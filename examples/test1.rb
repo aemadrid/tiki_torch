@@ -50,5 +50,3 @@ Tiki::Torch.shutdown
 
 logger.info 'Done!'
 exit
-
-Celluloid::SupervisionGroup

@@ -14,3 +14,4 @@
 mkmf.log
 scrap/
 .ruby-version
+.idea/
