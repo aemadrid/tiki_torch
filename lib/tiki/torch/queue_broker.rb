@@ -31,7 +31,7 @@ module Tiki
       end
 
       def finalize
-        info 'Finalized ...'
+        debug 'Finalized ...'
       end
 
     end

@@ -59,39 +59,39 @@ module Tiki
       end
 
       def setup_links
-        info 'Setting up links ...'
+        debug 'Setting up links ...'
         @broker = Actor[:tiki_torch_queue_broker]
         link @broker
-        info "@broker : #{@broker.inspect}"
+        debug "@broker : #{@broker.inspect}"
 
         @pool = Actor[:tiki_torch_event_processor_pool]
         link @pool
-        info "@pool : #{@pool.inspect}"
-        info 'Done setting up links ...'
+        debug "@pool : #{@pool.inspect}"
+        debug 'Done setting up links ...'
       end
 
       def setup_queues
-        info 'Setting up queues ...'
+        debug 'Setting up queues ...'
         self.class.consumer_registry.each do |consumer_class|
-          info "going to setup queue for #{consumer_class.name} : #{consumer_class.queue_name} : #{consumer_class.routing_keys.inspect} ..."
+          debug "going to setup queue for #{consumer_class.name} : #{consumer_class.queue_name} : #{consumer_class.routing_keys.inspect} ..."
           raise "No routing keys for #{consumer_class.name} : #{consumer_class.queue_name}" if consumer_class.routing_keys.empty?
           @broker.setup_queue consumer_class.queue_name, consumer_class.routing_keys
         end
-        info 'Done setting up queues ...'
+        debug 'Done setting up queues ...'
       end
 
       def setup_timers
-        info "Setting up timers for #{@min_secs} ..."
+        debug "Setting up timers for #{@min_secs} ..."
         every(@min_secs) do
-          info 'Going to check for events ...'
+          debug 'Going to check for events ...'
           if ready_for_events?
-            info 'Going to poll for events ...'
+            debug 'Going to poll for events ...'
             poll_for_events
           else
-            info 'Not ready for events ...'
+            debug 'Not ready for events ...'
           end
         end
-        info 'Done setting up timers ...'
+        debug 'Done setting up timers ...'
       end
 
       def ready_for_events?
@@ -107,7 +107,7 @@ module Tiki
               error 'No event classes ...'
               false
             else
-              info 'Ready for events!'
+              debug 'Ready for events!'
               true
             end
           end
@@ -117,9 +117,9 @@ module Tiki
       def poll_for_events
         @polling = true
         self.class.consumer_registry.each do |consumer_class|
-          info "going to poll for #{consumer_class.name} ..."
+          debug "going to poll for #{consumer_class.name} ..."
           if (idle_size = @pool.idle_size) > 0
-            info "pool is ready : #{idle_size}"
+            debug "pool is ready : #{idle_size}"
             poll_for_event consumer_class
           else
             error "pool is not ready : #{idle_size}"
@@ -129,24 +129,24 @@ module Tiki
       end
 
       def poll_for_event(consumer_class)
-        info "Checking for #{consumer_class} ..."
+        debug "Checking for #{consumer_class} ..."
         event = @broker.pull_event consumer_class.queue_name
         process_event consumer_class, event
       end
 
       def process_event(consumer_class, event)
         if event
-          info "Processing event #{event}"
+          debug "Processing event #{event}"
           pool.async.process consumer_class, event
         else
-          info "No event found for #{consumer_class}"
+          debug "No event found for #{consumer_class}"
         end
       end
 
       def finalize
-        info 'finalizing ...'
+        debug 'finalizing ...'
         stop_and_wait
-        info 'finalized ...'
+        debug 'finalized ...'
       end
 
     end

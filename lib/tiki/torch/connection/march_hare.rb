@@ -123,9 +123,9 @@ module Tiki
       end
 
       def finalize
-        info 'finalizing ...'
+        debug 'finalizing ...'
         close
-        info 'finalized ...'
+        debug 'finalized ...'
       end
 
     end

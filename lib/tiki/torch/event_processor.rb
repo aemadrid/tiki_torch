@@ -18,7 +18,7 @@ module Tiki
       private
 
       def finalize
-        info "Finalized ##{object_id} ..."
+        debug "Finalized ##{object_id} ..."
       end
 
     end
