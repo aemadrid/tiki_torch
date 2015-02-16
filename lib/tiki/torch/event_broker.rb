@@ -36,7 +36,15 @@ module Tiki
         res
       end
 
+      def start
+        return false if @stopped
+
+        @stopped = true
+      end
+
       def stop_and_wait(wait_time = 2)
+        return true if @stopped
+
         sleep_time = wait_time / 8.0
         debug 'stopping ...'
         @stopped = true
@@ -83,12 +91,16 @@ module Tiki
       def setup_timers
         debug "Setting up timers for #{@min_secs} ..."
         every(@min_secs) do
-          debug 'Going to check for events ...'
-          if ready_for_events?
-            debug 'Going to poll for events ...'
-            poll_for_events
+          if @stopped
+            debug 'Stopped, not going to check for events ...'
           else
-            debug 'Not ready for events ...'
+            debug 'Going to check for events ...'
+            if ready_for_events?
+              debug 'Going to poll for events ...'
+              poll_for_events
+            else
+              debug 'Not ready for events ...'
+            end
           end
         end
         debug 'Done setting up timers ...'
