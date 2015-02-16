@@ -148,6 +148,12 @@ module Tiki
         @event_broker_wait || 0.5
       end
 
+      attr_writer :poll_for_events
+
+      def poll_for_events
+        @poll_for_events.nil? ? false : @poll_for_events
+      end
+
     end
 
     def self.config

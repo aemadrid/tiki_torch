@@ -16,7 +16,7 @@ module Tiki
       def initialize(min_secs = config.event_broker_wait)
         @min_secs = min_secs
         @polling  = false
-        @stopped  = true
+        @stopped  = config.poll_for_events
 
         setup_links
         setup_queues
