@@ -44,13 +44,12 @@ module Tiki
 
       class Metadata
 
-        attr_reader :content_type, :content_encoding, :headers, :delivery_mode, :priority, :correlation_id, :reply_to,
+        attr_reader :content_type, :content_encoding, :delivery_mode, :priority, :correlation_id, :reply_to,
                     :expiration, :message_id, :timestamp, :type, :user_id, :app_id, :cluster_id
 
         def initialize(headers)
           @content_type     = headers.content_type
           @content_encoding = headers.content_encoding
-          @headers          = headers.headers
           @delivery_mode    = headers.delivery_mode
           @priority         = headers.priority
           @correlation_id   = headers.correlation_id
@@ -97,7 +96,7 @@ module Tiki
         Tiki::Torch::Event.new payload,
                                Delivery.new(headers),
                                Metadata.new(headers),
-                               headers.properties
+                               headers.headers
       end
 
       def channel

@@ -32,15 +32,18 @@ end
 MyConsumer.debug_var :queue_name, MyConsumer.queue_name
 MyConsumer.debug_var :routing_keys, MyConsumer.routing_keys
 
+logger.info 'Will poll for events ...'
+Tiki::Torch.config.poll_for_events = true
+Tiki::Torch.config.colorized       = true
 logger.info 'Running ...'
 Tiki::Torch.run
 
 logger.info 'Publishing message #1 ...'
 Tiki::Torch.publish_message 'tiki.great.things.to.come', a: 1, b: 2
 logger.info 'Publishing message #2 ...'
-Tiki::Torch.publish_message 'tiki.great.things.to.come', {a: 3, b: 4}, {c: 'a'}
+Tiki::Torch.publish_message 'tiki.great.things.to.come', { a: 3, b: 4 }, { c: 'a' }
 logger.info 'Publishing message #3 ...'
-Tiki::Torch.publish_message 'tiki.great.things.to.come', {a: 5, b: 6}, {c: 'b'}
+Tiki::Torch.publish_message 'tiki.great.things.to.come', { a: 5, b: 6 }, { c: 'b' }
 
 logger.info 'Waiting for a moment ...'
 sleep 2

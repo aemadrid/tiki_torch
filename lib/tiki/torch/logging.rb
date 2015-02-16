@@ -13,8 +13,12 @@ module Tiki
 
       module ClassMethods
 
-        def debug(string)
-          Tiki::Torch.logger.debug "#{log_prefix} #{string}".blue
+        def colorized_logging?
+          Tiki::Torch.config.colorized
+        end
+
+        def logger
+          Tiki::Torch.logger
         end
 
         def debug_var(var_name, var, meth = :inspect)
@@ -24,16 +28,25 @@ module Tiki
           debug "#{var_name} : (#{klass}:#{var.object_id}) #{msg}"
         end
 
+        def log(string, type = :debug)
+          msg = "#{log_prefix} #{string}"
+          logger.send type, colorized_logging? ? msg.blue : msg
+        end
+
+        def debug(string)
+          log string, :debug
+        end
+
         def info(string)
-          Tiki::Torch.logger.info "#{log_prefix} #{string}".cyan
+          log string, :info
         end
 
         def warn(string)
-          Tiki::Torch.logger.warn "#{log_prefix} #{string}".yellow
+          log string, :warn
         end
 
         def error(string)
-          Tiki::Torch.logger.error "#{log_prefix} #{string}".red
+          log string, :error
         end
 
         def log_prefix
