@@ -10,20 +10,20 @@ module Tiki
       extend Forwardable
       include Logging
 
-      attr_reader :payload, :delivery, :metadata, :properties
+      attr_reader :payload, :delivery, :metadata, :headers
 
-      def initialize(payload, delivery, metadata, properties)
+      def initialize(payload, delivery, metadata, headers)
         debug_var :payload, payload
         debug_var :delivery, delivery
         debug_var :metadata, metadata
-        debug_var :properties, properties
+        debug_var :headers, headers
 
-        @payload    = payload
-        @delivery   = delivery
-        @properties = properties
-        @metadata   = metadata
+        @payload  = payload
+        @delivery = delivery
+        @metadata = metadata
+        @headers  = headers
 
-        @body = Tiki::Torch.config.payload_decoding_handler.call payload
+        @body = payload
         debug_var :body, @body
       end
 
@@ -35,15 +35,20 @@ module Tiki
       attr_reader :body
 
       def acknowledge
-        debug "Acknowledging ##{id} with tag ##{delivery_tag.to_i} ..."
-        res = Tiki::Torch.connection.acknowledge_message delivery_tag
+        res = queue_broker.acknowledge_event self
         debug_var :res, res
         res
       end
 
       def reject
-        debug "Rejecting ##{id} with tag ##{delivery_tag.to_i} ..."
-        res = Tiki::Torch.connection.reject_message delivery_tag
+        res = queue_broker.reject_event self
+        debug_var :res, res
+        res
+      end
+
+      def publish(routing_key, payload = {}, properties = {})
+        debug "Publishing message to #{routing_key} ..."
+        res = queue_broker.publish_event routing_key, payload, properties
         debug_var :res, res
         res
       end
@@ -60,6 +65,12 @@ module Tiki
       end
 
       alias :inspect :to_s
+
+      private
+
+      def queue_broker
+        Torch.queue_broker
+      end
 
     end
   end

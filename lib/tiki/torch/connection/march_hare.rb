@@ -80,9 +80,14 @@ module Tiki
           nil
         else
           debug 'found 1 message ...'
-          event = build_event payload, headers
-          debug_var :event, event
-          event
+          parts = [
+            payload,
+            Delivery.new(headers),
+            Metadata.new(headers),
+            headers.headers
+          ]
+          debug_var :parts, parts
+          parts
         end
       end
 
@@ -90,13 +95,6 @@ module Tiki
 
       def driver_class
         MarchHare
-      end
-
-      def build_event(payload, headers)
-        Tiki::Torch::Event.new payload,
-                               Delivery.new(headers),
-                               Metadata.new(headers),
-                               headers.headers
       end
 
       def channel

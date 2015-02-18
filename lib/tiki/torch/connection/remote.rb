@@ -51,14 +51,8 @@ module Tiki
         channel.queue queue_name, config.consumer_queue_options.merge(options)
       end
 
-      def publish_message(routing_key, payload = {}, properties = {})
-        raise "invalid payload [#{payload.class.name}]" unless payload.respond_to?(:to_hash)
-        encoded_payload      = config.payload_encoding_handler.call payload.to_hash
-        options              = config.publish_options.merge(routing_key: routing_key)
-        options[:properties] = config.publish_properties.merge properties
-        debug_var :encoded_payload, encoded_payload
-        debug_var :options, options
-        res = exchange.publish encoded_payload, options
+      def publish_message(payload, options)
+        res = exchange.publish payload, options
         debug_var :res, res
         res
       end
