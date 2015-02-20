@@ -154,12 +154,6 @@ module Tiki
         @poll_for_events.nil? ? false : @poll_for_events
       end
 
-      attr_writer :colorized
-
-      def colorized
-        @colorized.nil? ? false : @colorized
-      end
-
     end
 
     def self.config

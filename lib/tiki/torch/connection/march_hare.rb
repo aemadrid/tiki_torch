@@ -44,12 +44,13 @@ module Tiki
 
       class Metadata
 
-        attr_reader :content_type, :content_encoding, :delivery_mode, :priority, :correlation_id, :reply_to,
+        attr_reader :content_type, :content_encoding, :headers, :delivery_mode, :priority, :correlation_id, :reply_to,
                     :expiration, :message_id, :timestamp, :type, :user_id, :app_id, :cluster_id
 
         def initialize(headers)
           @content_type     = headers.content_type
           @content_encoding = headers.content_encoding
+          @headers          = headers.headers
           @delivery_mode    = headers.delivery_mode
           @priority         = headers.priority
           @correlation_id   = headers.correlation_id
@@ -80,14 +81,9 @@ module Tiki
           nil
         else
           debug 'found 1 message ...'
-          parts = [
-            payload,
-            Delivery.new(headers),
-            Metadata.new(headers),
-            headers.headers
-          ]
-          debug_var :parts, parts
-          parts
+          event = build_event payload, headers
+          debug_var :event, event
+          event
         end
       end
 
@@ -95,6 +91,13 @@ module Tiki
 
       def driver_class
         MarchHare
+      end
+
+      def build_event(payload, headers)
+        Tiki::Torch::Event.new payload,
+                               Delivery.new(headers),
+                               Metadata.new(headers),
+                               headers.properties
       end
 
       def channel

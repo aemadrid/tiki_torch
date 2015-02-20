@@ -13,10 +13,10 @@ module Tiki
 
       attr_reader :timers, :broker, :pool
 
-      def initialize(min_secs = config.event_broker_wait, stopped = !config.poll_for_events)
+      def initialize(min_secs = config.event_broker_wait)
         @min_secs = min_secs
         @polling  = false
-        @stopped  = stopped
+        @stopped  = config.poll_for_events
 
         setup_links
         setup_queues
@@ -142,11 +142,11 @@ module Tiki
 
       def poll_for_event(consumer_class)
         debug "Checking for #{consumer_class} ..."
-        message = @broker.pull_event consumer_class.queue_name
-        process_message consumer_class, message
+        event = @broker.pull_event consumer_class.queue_name
+        process_event consumer_class, event
       end
 
-      def process_message(consumer_class, event)
+      def process_event(consumer_class, event)
         if event
           debug "Processing event #{event}"
           pool.async.process consumer_class, event

@@ -61,8 +61,8 @@ module Tiki
       group.event_broker
     end
 
-    def publish(routing_key, payload = {}, properties = {})
-      queue_broker.publish_event routing_key, payload, properties
+    def publish_message(routing_key, payload = {}, properties = {})
+      connection.publish_message routing_key, payload, properties
     end
 
   end
