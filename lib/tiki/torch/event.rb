@@ -10,18 +10,16 @@ module Tiki
       extend Forwardable
       include Logging
 
-      attr_reader :payload, :delivery, :metadata, :properties
+      attr_reader :payload, :delivery, :metadata
 
-      def initialize(payload, delivery, metadata, properties)
+      def initialize(payload, delivery, metadata)
         debug_var :payload, payload
         debug_var :delivery, delivery
         debug_var :metadata, metadata
-        debug_var :properties, properties
 
-        @payload    = payload
-        @delivery   = delivery
-        @properties = properties
-        @metadata   = metadata
+        @payload  = payload
+        @delivery = delivery
+        @metadata = metadata
 
         @body = Tiki::Torch.config.payload_decoding_handler.call payload
         debug_var :body, @body
@@ -29,7 +27,7 @@ module Tiki
 
       delegate [:[]] => :body
       delegate [:consumer_tag, :delivery_tag, :redelivered, :routing_key, :exchange] => :delivery
-      delegate [:message_id, :timestamp] => :metadata
+      delegate [:message_id, :timestamp, :headers] => :metadata
       def_delegator :metadata, :message_id, :id
 
       attr_reader :body

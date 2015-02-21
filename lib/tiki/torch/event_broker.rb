@@ -13,10 +13,10 @@ module Tiki
 
       attr_reader :timers, :broker, :pool
 
-      def initialize(min_secs = config.event_broker_wait)
+      def initialize(min_secs = config.event_broker_wait, stopped = !config.poll_for_events)
         @min_secs = min_secs
         @polling  = false
-        @stopped  = config.poll_for_events
+        @stopped  = true
 
         setup_links
         setup_queues
@@ -37,29 +37,34 @@ module Tiki
       end
 
       def start
-        return false if @stopped
+        return false unless @stopped
 
-        @stopped = true
+        @stopped = false
       end
 
+      alias :start_polling :start
+
       def stop_and_wait(wait_time = 2)
-        return true if @stopped
+        return true if fully_stopped?
 
         sleep_time = wait_time / 8.0
-        debug 'stopping ...'
+        info 'stopping ...'
         @stopped = true
         end_time = Time.now + wait_time
         while !fully_stopped? && Time.now < end_time
-          debug "waiting for #{sleep_time} ..."
+          info "waiting for #{sleep_time} ..."
           sleep sleep_time
         end
         fully_stopped?
       end
 
+      alias :stop :stop_and_wait
+      alias :stop_polling :stop_and_wait
+
       private
 
       def fully_stopped?
-        @stopped && !@polling
+        @stopped && !@polling && pool_busy_size == 0
       end
 
       def config
@@ -129,8 +134,10 @@ module Tiki
       def poll_for_events
         @polling = true
         self.class.consumer_registry.each do |consumer_class|
+          break if @stopped
+
           debug "going to poll for #{consumer_class.name} ..."
-          if (idle_size = @pool.idle_size) > 0
+          if (idle_size = pool_idle_size) > 0
             debug "pool is ready : #{idle_size}"
             poll_for_event consumer_class
           else
@@ -140,13 +147,25 @@ module Tiki
         @polling = false
       end
 
+      def pool_idle_size
+        @pool.idle_size
+      end
+
+      def pool_busy_size
+        @pool.busy_size
+      end
+
       def poll_for_event(consumer_class)
+        return nil if @stopped
+
         debug "Checking for #{consumer_class} ..."
         event = @broker.pull_event consumer_class.queue_name
         process_event consumer_class, event
       end
 
       def process_event(consumer_class, event)
+        return nil if @stopped
+
         if event
           debug "Processing event #{event}"
           pool.async.process consumer_class, event
@@ -156,9 +175,9 @@ module Tiki
       end
 
       def finalize
-        debug 'finalizing ...'
+        info 'finalizing ...'
         stop_and_wait
-        debug 'finalized ...'
+        info 'finalized ...'
       end
 
     end

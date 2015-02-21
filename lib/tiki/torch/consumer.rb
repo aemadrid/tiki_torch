@@ -13,11 +13,11 @@ module Tiki
       end
 
       def process(event)
-        info "Event ##{event.id} was processed"
+        debug "Event ##{event.id} was processed"
       end
 
       def on_start(event)
-        info "Event ##{event.id} started"
+        debug "Event ##{event.id} started"
       end
 
       def on_success(event, result)

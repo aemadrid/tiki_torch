@@ -29,29 +29,25 @@ module Tiki
         Tiki::Torch.const_get connection_class_name
       end
 
-      def connection_url
-        @connection_url || ENV.fetch('RABBITMQ_URL', '')
-      end
-
       def connection_attempts
         @connection_attempts || 5
       end
 
+      def connection_options
+        @connection_options
+      end
+
+      def connection_url
+        @connection_url || ENV['RABBITMQ_URL']
+      end
+
       def connection_settings
         {
-          timeout:                   2,
-          automatic_recovery:        true,
-          on_tcp_connection_failure: connection_failed_handler,
+          heartbeat: 10,
         }
       end
 
       attr_writer :connection_failed_handler, :connection_loss_handler, :message_return_handler
-
-      def connection_failed_handler
-        @connection_failed_handler ||= lambda do
-          error "RabbitMQ connection failure: #{connection_url}"
-        end
-      end
 
       def connection_loss_handler
         @connection_loss_handler ||= lambda do |conn|
@@ -154,6 +150,17 @@ module Tiki
         @poll_for_events.nil? ? false : @poll_for_events
       end
 
+      attr_writer :colorized
+
+      def colorized
+        @colorized.nil? ? false : @colorized
+      end
+
+      attr_writer :event_processor_pool_size
+
+      def event_processor_pool_size
+        @event_processor_pool_size || Celluloid.cores
+      end
     end
 
     def self.config

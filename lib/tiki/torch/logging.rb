@@ -13,8 +13,12 @@ module Tiki
 
       module ClassMethods
 
-        def debug(string)
-          Tiki::Torch.logger.debug "#{log_prefix} #{string}".blue
+        def colorized_logging?
+          Torch.config.colorized
+        end
+
+        def logger
+          Torch.logger
         end
 
         def debug_var(var_name, var, meth = :inspect)
@@ -24,20 +28,37 @@ module Tiki
           debug "#{var_name} : (#{klass}:#{var.object_id}) #{msg}"
         end
 
+        def log(string, type = :debug, color = :blue)
+          msg = "#{log_prefix} #{string}"
+          logger.send type, colorized_logging? ? msg.send(color) : msg
+        end
+
+        def debug(string)
+          log string, :debug, :white
+        end
+
         def info(string)
-          Tiki::Torch.logger.info "#{log_prefix} #{string}".cyan
+          log string, :info, :blue
         end
 
         def warn(string)
-          Tiki::Torch.logger.warn "#{log_prefix} #{string}".yellow
+          log string, :warn, :yellow
         end
 
         def error(string)
-          Tiki::Torch.logger.error "#{log_prefix} #{string}".red
+          log string, :error, :red
         end
 
         def log_prefix
-          "#{'%-35.35s' % name} | "
+          prefix      = name
+          _, _, label = log_prefix_labels
+          prefix      += ".#{label}" if label
+          # prefix += ":#{lineno}" if lineno
+          prefix.rjust(35, ' ')[-35,35] + ' | '
+        end
+
+        def log_prefix_labels
+          caller.lazy.reject { |x| x.index(__FILE__) }.map { |x| x =~ /(.*):(.*):in `(.*)'/ ? [$1, $2, $3] : nil }.first
         end
 
       end

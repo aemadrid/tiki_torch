@@ -21,13 +21,13 @@ module Tiki
 
     def group
       unless @group
-        @group   = SupervisionGroup.run!
+        @group ||= SupervisionGroup.run!
         @running = true
       end
       @group
     end
 
-    alias_method :run, :group
+    alias :run :group
 
     def running?
       !(@group.nil? && @running.nil?)
@@ -44,6 +44,8 @@ module Tiki
       @running = false
       true
     end
+
+    alias :stop :shutdown
 
     def connection
       group.connection

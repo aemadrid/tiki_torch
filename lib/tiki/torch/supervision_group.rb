@@ -4,9 +4,9 @@ module Tiki
   module Torch
     class SupervisionGroup < Celluloid::SupervisionGroup
 
-      supervise Tiki::Torch.config.connection_class, as: :tiki_torch_connection
+      supervise Torch.config.connection_class, as: :tiki_torch_connection
       supervise QueueBroker, as: :tiki_torch_queue_broker
-      pool EventProcessor, as: :tiki_torch_event_processor_pool
+      pool EventProcessor, as: :tiki_torch_event_processor_pool, size: Torch.config.event_processor_pool_size
       supervise EventBroker, as: :tiki_torch_event_broker
 
       def connection

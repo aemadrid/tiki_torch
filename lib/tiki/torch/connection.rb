@@ -37,7 +37,7 @@ module Tiki
         options[:port]     = uri.port || 5672
         options[:username] = uri.userinfo ? uri.userinfo.split(':').first : 'guest'
         options[:password] = uri.userinfo ? uri.userinfo.split(':').last : 'guest'
-        options[:vhost]    = uri.path.empty? ? '/' : uri.path
+        options[:vhost]    = uri.path.empty? ? '/' : uri.path[1..-1]
 
         options
       end
@@ -46,6 +46,5 @@ module Tiki
   end
 end
 require 'tiki/torch/connection/local'
-require 'tiki/torch/connection/remote'
 require 'tiki/torch/connection/march_hare'
 require 'tiki/torch/connection/bunny'
