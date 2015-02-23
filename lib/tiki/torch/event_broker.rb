@@ -134,11 +134,12 @@ module Tiki
       end
 
       def poll_for_events
+        debug 'Starting polling ...'
         @polling = true
         self.class.consumer_registry.each do |consumer_class|
+          debug "going to poll for #{consumer_class.name} ..."
           break if sudden_stop?
 
-          debug "going to poll for #{consumer_class.name} ..."
           if (idle_size = pool_idle_size) > 0
             debug "pool is ready : #{idle_size}"
             poll_for_event consumer_class
@@ -146,6 +147,7 @@ module Tiki
             error "pool is not ready : #{idle_size}"
           end
         end
+        debug 'Stopping polling ...'
         @polling = false
       end
 
