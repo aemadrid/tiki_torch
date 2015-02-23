@@ -90,10 +90,9 @@ module Tiki
       def setup_queues
         debug 'Setting up queues ...'
         self.class.consumer_registry.each do |consumer_class|
-          queue_name = "#{config.consumer_queue_prefix}#{consumer_class.queue_name}"
-          debug "going to setup queue for #{consumer_class.name} : #{queue_name} : #{consumer_class.routing_keys.inspect} ..."
-          raise "No routing keys for #{consumer_class.name} : #{queue_name}" if consumer_class.routing_keys.empty?
-          @broker.setup_queue queue_name, consumer_class.routing_keys
+          debug "going to setup queue for #{consumer_class.name} : #{consumer_class.queue_name} : #{consumer_class.routing_keys.inspect} ..."
+          raise "No routing keys for #{consumer_class.name} : #{consumer_class.queue_name}" if consumer_class.routing_keys.empty?
+          @broker.setup_queue consumer_class.queue_name, consumer_class.routing_keys
         end
         debug 'Done setting up queues ...'
       end

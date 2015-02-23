@@ -49,7 +49,7 @@ module Tiki
           if new_name
             @queue_name = new_name.to_s.underscore
           else
-            @queue_name ||= name.underscore
+            @queue_name || "#{Torch.config.consumer_queue_prefix}#{name.underscore}"
           end
         end
 
