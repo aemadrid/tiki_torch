@@ -63,7 +63,7 @@ module Tiki
         end
       end
 
-      attr_writer :channel_prefetch, :exchange_name
+      attr_writer :channel_prefetch, :exchange_name, :consumer_queue_prefix
 
       def channel_prefetch
         @channel_prefetch || 1
@@ -87,6 +87,10 @@ module Tiki
           auto_delete: false,
           exclusive:   false
         }
+      end
+
+      def consumer_queue_prefix
+        @consumer_queue_prefix || 'tiki_torch_'
       end
 
       def publish_options
