@@ -50,11 +50,12 @@ module Tiki
         end
 
         def log_prefix
+          length      = 45
           prefix      = name
           _, _, label = log_prefix_labels
           prefix      += ".#{label}" if label
           # prefix += ":#{lineno}" if lineno
-          prefix.rjust(35, ' ')[-35,35] + ' | '
+          prefix.rjust(length, ' ')[-length, length] + ' | '
         end
 
         def log_prefix_labels
