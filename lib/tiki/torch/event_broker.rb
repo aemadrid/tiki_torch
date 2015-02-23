@@ -140,7 +140,7 @@ module Tiki
         @polling = true
         self.class.consumer_registry.each do |consumer_class|
           debug "going to poll for #{consumer_class.name} ..."
-          break if sudden_stop?
+          # break if sudden_stop?
 
           if (idle_size = pool_idle_size) > 0
             debug "pool is ready : #{idle_size}"
@@ -162,15 +162,16 @@ module Tiki
       end
 
       def poll_for_event(consumer_class)
-        return nil if sudden_stop?
+        # return nil if sudden_stop?
 
         debug "Checking for #{consumer_class} ..."
         event = @broker.pull_event consumer_class.queue_name
+        debug "Got #{event.class.name} for #{consumer_class}, going to process ..."
         process_event consumer_class, event
       end
 
       def process_event(consumer_class, event)
-        return nil if sudden_stop?
+        # return nil if sudden_stop?
 
         if event
           debug "Processing event #{event}"
