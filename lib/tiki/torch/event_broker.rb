@@ -66,7 +66,9 @@ module Tiki
       private
 
       def fully_stopped?
-        @stopped && !@polling && pool_busy_size == 0
+        res = @stopped && !@polling && pool_busy_size == 0
+        debug "res : #{res} | @stopped : #{@stopped} | @polling : #{@polling} | pool_busy_size : #{pool_busy_size}"
+        res
       end
 
       def config
