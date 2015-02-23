@@ -51,8 +51,10 @@ module Tiki
         info 'stopping ...'
         @stopped = true
         end_time = Time.now + wait_time
+        cnt = 0
         while !fully_stopped? && Time.now < end_time
-          info "waiting for #{sleep_time} ..."
+          cnt += 1
+          info "#{cnt} | waiting until #{end_time} for #{sleep_time} ..."
           sleep sleep_time
         end
         fully_stopped?
