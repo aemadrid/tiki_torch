@@ -30,6 +30,10 @@ module Tiki
         error "Event ##{event.id} failed with #{exception.class.name} : #{exception.message}\n  #{exception.backtrace[0, 5].join("\n  ")}"
       end
 
+      def publish(routing_key, payload = {}, properties = {})
+        Torch.publish_message routing_key, payload, properties
+      end
+
       module ClassMethods
 
         def consume(*new_routing_keys)
