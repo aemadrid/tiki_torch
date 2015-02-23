@@ -90,7 +90,7 @@ module Tiki
       end
 
       def consumer_queue_prefix
-        @consumer_queue_prefix || 'tiki_torch_'
+        @consumer_queue_prefix || 'tiki.torch.'
       end
 
       def publish_options
