@@ -33,7 +33,11 @@ module Tiki
         uri     = URI.parse url
         options = settings
 
-        options[:host]     = uri.host || '127.0.0.1'
+        if (hosts = uri.host.split('--')).size > 1
+          options[:hosts] = hosts
+        else
+          options[:host] = uri.host || '127.0.0.1'
+        end
         options[:port]     = uri.port || 5672
         options[:username] = uri.userinfo ? uri.userinfo.split(':').first : 'guest'
         options[:password] = uri.userinfo ? uri.userinfo.split(':').last : 'guest'
