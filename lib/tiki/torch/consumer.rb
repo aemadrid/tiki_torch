@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+require 'concurrent/atomic/atomic_fixnum'
 
 require 'set'
 
@@ -47,10 +48,14 @@ module Tiki
 
         def queue_name(new_name = nil)
           if new_name
-            @queue_name = new_name.to_s.underscore
+            @queue_name = default_queue_name new_name
           else
-            @queue_name || "#{Torch.config.consumer_queue_prefix}#{name.underscore}"
+            @queue_name || default_queue_name
           end
+        end
+
+        def default_queue_name(suffix = name)
+          "#{Torch.config.consumer_queue_prefix}#{suffix.to_s.underscore}"
         end
 
         def routing_keys
@@ -63,14 +68,31 @@ module Tiki
           begin
             start_result = instance.on_start event
             debug_var :start_result, start_result
+            stats[:started].increment
             result = instance.process event
             debug_var :result, result
+            stats[:processed].increment
             success_result = instance.on_success event, result
             debug_var :success_result, success_result
+            stats[:succeeded].increment
           rescue => e
             failure_result = instance.on_failure event, e
             debug_var :failure_result, failure_result
+            stats[:failed].increment
           end
+        end
+
+        def stats
+          @stats ||= {
+            started:   Concurrent::AtomicFixnum.new(0),
+            processed: Concurrent::AtomicFixnum.new(0),
+            succeeded: Concurrent::AtomicFixnum.new(0),
+            failed:    Concurrent::AtomicFixnum.new(0),
+          }
+        end
+
+        def stats_hash
+          stats.each_with_object({}) { |(k, v), h| h[k] = v.value }
         end
 
       end

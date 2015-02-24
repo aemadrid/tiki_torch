@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'march_hare'
   spec.add_runtime_dependency 'bunny'
   spec.add_runtime_dependency 'multi_json'
+  spec.add_runtime_dependency 'concurrent-ruby'
   spec.add_runtime_dependency 'colorize'
 
   spec.add_development_dependency 'rspec'

@@ -55,6 +55,9 @@ end
 lgr.info 'Waiting for a moment ...'
 sleep 10
 
+lgr.info 'Some stats ...'
+lgr.info "MySingleConsumer : #{MySingleConsumer.stats_hash.to_yaml}"
+
 lgr.info 'Shutting down ...'
 Tiki::Torch.shutdown
 

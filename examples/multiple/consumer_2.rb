@@ -42,6 +42,9 @@ Tiki::Torch.event_broker.start_polling
 lgr.info 'Waiting for a moment ...'
 sleep 30
 
+lgr.info 'Some stats ...'
+lgr.info "MySecondConsumer : #{MySecondConsumer.stats_hash.to_yaml}"
+
 lgr.info 'Shutting down ...'
 Tiki::Torch.shutdown
 
