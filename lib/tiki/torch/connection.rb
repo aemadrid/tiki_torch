@@ -43,6 +43,7 @@ module Tiki
         options[:password] = uri.userinfo ? uri.userinfo.split(':').last : 'guest'
         options[:vhost]    = uri.path.empty? ? '/' : uri.path[1..-1]
 
+        debug_var :options, options
         options
       end
 
