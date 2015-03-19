@@ -10,49 +10,43 @@ module Tiki
       extend Forwardable
       include Logging
 
-      attr_reader :payload, :delivery, :metadata
+      attr_reader :message, :payload, :properties
 
-      def initialize(payload, delivery, metadata)
-        debug_var :payload, payload
-        debug_var :delivery, delivery
-        debug_var :metadata, metadata
+      def initialize(message)
+        debug_var :message, message
 
-        @payload  = payload
-        @delivery = delivery
-        @metadata = metadata
-
-        @body = Tiki::Torch.config.payload_decoding_handler.call payload
-        debug_var :body, @body
+        @message              = message
+        @payload, @properties = Tiki::Torch.config.payload_decoding_handler.call message.body
       end
 
-      delegate [:[]] => :body
-      delegate [:consumer_tag, :delivery_tag, :redelivered, :routing_key, :exchange] => :delivery
-      delegate [:message_id, :timestamp, :headers] => :metadata
-      def_delegator :metadata, :message_id, :id
+      delegate [:[]] => :payload
+      delegate [:body, :attempts, :timestamp, :finish, :touch, :requeue] => :message
 
-      attr_reader :body
+      def id
+        properties[:message_id]
+      end
 
-      def acknowledge
-        debug "Acknowledging ##{id} with tag ##{delivery_tag.to_i} ..."
-        res = Tiki::Torch.connection.acknowledge_message delivery_tag
+      def finish
+        debug "Finishing ##{id} ..."
+        res = message.finish
         debug_var :res, res
         res
       end
 
-      def reject
-        debug "Rejecting ##{id} with tag ##{delivery_tag.to_i} ..."
-        res = Tiki::Torch.connection.reject_message delivery_tag
+      def requeue(timeout = 0)
+        debug "Requeueing ##{id} ..."
+        res = message.requeue timeout
         debug_var :res, res
         res
       end
 
       def to_s
         attrs = {
-          :@body        => body.to_s,
-          message_id:   message_id,
-          routing_key:  routing_key,
-          delivery_tag: delivery_tag.to_i,
-          timestamp:    timestamp,
+            id:        id,
+            body:      body.size,
+            payload:   payload.class.name,
+            attempts:  attempts,
+            timestamp: timestamp,
         }
         "#<Tiki::Torch::Event #{attrs.map { |k, v| "#{k}=#{v.inspect}" }.join(', ')}>"
       end

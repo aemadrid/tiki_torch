@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 require 'concurrent/atomic/atomic_fixnum'
-
 require 'set'
+require 'nsq'
 
 module Tiki
   module Torch
@@ -13,70 +13,79 @@ module Tiki
         EventBroker.register_consumer base
       end
 
-      def process(event)
+      attr_reader :event
+
+      def initialize(event)
+        @event = event
+      end
+
+      def process
         debug "Event ##{event.id} was processed"
       end
 
-      def on_start(event)
+      def on_start
         debug "Event ##{event.id} started"
       end
 
-      def on_success(event, result)
-        event.acknowledge
+      def on_success(result)
+        event.finish
         info "Event ##{event.id} succeeded with #{result.inspect}"
       end
 
-      def on_failure(event, exception)
-        event.reject
+      def on_failure(exception)
+        event.requeue
         error "Event ##{event.id} failed with #{exception.class.name} : #{exception.message}\n  #{exception.backtrace[0, 5].join("\n  ")}"
       end
 
-      def publish(routing_key, payload = {}, properties = {})
-        Torch.publish_message routing_key, payload, properties
+      def publish(topic_name, payload = {}, properties = {})
+        Torch.publish_message topic_name, payload, properties
       end
 
       module ClassMethods
 
-        def consume(*new_routing_keys)
-          # debug_var :routing_keys_1, routing_keys
-          # debug_var :new_routing_keys, new_routing_keys
-          # routing_keys.union new_routing_keys
-          new_routing_keys.each { |x| routing_keys.add x }
-          debug_var :routing_keys, routing_keys
-          debug_var :new_routing_keys, new_routing_keys
-        end
-
-        def queue_name(new_name = nil)
-          if new_name
-            @queue_name = default_queue_name new_name
+        def topic(name = nil)
+          if name.nil?
+            @topic || name.to_s.underscore
           else
-            @queue_name || default_queue_name
+            @topic = name
           end
         end
 
-        def default_queue_name(suffix = name)
-          "#{Torch.config.consumer_queue_prefix}#{suffix.to_s.underscore}"
+        def channel(name = nil)
+          if name.nil?
+            @channel || 'events'
+          else
+            @channel = name
+          end
         end
 
-        def routing_keys
-          @routing_keys ||= Set.new
+        def connection
+          @connection ||= ::Nsq::Consumer.new Torch.config.consumer_connection_options(topic, channel)
+        end
+
+        def pop
+          if connection.size > 0
+            Event.new connection.pop
+          else
+            nil
+          end
         end
 
         def process(event)
-          instance = new
+          instance = new event
           debug_var :instance, instance
           begin
-            start_result = instance.on_start event
+            start_result = instance.on_start
             debug_var :start_result, start_result
             stats[:started].increment
-            result = instance.process event
+            result = instance.process
             debug_var :result, result
             stats[:processed].increment
-            success_result = instance.on_success event, result
+            success_result = instance.on_success result
             debug_var :success_result, success_result
             stats[:succeeded].increment
           rescue => e
-            failure_result = instance.on_failure event, e
+            failure_result = instance.on_failure e
             debug_var :failure_result, failure_result
             stats[:failed].increment
           end
@@ -84,10 +93,10 @@ module Tiki
 
         def stats
           @stats ||= {
-            started:   Concurrent::AtomicFixnum.new(0),
-            processed: Concurrent::AtomicFixnum.new(0),
-            succeeded: Concurrent::AtomicFixnum.new(0),
-            failed:    Concurrent::AtomicFixnum.new(0),
+              started:   Concurrent::AtomicFixnum.new(0),
+              processed: Concurrent::AtomicFixnum.new(0),
+              succeeded: Concurrent::AtomicFixnum.new(0),
+              failed:    Concurrent::AtomicFixnum.new(0),
           }
         end
 

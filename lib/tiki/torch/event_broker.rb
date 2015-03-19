@@ -11,16 +11,13 @@ module Tiki
 
       finalizer :finalize
 
-      attr_reader :timers, :broker, :pool
+      attr_reader :pool, :stats
 
-      def initialize(min_secs = config.event_broker_wait, stopped = !config.poll_for_events)
-        @min_secs = min_secs
-        @polling  = false
-        @stopped  = true
-
+      def initialize
+        setup_stats
         setup_links
-        setup_queues
-        setup_timers
+        setup_topics
+        async.poll_for_events_loop
       end
 
       def self.consumer_registry
@@ -42,8 +39,6 @@ module Tiki
         @stopped = false
       end
 
-      alias :start_polling :start
-
       def stop_and_wait(wait_time = 2)
         return true if fully_stopped?
 
@@ -51,7 +46,7 @@ module Tiki
         info 'stopping ...'
         @stopped = true
         end_time = Time.now + wait_time
-        cnt = 0
+        cnt      = 0
         while !fully_stopped? && Time.now < end_time
           cnt += 1
           info "#{cnt} | waiting until #{end_time} for #{sleep_time} ..."
@@ -63,11 +58,15 @@ module Tiki
       alias :stop :stop_and_wait
       alias :stop_polling :stop_and_wait
 
+      def stats_hash
+        stats.each_with_object({}) { |(k, v), h| h[k] = v.value }
+      end
+
       private
 
       def fully_stopped?
-        res = @stopped && !@polling && pool_busy_size == 0
-        debug "res : #{res} | @stopped : #{@stopped} | @polling : #{@polling} | pool_busy_size : #{pool_busy_size}"
+        res = @stopped && !@polling && @pool.busy_size == 0
+        debug "res : #{res} | @stopped : #{@stopped} | @polling : #{@polling} | @pool.busy_size : #{@pool.busy_size}"
         res
       end
 
@@ -76,125 +75,130 @@ module Tiki
       end
 
       def setup_links
-        debug 'Setting up links ...'
-        @broker = Actor[:tiki_torch_queue_broker]
-        link @broker
-        debug "@broker : #{@broker.inspect}"
-
         @pool = Actor[:tiki_torch_event_processor_pool]
         link @pool
         debug "@pool : #{@pool.inspect}"
         debug 'Done setting up links ...'
       end
 
-      def setup_queues
+      def setup_topics
         debug 'Setting up queues ...'
         self.class.consumer_registry.each do |consumer_class|
-          debug "going to setup queue for #{consumer_class.name} : #{consumer_class.queue_name} : #{consumer_class.routing_keys.inspect} ..."
-          raise "No routing keys for #{consumer_class.name} : #{consumer_class.queue_name}" if consumer_class.routing_keys.empty?
-          @broker.setup_queue consumer_class.queue_name, consumer_class.routing_keys
+          debug "going to check connection for #{consumer_class.name} : #{consumer_class.topic} : #{consumer_class.channel} ..."
+          res = consumer_class.connection.connected?
+          debug "#{consumer_class.name} : #{consumer_class.topic} : #{consumer_class.channel} : connected : [#{res}] ..."
         end
         debug 'Done setting up queues ...'
       end
 
-      def setup_timers
-        debug "Setting up timers for #{@min_secs} ..."
-        every(@min_secs) do
-          if @stopped
-            debug 'Stopped, not going to check for events ...'
-          else
-            debug 'Going to check for events ...'
-            if ready_for_events?
-              debug 'Going to poll for events ...'
-              poll_for_events
-            else
-              debug 'Not ready for events ...'
+      def poll_for_events_loop
+        while true
+          cnt = stats[:looped].increment
+          debug " [#{cnt}] ".center(60, '=')
+          if ready_for_events?
+            debug "[#{cnt}] We are ready for events, going to poll ..."
+            poll_for_events
+            sleep_time = Torch.config.events_busy_sleep_time
+            if sleep_time > 0
+              debug "[#{cnt}] Already polled for events, sleeping for #{sleep_time} seconds ..."
+              sleep sleep_time
             end
+          else
+            sleep_time = Torch.config.events_idle_sleep_time
+            debug "[#{cnt}] We are NOT ready for events, sleeping for #{sleep_time} seconds ..."
+            sleep sleep_time
           end
         end
-        debug 'Done setting up timers ...'
       end
 
       def ready_for_events?
-        if @stopped
-          warn 'Stopped, not trying ...'
-          false
-        else
+        if Torch.config.poll_for_events
           if @polling
             warn 'Already polling, wait until next turn ...'
+            stats[:polling].increment
             false
           else
             if self.class.consumer_registry.empty?
+              stats[:empty].increment
               error 'No event classes ...'
               false
             else
               debug 'Ready for events!'
+              stats[:ready].increment
               true
             end
           end
+        else
+          warn 'Stopped, not trying ...'
+          stats[:stopped].increment
+          false
         end
       end
 
       def poll_for_events
         debug 'Starting polling ...'
         @polling = true
+        stats[:polled].increment
         self.class.consumer_registry.each do |consumer_class|
           debug "going to poll for #{consumer_class.name} ..."
-          # break if sudden_stop?
 
-          if (idle_size = pool_idle_size) > 0
+          if (idle_size = @pool.idle_size) > 0
             debug "pool is ready : #{idle_size}"
             poll_for_event consumer_class
           else
             error "pool is not ready : #{idle_size}"
+            stats[:busy].increment
           end
         end
         debug 'Stopping polling ...'
         @polling = false
       end
 
-      def pool_idle_size
-        @pool.idle_size
-      end
-
-      def pool_busy_size
-        @pool.busy_size
-      end
-
       def poll_for_event(consumer_class)
-        # return nil if sudden_stop?
-
         debug "Checking for #{consumer_class} ..."
-        event = @broker.pull_event consumer_class.queue_name
-        debug "Got #{event.class.name} for #{consumer_class}, going to process ..."
-        process_event consumer_class, event
-      end
-
-      def process_event(consumer_class, event)
-        # return nil if sudden_stop?
-
-        if event
-          debug "Processing event #{event}"
-          pool.async.process consumer_class, event
-        else
-          debug "No event found for #{consumer_class}"
+        if (event = consumer_class.pop)
+          debug "Got #{event.class.name} for #{consumer_class}, going to process ..."
+          stats[:processed].increment
+          process_event consumer_class, event
         end
       end
 
-      def finalize
-        info 'finalizing ...'
-        stop_and_wait
-        info 'finalized ...'
+      def process_event(consumer_class, event)
+        debug "Processing event #{event}"
+        pool.async.process consumer_class, event
       end
 
-      def sudden_stop?
-        return false unless @stopped
+      def setup_stats
+        @stats = {
+            looped:    Concurrent::AtomicFixnum.new(0),
+            stopped:   Concurrent::AtomicFixnum.new(0),
+            polling:   Concurrent::AtomicFixnum.new(0),
+            empty:     Concurrent::AtomicFixnum.new(0),
+            ready:     Concurrent::AtomicFixnum.new(0),
+            polled:    Concurrent::AtomicFixnum.new(0),
+            processed: Concurrent::AtomicFixnum.new(0),
+            busy:      Concurrent::AtomicFixnum.new(0),
+        }
+      end
 
-        info 'Stopping on our tracks ...'
-        @polling = false
+      def finalize
+        # debug "Finalizing ##{object_id} ..."
+        # stop_and_wait
+        debug "Finalized ##{object_id} ..."
         true
       end
 
     end
+
+    extend self
+
+    def start_polling
+      config.poll_for_events = true
+    end
+
+    def stop_polling
+      config.poll_for_events = false
+    end
+
   end
 end

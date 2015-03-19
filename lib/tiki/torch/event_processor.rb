@@ -19,6 +19,7 @@ module Tiki
 
       def finalize
         debug "Finalized ##{object_id} ..."
+        true
       end
 
     end

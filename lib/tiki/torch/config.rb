@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 
+require 'multi_json'
 require 'celluloid'
-require 'securerandom'
 
 module Tiki
   module Torch
@@ -9,167 +9,84 @@ module Tiki
 
       include Logging
 
-      attr_writer :connection_type, :connection_url, :connection_attempts
+      attr_accessor :topic_prefix, :nsqd, :nsqlookupd
+      attr_accessor :max_in_flight, :discovery_interval, :msq_timeout
+      attr_accessor :pool_size, :event_pool_size
+      attr_accessor :poll_for_events, :events_idle_sleep_time, :events_busy_sleep_time
+      attr_accessor :colorized
 
-      def connection_type
-        @connection_type ||= if ENV.fetch('TIKI_TORCH_CONNECTION_TYPE', '') == 'local'
-                               'Local'
-                             elsif ENV.fetch('TIKI_TORCH_CONNECTION_TYPE', '') == 'march_hare' || RUBY_PLATFORM == 'java'
-                               'MarchHare'
-                             else
-                               'Bunny'
-                             end
+      def initialize(options = {})
+        self.topic_prefix       = 'tiki_torch-'
+        self.max_in_flight      = 1
+        self.discovery_interval = 60
+        self.msq_timeout        = 60_000
+
+        self.event_pool_size = Celluloid.cores
+        self.poll_for_events = false
+
+        self.events_idle_sleep_time = 1
+        self.events_busy_sleep_time = 0.1
+
+        self.colorized = false
+
+        options.each { |k, v| send "#{k}=", v }
       end
 
-      def connection_class_name
-        "#{connection_type}Connection"
+      def consumer_connection_options(topic_name, channel_name)
+        options              = {
+            topic:              "#{topic_prefix}#{topic_name}",
+            channel:            channel_name.to_s,
+            max_in_flight:      max_in_flight,
+            discovery_interval: discovery_interval,
+            msq_timeout:        msq_timeout,
+        }
+        options[:nsqlookupd] = nsqlookupd unless nsqlookupd.nil?
+        options[:nsqd]       = nsqd unless nsqd.nil?
+        options
       end
 
-      def connection_class
-        Tiki::Torch.const_get connection_class_name
+      def producer_connection_options(topic_name)
+        options              = {
+            topic: "#{topic_prefix}#{topic_name}",
+        }
+        options[:nsqlookupd] = nsqlookupd unless nsqlookupd.nil?
+        options[:nsqd]       = nsqd unless nsqd.nil?
+        options
       end
 
-      def connection_attempts
-        @connection_attempts || 5
-      end
-
-      def connection_options
-        @connection_options
-      end
-
-      def connection_url
-        @connection_url || ENV['RABBITMQ_URL']
-      end
-
-      def connection_settings
-        {
-          heartbeat: 10,
+      def default_message_properties
+        @default_message_properties ||= {
+            message_id: SecureRandom.hex,
         }
       end
-
-      attr_writer :connection_failed_handler, :connection_loss_handler, :message_return_handler
-
-      def connection_loss_handler
-        @connection_loss_handler ||= lambda do |conn|
-          warn "RabbitMQ connection loss: #{connection_url}"
-          conn.reconnect false, 2
-        end
-      end
-
-      def message_return_handler
-        @message_return_handler ||= lambda do |basic_return, metadata, payload|
-          ary = [Event.parse_payload(payload), basic_return.reply_code, basic_return.reply_text, metadata[:headers]]
-          warn 'Tiki::Torch message %s was returned! reply_code = %s, reply_text = %s headers = %s' % ary
-        end
-      end
-
-      attr_writer :channel_prefetch, :exchange_name, :consumer_queue_prefix
-
-      def channel_prefetch
-        @channel_prefetch || 1
-      end
-
-      def exchange_name
-        @exchange_name || 'tiki_torch'
-      end
-
-      def exchange_options
-        @exchange_options ||= {
-          durable:     true,
-          auto_delete: false,
-          exclusive:   false
-        }
-      end
-
-      def consumer_queue_options
-        @consumer_queue_options ||= {
-          durable:     true,
-          auto_delete: false,
-          exclusive:   false
-        }
-      end
-
-      def consumer_queue_prefix
-        @consumer_queue_prefix || 'tiki.torch.'
-      end
-
-      def publish_options
-        @publish_options ||= {
-          persistent: true,
-          mandatory:  false,
-        }
-      end
-
-      attr_writer :app_id
-
-      def app_id
-        @app_id || 'missing'
-      end
-
-      def default_publish_properties
-        @default_publish_properties ||= {
-          priority:       5,
-          type:           '',
-          headers:        {},
-          timestamp:      Time.now,
-          reply_to:       nil,
-          correlation_id: nil,
-        }
-      end
-
-      def publish_properties
-        default_publish_properties.merge app_id:       app_id,
-                                         content_type: payload_content_type,
-                                         message_id:   SecureRandom.hex
-
-      end
-
-      attr_writer :payload_encoding_handler, :payload_decoding_handler, :payload_content_type
 
       def payload_encoding_handler
-        @payload_encoding_handler ||= lambda do |payload|
-          MultiJson.dump payload
+        @payload_encoding_handler ||= lambda do |payload, properties|
+          MultiJson.dump payload:    payload || {},
+                         properties: default_message_properties.merge(properties || {})
         end
       end
 
       def payload_decoding_handler
-        @payload_decoding_handler ||= lambda do |payload|
-          MultiJson.load payload, symbolize_keys: true
+        @payload_decoding_handler ||= lambda do |str|
+          hsh = MultiJson.load str, symbolize_keys: true
+          [hsh[:payload], hsh[:properties]]
         end
       end
 
-      def payload_content_type
-        @payload_content_type || 'application/json'
+      private
+
+      def topic_name(name)
+        name.to_s.gsub(/[^\.a-zA-Z0-9_-]/, '')[0, 32]
       end
 
-      attr_writer :event_broker_wait
-
-      def event_broker_wait
-        @event_broker_wait || 0.5
-      end
-
-      attr_writer :poll_for_events
-
-      def poll_for_events
-        @poll_for_events.nil? ? false : @poll_for_events
-      end
-
-      attr_writer :colorized
-
-      def colorized
-        @colorized.nil? ? false : @colorized
-      end
-
-      attr_writer :event_processor_pool_size
-
-      def event_processor_pool_size
-        @event_processor_pool_size || Celluloid.cores
-      end
     end
 
     def self.config
       @config ||= Config.new
     end
+
+    config
 
   end
 end
