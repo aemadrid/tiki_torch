@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors     = ['Adrian Madrid']
   spec.email       = ['aemadrid@gmail.com']
   spec.description = %q{Inter-service communication library for Ruby}
-  spec.summary     = %q{Tiki Torch is a Ruby asynchronous communication library using Celluloid and RabbitMQ, heavily influenced by Hutch and others.}
+  spec.summary     = %q{Tiki Torch is a Ruby asynchronous communication library using Celluloid and NSQ.}
   spec.homepage    = ''
   spec.license     = 'MIT'
 
@@ -18,12 +18,11 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
+  spec.add_runtime_dependency 'nsq-ruby'
   spec.add_runtime_dependency 'celluloid'
-  spec.add_runtime_dependency 'pry'
-  spec.add_runtime_dependency 'march_hare'
-  spec.add_runtime_dependency 'bunny'
-  spec.add_runtime_dependency 'multi_json'
   spec.add_runtime_dependency 'concurrent-ruby'
+  spec.add_runtime_dependency 'multi_json'
+  spec.add_runtime_dependency 'pry'
   spec.add_runtime_dependency 'colorize'
 
   spec.add_development_dependency 'rspec'

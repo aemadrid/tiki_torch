@@ -8,12 +8,11 @@ require 'bundler/setup'
 require 'tiki/torch'
 
 T  = Tiki::Torch
-CN = Tiki::Torch::Connection
 CS = Tiki::Torch::Consumer
 E  = Tiki::Torch::Event
 EB = Tiki::Torch::EventBroker
 EP = Tiki::Torch::EventProcessor
-QB = Tiki::Torch::QueueBroker
+P  = Tiki::Torch::Publisher
 SG = Tiki::Torch::SupervisionGroup
 
 require 'logger'

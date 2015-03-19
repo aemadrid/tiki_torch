@@ -13,10 +13,6 @@ module Tiki
 
       module ClassMethods
 
-        def colorized_logging?
-          Torch.config.colorized
-        end
-
         def logger
           Torch.logger
         end
@@ -30,7 +26,7 @@ module Tiki
 
         def log(string, type = :debug, color = :blue)
           msg = "#{log_prefix} #{string}"
-          logger.send type, colorized_logging? ? msg.send(color) : msg
+          logger.send type, Torch.config.colorized ? msg.send(color) : msg
         end
 
         def debug(string)
@@ -54,12 +50,14 @@ module Tiki
           prefix      = name
           _, _, label = log_prefix_labels
           prefix      += ".#{label}" if label
-          # prefix += ":#{lineno}" if lineno
           prefix.rjust(length, ' ')[-length, length] + ' | '
         end
 
         def log_prefix_labels
-          caller.lazy.reject { |x| x.index(__FILE__) }.map { |x| x =~ /(.*):(.*):in `(.*)'/ ? [$1, $2, $3] : nil }.first
+          caller.lazy.
+              reject { |x| x.index(__FILE__) }.
+              map { |x| x =~ /(.*):(.*):in `(.*)'/ ? [$1, $2, $3] : nil }.
+              first
         end
 
       end
@@ -83,7 +81,15 @@ module Tiki
       def error(string)
         self.class.error string
       end
-
     end
+
+    extend self
+
+    attr_writer :logger
+
+    def logger
+      @logger || Celluloid.logger
+    end
+
   end
 end
