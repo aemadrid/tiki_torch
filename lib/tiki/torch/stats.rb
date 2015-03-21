@@ -1,8 +1,6 @@
 # -*- encoding: utf-8 -*-
 
-require 'colorize'
-require 'yaml'
-require 'logger'
+require 'concurrent/atomic/atomic_fixnum'
 
 module Tiki
   module Torch

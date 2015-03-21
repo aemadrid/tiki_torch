@@ -33,8 +33,8 @@ module Tiki
   end
 end
 
-require 'tiki/torch/config'
 require 'tiki/torch/logging'
+require 'tiki/torch/config'
 
 require 'tiki/torch/transcoder'
 require 'tiki/torch/transcoders/json'
