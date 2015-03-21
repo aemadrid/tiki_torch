@@ -7,59 +7,75 @@ require 'rubygems'
 require 'bundler/setup'
 require 'tiki/torch'
 
-lgr = Logger.new(STDOUT).tap { |x| x.level = Logger::INFO }
-# Tiki::Torch.logger = lgr
+lgr       = Tiki::Torch.logger
+lgr.level = Logger::INFO
 
 lgr.info 'Starting ...'
 
-lgr.info 'Setting url ...'
-Tiki::Torch.config.nsqd = 'localhost:4150'
-lgr.info 'Will colorize logs ...'
-Tiki::Torch.config.colorized = true
+lkd = ENV['NSLOOKUPD_ADDRESS']
+nsd = ENV['NSQD_ADDRESS']
+
+Tiki::Torch.configure do |c|
+  if lkd
+    c.nsqlookupd = lkd
+  elsif nsd
+    c.nsqd = nsd
+  else
+    c.nsqd = 'localhost:4150'
+  end
+  c.colorized = true
+end
+# puts Tiki::Torch.config.to_yaml
 
 lgr.info 'Defining consumer ...'
-class MySingleConsumer
-
-  include Tiki::Torch::Consumer
+class MySingleConsumer < Tiki::Torch::Consumer
 
   topic 'single.events'
-  # channel 'my_single_consumer'
+  channel 'events'
+  max_in_flight 10
 
   def process
-    debug ">>> ##{object_id} : class      : #{event.class.name}"
-    info  ">>> ##{object_id} : payload    : (#{event.payload.class.name}) #{event.payload.to_yaml}"
-    debug ">>> ##{object_id} : properties : (#{event.properties.class.name}) #{event.properties.to_yaml}"
-    # debug ">>> ##{object_id} : message    : (#{event.message.class.name}) #{event.message.to_yaml}"
+    id_str = "##{object_id} : ##{Thread.current.object_id}"
+    debug " [ START : #{id_str} ] ".center(90, '=')
+
+    debug "#{id_str} : class      : #{event.class.name}"
+    info "#{id_str} : payload    : (#{event.payload.class.name}) #{event.payload.inspect}"
+    debug "#{id_str} : properties : (#{event.properties.class.name}) #{event.properties.inspect}"
+
+    sleep_secs = (ARGV[2] || 0).to_i
+    if sleep_secs > 0
+      max_time = Time.now + sleep_secs + rand(3)
+      while (now = Time.now) < max_time
+        debug "#{id_str} : waiting for #{'%.2f secs' % (max_time - now)} ..."
+        sleep 0.5
+      end
+      debug "#{id_str} : done waiting ..."
+    end
+
+    debug " [ END : #{id_str} ] ".center(90, '-')
   end
 
 end
 
-lgr.info 'Running ...'
-Tiki::Torch.run
 lgr.info 'Start polling for events ...'
 Tiki::Torch.start_polling
 
 key = MySingleConsumer.topic
-qty = (ARGV[0] || 1).to_i
+qty = (ARGV[0] || 10).to_i
 
 qty.times do |nr|
   lgr.info "[#{nr}] Publishing message #1 to [#{key}] ..."
   Tiki::Torch.publish key, a: 1, b: 2, nr: nr
-  lgr.info "[#{nr}] Publishing message #2 to [#{key}] ..."
-  Tiki::Torch.publish key, a: 3, b: 4, nr: nr
-  lgr.info "[#{nr}] Publishing message #3 to [#{key}] ..."
-  Tiki::Torch.publish key, a: 5, b: 6, nr: nr
 end
 
 lgr.info 'Waiting for a moment ...'
-sleep 2
-
-lgr.info 'Some stats ...'
-lgr.info "Tiki::Torch.event_broker : stats : #{Tiki::Torch.event_broker.stats_hash.to_yaml}"
-lgr.info "MySingleConsumer : stats : #{MySingleConsumer.stats_hash.to_yaml}"
+sleep (ARGV[1] || 2).to_i
 
 lgr.info 'Shutting down ...'
 Tiki::Torch.shutdown
+
+lgr.info 'Some stats ...'
+lgr.info "MySingleConsumer : stats : #{MySingleConsumer.stats.to_hash.to_yaml}"
 
 lgr.info 'Done!'
 exit

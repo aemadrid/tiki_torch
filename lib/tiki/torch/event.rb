@@ -13,28 +13,27 @@ module Tiki
       attr_reader :message, :payload, :properties
 
       def initialize(message)
-        debug_var :message, message
-
+        # debug_var :message, message
         @message              = message
-        @payload, @properties = Tiki::Torch.config.payload_decoding_handler.call message.body
+        @payload, @properties = Torch::Transcoder.decode message.body
       end
 
       delegate [:[]] => :payload
       delegate [:body, :attempts, :timestamp, :finish, :touch, :requeue] => :message
 
-      def id
+      def message_id
         properties[:message_id]
       end
 
       def finish
-        debug "Finishing ##{id} ..."
+        debug "Finishing ##{message_id} ..."
         res = message.finish
         debug_var :res, res
         res
       end
 
       def requeue(timeout = 0)
-        debug "Requeueing ##{id} ..."
+        debug "Requeueing ##{message_id} ..."
         res = message.requeue timeout
         debug_var :res, res
         res
@@ -42,11 +41,11 @@ module Tiki
 
       def to_s
         attrs = {
-            id:        id,
-            body:      body.size,
-            payload:   payload.class.name,
-            attempts:  attempts,
-            timestamp: timestamp,
+          message_id: message_id,
+          body:       body.size,
+          payload:    payload.class.name,
+          attempts:   attempts,
+          timestamp:  timestamp,
         }
         "#<Tiki::Torch::Event #{attrs.map { |k, v| "#{k}=#{v.inspect}" }.join(', ')}>"
       end

@@ -2,6 +2,7 @@
 
 require 'colorize'
 require 'yaml'
+require 'logger'
 
 module Tiki
   module Torch
@@ -55,9 +56,9 @@ module Tiki
 
         def log_prefix_labels
           caller.lazy.
-              reject { |x| x.index(__FILE__) }.
-              map { |x| x =~ /(.*):(.*):in `(.*)'/ ? [$1, $2, $3] : nil }.
-              first
+            reject { |x| x.index(__FILE__) }.
+            map { |x| x =~ /(.*):(.*):in `(.*)'/ ? [$1, $2, $3] : nil }.
+            first
         end
 
       end
@@ -88,7 +89,7 @@ module Tiki
     attr_writer :logger
 
     def logger
-      @logger || Celluloid.logger
+      @logger ||= Logger.new(STDOUT).tap { |x| x.level = Logger::INFO }
     end
 
   end

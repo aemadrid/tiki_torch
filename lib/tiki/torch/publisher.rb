@@ -7,15 +7,30 @@ module Tiki
   module Torch
     class Publisher
 
+      include Logging
+
       def initialize
         @producers = Hash.new
         @mutex     = ::Mutex.new
-        at_exit { terminate_producers }
       end
 
-      def publish(topic_name, payload = {}, properties = {})
-        encoded = Torch.config.payload_encoding_handler.call payload, properties
+      def publish(topic_name, payload = {}, properties = {}, code = Torch.config.transcoder_code)
+        properties = Torch.config.default_message_properties.merge properties.dup
+        encoded    = Torch::Transcoder.encode payload, properties, code
         get_or_set(topic_name).write encoded
+      end
+
+      def stop
+        debug 'Shutting down ...'
+        @producers.values.each { |p| p.terminate }
+        @producers.clear
+        debug 'Shut down ...'
+      end
+
+      alias :shutdown :stop
+
+      def stopped?
+        @producers.size == 0
       end
 
       private
@@ -35,10 +50,6 @@ module Tiki
         @producers[key] = ::Nsq::Producer.new Torch.config.producer_connection_options(key)
       end
 
-      def terminate_producers
-        @producers.values.each { |p| p.terminate }
-      end
-
     end
 
     extend self
@@ -47,11 +58,13 @@ module Tiki
       @publisher ||= Publisher.new
     end
 
-    publisher
-
     def publish(topic_name, payload = {}, properties = {})
       publisher.publish topic_name, payload, properties
     end
+
+    publisher
+
+    processes.add :publisher
 
   end
 end
