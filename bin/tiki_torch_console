@@ -10,10 +10,8 @@ require 'tiki/torch'
 T  = Tiki::Torch
 CS = Tiki::Torch::Consumer
 E  = Tiki::Torch::Event
-EB = Tiki::Torch::ConsumerBroker
-# EP = Tiki::Torch::EventProcessor
+CB = Tiki::Torch::ConsumerBroker
 P  = Tiki::Torch::Publisher
-# SG = Tiki::Torch::SupervisionGroup
 
 require 'logger'
 

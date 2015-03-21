@@ -44,8 +44,5 @@ require 'tiki/torch/consumer'
 require 'tiki/torch/event'
 require 'tiki/torch/thread_pool'
 require 'tiki/torch/consumer_broker'
-# require 'tiki/torch/event_processor'
 
 require 'tiki/torch/publisher'
-
-# require 'tiki/torch/supervision_group'

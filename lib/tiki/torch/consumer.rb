@@ -1,6 +1,5 @@
 # -*- encoding: utf-8 -*-
-require 'concurrent/atomic/atomic_fixnum'
-require 'nsq'
+require 'set'
 
 module Tiki
   module Torch

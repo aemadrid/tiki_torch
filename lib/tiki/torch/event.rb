@@ -47,7 +47,7 @@ module Tiki
           attempts:   attempts,
           timestamp:  timestamp,
         }
-        "#<Tiki::Torch::Event #{attrs.map { |k, v| "#{k}=#{v.inspect}" }.join(', ')}>"
+        "#<#{self.class.name} #{attrs.map { |k, v| "#{k}=#{v.inspect}" }.join(', ')}>"
       end
 
       alias :inspect :to_s
