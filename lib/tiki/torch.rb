@@ -1,5 +1,6 @@
 require 'pathname'
 require 'set'
+require 'thread_safe'
 require 'tiki/torch/version'
 require 'tiki/torch/core_ext'
 

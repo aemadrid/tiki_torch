@@ -17,7 +17,8 @@ module Tiki
       def publish(topic_name, payload = {}, properties = {}, code = Torch.config.transcoder_code)
         properties = Torch.config.default_message_properties.merge properties.dup
         encoded    = Torch::Transcoder.encode payload, properties, code
-        get_or_set(topic_name).write encoded
+        full_name  = full_topic_name topic_name
+        get_or_set(full_name).write encoded
       end
 
       def stop
@@ -35,11 +36,12 @@ module Tiki
 
       private
 
-      def get_or_set(name)
-        key = name.to_s.underscore
-        @mutex.synchronize do
+      def get_or_set(key)
+        res = @mutex.synchronize do
           get(key) || set(key)
         end
+        debug_var :res, res
+        res
       end
 
       def get(key)
@@ -48,6 +50,14 @@ module Tiki
 
       def set(key)
         @producers[key] = ::Nsq::Producer.new Torch.config.producer_connection_options(key)
+      end
+
+      def full_topic_name(name)
+        prefix   = Torch.config.topic_prefix
+        new_name = name.to_s
+        return new_name if new_name.to_s.start_with? prefix
+
+        "#{prefix}#{new_name}"
       end
 
     end

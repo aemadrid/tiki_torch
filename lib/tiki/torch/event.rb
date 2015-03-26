@@ -25,6 +25,8 @@ module Tiki
         properties[:message_id]
       end
 
+      alias :id :message_id
+
       def finish
         debug "Finishing ##{message_id} ..."
         res = message.finish

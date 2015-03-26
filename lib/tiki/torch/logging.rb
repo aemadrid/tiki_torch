@@ -92,5 +92,7 @@ module Tiki
       @logger ||= Logger.new(STDOUT).tap { |x| x.level = Logger::INFO }
     end
 
+    logger
+
   end
 end

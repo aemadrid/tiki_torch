@@ -48,8 +48,9 @@ module Tiki
           if name.nil?
             @topic || name.to_s.underscore
           else
-            raise "Invalid topic name [#{name}]" unless valid_topic_or_channel_name? name
-            @topic = name
+            new_name = "#{Torch.config.topic_prefix}#{name}"
+            raise "Invalid topic name [#{name}]" unless valid_topic_name? new_name
+            @topic = new_name
           end
         end
 
@@ -57,7 +58,7 @@ module Tiki
           if name.nil?
             @channel || 'events'
           else
-            raise "Invalid channel name [#{name}]" unless valid_topic_or_channel_name? name
+            raise "Invalid channel name [#{name}]" unless valid_topic_name? name
             @channel = name
           end
         end
@@ -223,11 +224,17 @@ module Tiki
 
         private
 
-        TOPIC_CHANNEL_NAME_RX = /^[\.a-zA-Z0-9_-]+(#ephemeral)?$/
+        TOPIC_NAME_RX   = /^[\.a-zA-Z0-9_-]+$/
+        CHANNEL_NAME_RX = /^[\.a-zA-Z0-9_-]+(#ephemeral)?$/
 
-        def valid_topic_or_channel_name?(name)
-          return false if name.size < 1 || name.size > 64
-          !!name.match(TOPIC_CHANNEL_NAME_RX)
+        def valid_topic_name?(name)
+          return false if name.size < 1 || name.size > 32
+          !!name.match(TOPIC_NAME_RX)
+        end
+
+        def valid_channel_name?(name)
+          return false if name.size < 1 || name.size > 32
+          !!name.match(CHANNEL_NAME_RX)
         end
 
       end
