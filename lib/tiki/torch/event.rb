@@ -27,6 +27,13 @@ module Tiki
 
       alias :id :message_id
 
+      def touch
+        debug "Touching ##{message_id} ..."
+        res = message.touch
+        debug_var :res, res
+        res
+      end
+
       def finish
         debug "Finishing ##{message_id} ..."
         res = message.finish
