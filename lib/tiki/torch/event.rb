@@ -16,6 +16,7 @@ module Tiki
         # debug_var :message, message
         @message              = message
         @payload, @properties = Torch::Transcoder.decode message.body
+        @finished             = false
       end
 
       delegate [:[]] => :payload
@@ -27,6 +28,10 @@ module Tiki
 
       alias :id :message_id
 
+      def finished?
+        @finished
+      end
+
       def touch
         debug "Touching ##{message_id} ..."
         res = message.touch
@@ -35,15 +40,21 @@ module Tiki
       end
 
       def finish
+        return false if finished?
+
         debug "Finishing ##{message_id} ..."
-        res = message.finish
+        res       = message.finish
+        @finished = true
         debug_var :res, res
         res
       end
 
       def requeue(timeout = 0)
+        return false if finished?
+
         debug "Requeueing ##{message_id} ..."
-        res = message.requeue timeout
+        res       = message.requeue timeout
+        @finished = true
         debug_var :res, res
         res
       end
