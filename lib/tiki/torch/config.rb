@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+require 'concurrent/utility/processor_count'
 
 module Tiki
   module Torch
@@ -11,6 +12,7 @@ module Tiki
       attr_accessor :transcoder_code
       attr_accessor :event_pool_size, :events_sleep_times
       attr_accessor :colorized
+      attr_accessor :processor_count, :physical_processor_count
 
       def initialize(options = {})
         self.topic_prefix       = 'tiki_torch-'
@@ -24,6 +26,10 @@ module Tiki
         self.events_sleep_times = { idle: 1, busy: 0.1, empty: 0.5, }
 
         self.colorized = false
+
+        processor_counter             = Concurrent::ProcessorCounter.new
+        self.processor_count          = processor_counter.processor_count
+        self.physical_processor_count = processor_counter.physical_processor_count
 
         options.each { |k, v| send "#{k}=", v }
       end

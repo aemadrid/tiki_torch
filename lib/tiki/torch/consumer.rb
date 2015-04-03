@@ -48,9 +48,9 @@ module Tiki
           if name.nil?
             @topic || name.to_s.underscore
           else
-            new_name = "#{Torch.config.topic_prefix}#{name}"
-            raise "Invalid topic name [#{name}]" unless valid_topic_name? new_name
-            @topic = new_name
+            prefix = Torch.config.topic_prefix
+            name = "#{prefix}#{name}" unless name.start_with? prefix
+            @topic = name
           end
         end
 
@@ -58,8 +58,7 @@ module Tiki
           if name.nil?
             @channel || 'events'
           else
-            raise "Invalid channel name [#{name}]" unless valid_topic_name? name
-            @channel = name
+            @channel = name.to_s
           end
         end
 
@@ -137,7 +136,7 @@ module Tiki
           @stats ||= Stats.new :started, :processed, :succeeded, :failed
 
           debug 'setting up process pool ...'
-          @process_pool ||= Torch::ThreadPool.new :process, 2
+          @process_pool ||= Tiki::Torch::ThreadPool.new :process, Torch.config.processor_count
           @stopped      = false
 
           debug 'starting process loop ...'
@@ -220,21 +219,6 @@ module Tiki
             debug_var :failure_result, failure_result
             stats.increment :failed
           end
-        end
-
-        private
-
-        TOPIC_NAME_RX   = /^[\.a-zA-Z0-9_-]+$/
-        CHANNEL_NAME_RX = /^[\.a-zA-Z0-9_-]+(#ephemeral)?$/
-
-        def valid_topic_name?(name)
-          return false if name.size < 1 || name.size > 32
-          !!name.match(TOPIC_NAME_RX)
-        end
-
-        def valid_channel_name?(name)
-          return false if name.size < 1 || name.size > 32
-          !!name.match(CHANNEL_NAME_RX)
         end
 
       end

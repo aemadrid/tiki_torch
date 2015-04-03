@@ -18,7 +18,9 @@ module Tiki
         properties = Torch.config.default_message_properties.merge properties.dup
         encoded    = Torch::Transcoder.encode payload, properties, code
         full_name  = full_topic_name topic_name
-        get_or_set(full_name).write encoded
+        res = get_or_set(full_name).write encoded
+        debug_var :res, res
+        res
       end
 
       def stop

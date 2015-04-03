@@ -11,15 +11,19 @@ require 'support/helpers'
 require 'support/consumers'
 
 RSpec.configure do |config|
+  config.include TestingHelpers
+
   config.mock_with :rspec do |mocks|
     mocks.verify_partial_doubles = true
   end
 
-  config.before(:each, :integration => true) do
+  config.before(:each, integration: true) do
     $messages = TestingHelpers::Messages.new
-    setup_torch
+    TestingHelpers.setup_torch
   end
-  config.after(:each, :integration => true) do
-    take_down_torch
+
+  config.after(:each, integration: true) do
+    TestingHelpers.take_down_torch
   end
+
 end
