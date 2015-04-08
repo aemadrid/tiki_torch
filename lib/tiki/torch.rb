@@ -41,6 +41,7 @@ require 'tiki/torch/transcoder'
 require 'tiki/torch/transcoders/json'
 
 require 'tiki/torch/stats'
+require 'tiki/torch/consumer_poller'
 require 'tiki/torch/consumer'
 require 'tiki/torch/event'
 require 'tiki/torch/thread_pool'

@@ -39,7 +39,7 @@ module Tiki
       end
 
       def publish(topic_name, payload = {}, properties = {})
-        Torch.publish topic_name, payload, properties
+        Tiki::Torch.publish topic_name, payload, properties
       end
 
       class << self
@@ -48,8 +48,8 @@ module Tiki
           if name.nil?
             @topic || name.to_s.underscore
           else
-            prefix = Torch.config.topic_prefix
-            name = "#{prefix}#{name}" unless name.start_with? prefix
+            prefix = config.topic_prefix
+            name   = "#{prefix}#{name}" unless name.start_with? prefix
             @topic = name
           end
         end
@@ -62,64 +62,6 @@ module Tiki
           end
         end
 
-        def nsqd(address = nil)
-          if address.nil?
-            @nsqd || Torch.config.nsqd
-          else
-            @nsqd = address
-          end
-        end
-
-        def nsqlookupd(address = nil)
-          if address.nil?
-            @nsqlookupd || Torch.config.nsqlookupd
-          else
-            @nsqlookupd = address
-          end
-        end
-
-        def max_in_flight(value = nil)
-          if value.nil?
-            @max_in_flight || Torch.config.max_in_flight
-          else
-            @max_in_flight = value
-          end
-        end
-
-        def discovery_interval(value = nil)
-          if value.nil?
-            @discovery_interval || Torch.config.discovery_interval
-          else
-            @discovery_interval = value
-          end
-        end
-
-        def msg_timeout(value = nil)
-          if value.nil?
-            @msg_timeout || Torch.config.msg_timeout
-          else
-            @msg_timeout = value
-          end
-        end
-
-        def connection_options
-          options = {
-            nsqd:               nsqd,
-            nsqlookupd:         nsqlookupd,
-            topic:              topic,
-            channel:            channel,
-            max_in_flight:      max_in_flight,
-            discovery_interval: discovery_interval,
-            msg_timeout:        msg_timeout,
-          }
-          debug_var :options, options
-          options
-        end
-
-        def connection
-          @connection ||= ::Nsq::Consumer.new connection_options
-        end
-
         attr_reader :event_pool, :stats
 
         def busy_size
@@ -129,14 +71,14 @@ module Tiki
         def start
           debug 'starting ...'
 
-          res = connection.connected?
+          res = poller.connected?
           debug "connected : #{res}"
 
           debug 'setting up stats'
           @stats ||= Stats.new :started, :processed, :succeeded, :failed
 
           debug 'setting up process pool ...'
-          @process_pool ||= Tiki::Torch::ThreadPool.new :process, Torch.config.processor_count
+          @process_pool ||= Tiki::Torch::ThreadPool.new :process, config.processor_count
           @stopped      = false
 
           debug 'starting process loop ...'
@@ -168,14 +110,26 @@ module Tiki
           debug 'done stopping events ...'
         end
 
+        attr_accessor :nsqd, :nsqlookupd, :max_in_flight, :discovery_interval, :msg_timeout
+
+        def poller
+          @poller ||= Tiki::Torch::ConsumerPoller.new topic:              topic,
+                                                      channel:            channel,
+                                                      nsqd:               @nsqd,
+                                                      nsqlookupd:         @nsqlookupd,
+                                                      max_in_flight:      @max_in_flight,
+                                                      discovery_interval: @discovery_interval,
+                                                      msg_timeout:        @msg_timeout
+        end
+
         def process_loop
           debug 'Started running process loop ...'
           until @stopped
-            @event_pool ||= Torch::ThreadPool.new :events, Torch.config.event_pool_size
+            @event_pool ||= Tiki::Torch::ThreadPool.new(:events, config.event_pool_size)
             # debug "got pool #{@event_pool} ..."
             if @event_pool.ready?
               debug "event pool is ready : #{@event_pool}"
-              msg = connection.pop
+              msg = poller.pop
               if msg
                 debug "got msg : #{msg}"
                 event = Event.new msg
@@ -196,7 +150,7 @@ module Tiki
         end
 
         def sleep_for(name)
-          sleep_time = Torch.config.events_sleep_times[name]
+          sleep_time = config.events_sleep_times[name]
           debug "going to sleep on #{name} for #{sleep_time} secs ..."
           sleep sleep_time
         end
@@ -219,6 +173,12 @@ module Tiki
             debug_var :failure_result, failure_result
             stats.increment :failed
           end
+        end
+
+        private
+
+        def config
+          Tiki::Torch.config
         end
 
       end

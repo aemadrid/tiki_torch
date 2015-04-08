@@ -2,7 +2,6 @@ class SimpleConsumer < Tiki::Torch::Consumer
 
   topic 'test.single.events'
   channel 'events'
-  max_in_flight 1
 
   def process
     $messages.add_event self.class.name, event
@@ -14,7 +13,6 @@ class SleepyConsumer < Tiki::Torch::Consumer
 
   topic 'test.sleepy.events'
   channel 'events'
-  max_in_flight 1
 
   def process
     sleep_if_necessary
@@ -36,7 +34,6 @@ class SlowConsumer < Tiki::Torch::Consumer
 
   topic 'test.slow.events'
   channel 'events'
-  max_in_flight 1
 
   def process
     payload.times do |nr|
@@ -62,7 +59,6 @@ class MultipleFirstConsumer < Tiki::Torch::Consumer
 
   topic 'test.multiple.events'
   channel 'first'
-  max_in_flight 1
 
   def process
     $messages.add_event self.class.name, event
@@ -75,7 +71,6 @@ class MultipleSecondConsumer < Tiki::Torch::Consumer
 
   topic 'test.multiple.events'
   channel 'second'
-  max_in_flight 1
 
   def process
     $messages.add_event self.class.name, event

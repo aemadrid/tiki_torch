@@ -101,7 +101,7 @@ module TestingHelpers
   end
 
   def clear_consumer(consumer)
-    uri = URI "http://#{host_for_consumer(consumer)}:4151/channel/empty?topic=#{consumer.topic}&channel=#{consumer.channel}"
+    uri = URI "http://#{known_nsq_host}:4151/channel/empty?topic=#{consumer.topic}&channel=#{consumer.channel}"
     # debug "clear_consumer | uri : #{uri}"
     res = Net::HTTP.post_form uri, {}
     # debug "clear_consumer | res : (#{res.class.name}) #{res.inspect}"
@@ -114,8 +114,8 @@ module TestingHelpers
     end
   end
 
-  def host_for_consumer(consumer)
-    Array(consumer.nsqd).first.split(':').first
+  def known_nsq_host
+    Array(Tiki::Torch.config.nsqd).first.split(':').first
   end
 
   def debug(msg)
