@@ -55,7 +55,7 @@ module Tiki
         end
 
         def log_prefix_labels
-          caller.lazy.
+          caller.
             reject { |x| x.index(__FILE__) }.
             map { |x| x =~ /(.*):(.*):in `(.*)'/ ? [$1, $2, $3] : nil }.
             first
