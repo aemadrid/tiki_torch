@@ -3,7 +3,7 @@ require 'rspec/expectations'
 module TestingHelpers
   class Messages
 
-    Message = Struct.new(:consumer, :id, :payload, :properties, :thread_id) do
+    Message = Struct.new(:consumer, :id, :payload, :properties, :attempts, :thread_id) do
 
       def to_s
         %{[M|#{consumer}#{id.to_s[0, 6]}|#{payload.inspect}|#{properties}|#{thread_id}]}
@@ -28,6 +28,7 @@ module TestingHelpers
                         options[:id],
                         options[:payload],
                         options[:properties],
+                        options[:attempts],
                         options[:thread_id]
       all << msg
     end
@@ -37,6 +38,7 @@ module TestingHelpers
           id:         event.message_id,
           payload:    event.payload,
           properties: event.properties,
+          attempts:   event.attempts,
           thread_id:  Thread.current.object_id
     end
 
@@ -45,7 +47,7 @@ module TestingHelpers
     end
 
     def message_ids
-      all.map { |x| x.message_id }
+      all.map { |x| x.id }
     end
 
     def payloads
@@ -54,6 +56,10 @@ module TestingHelpers
 
     def properties
       all.map { |x| x.properties }
+    end
+
+    def attempts
+      all.map { |x| x.attempts }
     end
 
     def thread_ids

@@ -78,3 +78,19 @@ class MultipleSecondConsumer < Tiki::Torch::Consumer
   end
 
 end
+
+class FailingConsumer < Tiki::Torch::Consumer
+
+  topic 'test.failing.events'
+  channel 'events'
+
+  self.max_attempts       = 3
+  self.back_off_time_unit = 100 # ms
+
+  def process
+    $messages.add_event self.class.name, event
+    raise 'I like to fail'
+  end
+
+end
+

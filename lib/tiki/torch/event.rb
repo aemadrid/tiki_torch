@@ -28,6 +28,10 @@ module Tiki
 
       alias :id :message_id
 
+      def short_id
+        message_id[0,6]
+      end
+
       def finished?
         @finished
       end

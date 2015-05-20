@@ -9,6 +9,7 @@ module Tiki
 
       attr_accessor :topic_prefix, :nsqd, :nsqlookupd
       attr_accessor :max_in_flight, :discovery_interval, :msg_timeout
+      attr_accessor :max_attempts, :back_off_time_unit
       attr_accessor :transcoder_code
       attr_accessor :event_pool_size, :events_sleep_times
       attr_accessor :colorized
@@ -19,6 +20,9 @@ module Tiki
         self.max_in_flight      = 1
         self.discovery_interval = 60
         self.msg_timeout        = 60_000
+
+        self.max_attempts       = 100
+        self.back_off_time_unit = 3_000 # In milliseconds
 
         self.transcoder_code = 'json'
 

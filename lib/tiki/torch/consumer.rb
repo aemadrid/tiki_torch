@@ -17,25 +17,40 @@ module Tiki
       end
 
       attr_reader :event
-      delegate [:message, :payload, :properties, :message_id] => :event
+      delegate [:message, :payload, :properties, :message_id, :short_id] => :event
       delegate [:body, :attempts, :timestamp] => :message
 
       def process
-        debug "Event ##{message_id} was processed"
+        debug "Event ##{short_id} was processed"
       end
 
       def on_start
-        debug "Event ##{message_id} started"
+        debug "Event ##{short_id} started"
       end
 
       def on_success(result)
+        info "Event ##{short_id} succeeded with #{result.inspect}"
         event.finish
-        info "Event ##{message_id} succeeded with #{result.inspect}"
       end
 
       def on_failure(exception)
-        event.requeue
-        error "Event ##{message_id} failed with #{exception.class.name} : #{exception.message}\n  #{exception.backtrace[0, 5].join("\n  ")}"
+        error "Event ##{short_id} failed with #{exception.class.name} : #{exception.message}\n  #{exception.backtrace[0, 5].join("\n  ")}"
+        do_requeue, time = back_off_decision
+        if do_requeue
+          info "Event ##{short_id} will be requeued in #{time} ms ..."
+          event.requeue time
+        else
+          error "Event ##{short_id} will NOT be requeued ..."
+          event.finish
+        end
+      end
+
+      def back_off_decision
+        if event.attempts >= self.class.max_attempts
+          [false, nil]
+        else
+          [true, self.class.back_off_time_unit * event.attempts]
+        end
       end
 
       def publish(topic_name, payload = {}, properties = {})
@@ -120,6 +135,16 @@ module Tiki
                                                       max_in_flight:      @max_in_flight,
                                                       discovery_interval: @discovery_interval,
                                                       msg_timeout:        @msg_timeout
+        end
+
+        attr_writer :max_attempts, :back_off_time_unit
+
+        def max_attempts
+          @max_attempts || config.max_attempts
+        end
+
+        def back_off_time_unit
+          @back_off_time_unit || config.back_off_time_unit
         end
 
         def process_loop
