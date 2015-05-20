@@ -86,13 +86,9 @@ module Tiki
 
     extend self
 
-    attr_writer :logger
+    attr_accessor :logger
 
-    def logger
-      @logger ||= Logger.new(STDOUT).tap { |x| x.level = Logger::INFO }
-    end
-
-    logger
+    self.logger = Logger.new(STDOUT).tap { |x| x.level = Logger::INFO } if logger.nil?
 
   end
 end
