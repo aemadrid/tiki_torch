@@ -1,4 +1,4 @@
-describe 'sleepy consumers', integration: true do
+describe 'slow consumers', integration: true do
   let(:consumer) { SlowConsumer }
 
   it 'receives one message' do

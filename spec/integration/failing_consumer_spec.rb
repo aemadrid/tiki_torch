@@ -1,4 +1,4 @@
-describe 'simple consumers', integration: true do
+describe 'failing consumers', integration: true do
   let(:consumer) { FailingConsumer }
   before(:each) { clear_consumer consumer }
 

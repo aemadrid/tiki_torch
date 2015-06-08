@@ -37,7 +37,7 @@ module Tiki
       end
 
       def touch
-        debug "Touching ##{message_id} ..."
+        debug "Touching ##{short_id} ..."
         res = message.touch
         debug_var :res, res
         res
@@ -46,7 +46,7 @@ module Tiki
       def finish
         return false if finished?
 
-        debug "Finishing ##{message_id} ..."
+        debug "Finishing ##{short_id} ..."
         res       = message.finish
         @finished = true
         debug_var :res, res
@@ -56,7 +56,7 @@ module Tiki
       def requeue(timeout = 0)
         return false if finished?
 
-        debug "Requeueing ##{message_id} ..."
+        debug "Requeueing ##{short_id} ..."
         res       = message.requeue timeout
         @finished = true
         debug_var :res, res

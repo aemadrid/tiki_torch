@@ -8,6 +8,11 @@ module Tiki
       include Logging
       extend Forwardable
 
+      if defined? ::ActiveRecord
+        include ActiveRecord::ConnectionManagement
+        include ActiveRecord::QueryCache
+      end
+
       def self.inherited(subclass)
         ConsumerBroker.register_consumer subclass
       end
@@ -43,6 +48,10 @@ module Tiki
           error "Event ##{short_id} will NOT be requeued ..."
           event.finish
         end
+      end
+
+      def on_end
+        debug "Event ##{short_id} ended"
       end
 
       def back_off_decision
@@ -197,6 +206,8 @@ module Tiki
             failure_result = instance.on_failure e
             debug_var :failure_result, failure_result
             stats.increment :failed
+          ensure
+            instance.on_end
           end
         end
 

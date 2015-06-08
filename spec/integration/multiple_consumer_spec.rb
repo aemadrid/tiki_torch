@@ -1,4 +1,4 @@
-describe 'simple consumers', integration: true do
+describe 'multiple consumers', integration: true do
   let(:consumers) { [MultipleFirstConsumer, MultipleSecondConsumer] }
   before(:each) { consumers.each { |k| clear_consumer k } }
 

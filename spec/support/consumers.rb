@@ -1,6 +1,6 @@
 class SimpleConsumer < Tiki::Torch::Consumer
 
-  topic 'test.single.events'
+  topic 'test.single'
   channel 'events'
 
   def process
@@ -11,7 +11,7 @@ end
 
 class SleepyConsumer < Tiki::Torch::Consumer
 
-  topic 'test.sleepy.events'
+  topic 'test.sleepy'
   channel 'events'
 
   def process
@@ -32,7 +32,7 @@ end
 
 class SlowConsumer < Tiki::Torch::Consumer
 
-  topic 'test.slow.events'
+  topic 'test.slow'
   channel 'events'
 
   def process
@@ -57,7 +57,7 @@ end
 
 class MultipleFirstConsumer < Tiki::Torch::Consumer
 
-  topic 'test.multiple.events'
+  topic 'test.multiple'
   channel 'first'
 
   def process
@@ -69,7 +69,7 @@ end
 
 class MultipleSecondConsumer < Tiki::Torch::Consumer
 
-  topic 'test.multiple.events'
+  topic 'test.multiple'
   channel 'second'
 
   def process
@@ -81,7 +81,7 @@ end
 
 class FailingConsumer < Tiki::Torch::Consumer
 
-  topic 'test.failing.events'
+  topic 'test.failing'
   channel 'events'
 
   self.max_attempts       = 3
@@ -94,3 +94,73 @@ class FailingConsumer < Tiki::Torch::Consumer
 
 end
 
+class LogMessages
+
+  class << self
+
+    def messages
+      @messages ||= []
+    end
+
+    def clear
+      messages.clear
+    end
+
+    def add(msg)
+      messages << msg
+    end
+
+    alias :<< :add
+
+  end
+
+end
+
+LogMessages.clear
+
+module CustomConsumer
+
+  def on_start
+    super
+    LogMessages << 'started'
+  end
+
+  def on_success(result)
+    super
+    LogMessages << "succeeded with #{result.inspect}"
+  end
+
+  def on_failure(exception)
+    puts "on_failure start ..."
+    LogMessages << "failed with #{exception.class} : #{exception.message}"
+    puts "on_failure end ..."
+    super
+  end
+
+  def on_end
+    super
+    LogMessages << 'end'
+  end
+
+end
+
+class CustomizedConsumer < Tiki::Torch::Consumer
+
+  include CustomConsumer
+
+  topic 'test.customized'
+  channel 'events'
+
+  def process
+    debug_var :payload, payload
+    case payload[:status]
+      when 'ok'
+        true
+      when 'meh'
+        false
+      else
+        raise "Unknown status [#{payload[:status]}]"
+    end
+  end
+
+end
