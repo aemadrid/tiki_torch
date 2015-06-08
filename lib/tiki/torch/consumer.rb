@@ -8,11 +8,6 @@ module Tiki
       include Logging
       extend Forwardable
 
-      if defined? ::ActiveRecord
-        include ActiveRecord::ConnectionManagement
-        include ActiveRecord::QueryCache
-      end
-
       def self.inherited(subclass)
         ConsumerBroker.register_consumer subclass
       end
@@ -21,7 +16,8 @@ module Tiki
         @event = event
       end
 
-      attr_reader :event
+      attr_reader :event, :back_off
+
       delegate [:message, :payload, :properties, :message_id, :short_id] => :event
       delegate [:body, :attempts, :timestamp] => :message
 
@@ -40,10 +36,11 @@ module Tiki
 
       def on_failure(exception)
         error "Event ##{short_id} failed with #{exception.class.name} : #{exception.message}\n  #{exception.backtrace[0, 5].join("\n  ")}"
-        do_requeue, time = back_off_decision
-        if do_requeue
-          info "Event ##{short_id} will be requeued in #{time} ms ..."
-          event.requeue time
+        @back_off = self.class.back_off_strategy.new event, exception, self
+
+        if @back_off.requeue?
+          info "Event ##{short_id} will be requeued in #{@back_off.time} ms ..."
+          event.requeue @back_off.time
         else
           error "Event ##{short_id} will NOT be requeued ..."
           event.finish
@@ -52,14 +49,6 @@ module Tiki
 
       def on_end
         debug "Event ##{short_id} ended"
-      end
-
-      def back_off_decision
-        if event.attempts >= self.class.max_attempts
-          [false, nil]
-        else
-          [true, self.class.back_off_time_unit * event.attempts]
-        end
       end
 
       def publish(topic_name, payload = {}, properties = {})
@@ -146,7 +135,11 @@ module Tiki
                                                       msg_timeout:        @msg_timeout
         end
 
-        attr_writer :max_attempts, :back_off_time_unit
+        attr_writer :back_off, :max_attempts, :back_off_time_unit
+
+        def back_off_strategy
+          @back_off || BackOffStrategies::Default
+        end
 
         def max_attempts
           @max_attempts || config.max_attempts

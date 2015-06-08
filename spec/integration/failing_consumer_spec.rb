@@ -9,7 +9,6 @@ describe 'failing consumers', integration: true do
     expect($messages.payloads).to eq %w{ failure failure failure }
     expect($messages.attempts).to eq [1, 2, 3]
     expect($messages.message_ids.uniq.size).to eq 1
-    expect($messages.consumer_count(consumer.name)).to eq 3
-    expect($messages.thread_ids.uniq.size).to eq $messages.size
+    expect($lines.all).to eq %w{ requeued requeued dead }
   end
 end

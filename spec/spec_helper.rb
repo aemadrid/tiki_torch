@@ -18,6 +18,7 @@ RSpec.configure do |config|
   end
 
   config.before(:each, integration: true) do
+    $lines    = TestingHelpers::LogLines.new
     $messages = TestingHelpers::Messages.new
     TestingHelpers.setup_torch
   end

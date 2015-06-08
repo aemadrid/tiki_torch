@@ -92,54 +92,40 @@ class FailingConsumer < Tiki::Torch::Consumer
     raise 'I like to fail'
   end
 
-end
+  def on_failure(exception)
+    super
 
-class LogMessages
-
-  class << self
-
-    def messages
-      @messages ||= []
-    end
-
-    def clear
-      messages.clear
-    end
-
-    def add(msg)
-      messages << msg
-    end
-
-    alias :<< :add
-
+    $lines << (back_off.requeue? ? 'requeued' : 'dead')
   end
 
 end
-
-LogMessages.clear
 
 module CustomConsumer
 
   def on_start
     super
-    LogMessages << 'started'
+
+    $lines << 'started'
   end
 
   def on_success(result)
     super
-    LogMessages << "succeeded with #{result.inspect}"
+
+    $lines << "succeeded with #{result.inspect}"
   end
 
   def on_failure(exception)
-    puts "on_failure start ..."
-    LogMessages << "failed with #{exception.class} : #{exception.message}"
-    puts "on_failure end ..."
     super
+
+    puts "on_failure start ..."
+    $lines << "failed with #{exception.class} : #{exception.message}"
+    puts "on_failure end ..."
   end
 
   def on_end
     super
-    LogMessages << 'end'
+
+    $lines << 'end'
   end
 
 end

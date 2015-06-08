@@ -1,6 +1,28 @@
 require 'rspec/expectations'
 
 module TestingHelpers
+
+  class LogLines
+
+    attr_reader :all
+
+    def initialize
+      @all = []
+    end
+
+    def clear
+      @all.clear
+    end
+
+    def add(msg)
+      @all << msg
+    end
+
+    alias :<< :add
+
+  end
+
+
   class Messages
 
     Message = Struct.new(:consumer, :id, :payload, :properties, :attempts, :thread_id) do
