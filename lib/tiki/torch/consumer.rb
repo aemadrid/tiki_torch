@@ -16,7 +16,7 @@ module Tiki
         @event = event
       end
 
-      attr_reader :event, :back_off
+      attr_reader :event, :success, :failure, :back_off
 
       delegate [:message, :payload, :properties, :message_id, :short_id] => :event
       delegate [:body, :attempts, :timestamp] => :message
@@ -31,12 +31,14 @@ module Tiki
 
       def on_success(result)
         info "Event ##{short_id} succeeded with #{result.inspect}"
+        @success = result
         event.finish
       end
 
       def on_failure(exception)
         error "Event ##{short_id} failed with #{exception.class.name} : #{exception.message}\n  #{exception.backtrace[0, 5].join("\n  ")}"
-        @back_off = self.class.back_off_strategy.new event, exception, self
+        @failure = exception
+        @back_off  = self.class.back_off_strategy.new event, exception, self
 
         if @back_off.requeue?
           info "Event ##{short_id} will be requeued in #{@back_off.time} ms ..."
