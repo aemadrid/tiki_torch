@@ -1,10 +1,10 @@
 module Tiki
   module Torch
-    module ActiveRecord
+    class Consumer
 
       # Stolen from https://github.com/moneydesktop/action_subscriber/blob/master/lib/action_subscriber/middleware/active_record/connection_management.rb
 
-      module ConnectionManagement
+      module ArConnectionManagement
         def on_end
           super
 
@@ -14,7 +14,7 @@ module Tiki
 
       # Stolen from https://github.com/moneydesktop/action_subscriber/blob/master/lib/action_subscriber/middleware/active_record/query_cache.rb
 
-      module QueryCache
+      module ArQueryCache
         def on_start
           super
 

@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 require 'concurrent/utility/processor_count'
 
 module Tiki

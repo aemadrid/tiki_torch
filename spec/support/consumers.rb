@@ -138,7 +138,6 @@ class CustomizedConsumer < Tiki::Torch::Consumer
   channel 'events'
 
   def process
-    debug_var :payload, payload
     case payload[:status]
       when 'ok'
         true
@@ -147,6 +146,29 @@ class CustomizedConsumer < Tiki::Torch::Consumer
       else
         raise "Unknown status [#{payload[:status]}]"
     end
+  end
+
+end
+
+class TextProcessorConsumer < Tiki::Torch::Consumer
+
+  topic 'test.reentrant'
+  channel 'events'
+
+  def process
+    text = payload.to_s
+    return [:error, 'missing text'] if text.empty?
+
+    head, tail = text[0,1], text[1..-1]
+
+    publish self.class.topic, tail unless tail.empty?
+    [:ok, head]
+  end
+
+  def on_success(result)
+    super
+
+    $messages.add_event self.class.name, event, result
   end
 
 end

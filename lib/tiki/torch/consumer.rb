@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 require 'set'
 
 module Tiki
@@ -6,6 +5,7 @@ module Tiki
     class Consumer
 
       include Logging
+      include PublisherHelper
       extend Forwardable
 
       def self.inherited(subclass)
@@ -49,10 +49,6 @@ module Tiki
 
       def on_end
         debug "Event ##{short_id} ended"
-      end
-
-      def publish(topic_name, payload = {}, properties = {})
-        Tiki::Torch.publish topic_name, payload, properties
       end
 
       class << self

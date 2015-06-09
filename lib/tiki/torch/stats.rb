@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-
 require 'concurrent/atomic/atomic_fixnum'
 
 module Tiki

@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-
 require 'colorize'
 require 'yaml'
 require 'logger'
