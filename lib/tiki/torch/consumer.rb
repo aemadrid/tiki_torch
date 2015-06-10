@@ -147,10 +147,16 @@ module Tiki
           @back_off_time_unit || config.back_off_time_unit
         end
 
+        attr_writer :event_pool_size
+
+        def event_pool_size
+          @event_pool_size || config.event_pool_size
+        end
+
         def process_loop
           debug 'Started running process loop ...'
           until @stopped
-            @event_pool ||= Tiki::Torch::ThreadPool.new(:events, config.event_pool_size)
+            @event_pool ||= Tiki::Torch::ThreadPool.new(:events, event_pool_size)
             # debug "got pool #{@event_pool} ..."
             if @event_pool.ready?
               debug "event pool is ready : #{@event_pool}"

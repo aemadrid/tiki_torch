@@ -25,14 +25,14 @@ module Tiki
 
         self.transcoder_code = 'json'
 
-        self.event_pool_size    = 4
-        self.events_sleep_times = { idle: 1, busy: 0.1, empty: 0.5, }
-
-        self.colorized = false
-
         processor_counter             = Concurrent::ProcessorCounter.new
         self.processor_count          = processor_counter.processor_count
         self.physical_processor_count = processor_counter.physical_processor_count
+
+        self.event_pool_size    = processor_counter.processor_count
+        self.events_sleep_times = { idle: 1, busy: 0.1, empty: 0.5, }
+
+        self.colorized = false
 
         options.each { |k, v| send "#{k}=", v }
       end
