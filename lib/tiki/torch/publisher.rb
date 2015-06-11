@@ -13,10 +13,12 @@ module Tiki
       end
 
       def publish(topic_name, payload = {}, properties = {}, code = Torch.config.transcoder_code)
-        properties = Torch.config.default_message_properties.merge properties.dup
+        properties = Torch.config.default_message_properties.
+          merge(message_id: SecureRandom.hex).
+          merge(properties.dup)
         encoded    = Torch::Transcoder.encode payload, properties, code
         full_name  = full_topic_name topic_name
-        res = get_or_set(full_name).write encoded
+        res        = get_or_set(full_name).write encoded
         debug_var :res, res
         res
       end

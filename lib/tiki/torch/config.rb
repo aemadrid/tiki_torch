@@ -47,9 +47,7 @@ module Tiki
       end
 
       def default_message_properties
-        @default_message_properties ||= {
-          message_id: SecureRandom.hex,
-        }
+        @default_message_properties ||= {}
       end
 
     end
