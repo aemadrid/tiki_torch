@@ -17,17 +17,18 @@ module Tiki
         end
 
         def on_success(result)
-          @success_time = Time.now
-          @success      = result
-          info "Event ##{short_id} succeeded with #{result.inspect} in #{success_time_str}"
+          @end_time = Time.now
+          @success  = result
+          info "Event ##{short_id} succeeded with #{result.inspect} in #{time_taken_str}"
 
           event.finish
         end
 
         def on_failure(exception)
-          @failure_time = Time.now
-          @failure      = exception
-          error "Event ##{short_id} failed with #{exception.class.name} : #{exception.message}\n  #{exception.backtrace[0, 5].join("\n  ")}\n in #{failure_time_str}"
+          @end_time = Time.now
+          @failure  = exception
+          error "Event ##{short_id} failed with #{exception.class.name} : #{exception.message}\n  " +
+                  "#{exception.backtrace[0, 5].join("\n  ")}\n in #{time_taken_str}"
 
           back_off_event || dlq_event || finish_event
         end
@@ -48,12 +49,14 @@ module Tiki
           event.finish
         end
 
-        def success_time_str
-          Tiki::Torch::Utils.time_taken @start_time, @success_time
+        def time_taken
+          return nil unless @end_time
+
+          @end_time - @start_time
         end
 
-        def failure_time_str
-          Tiki::Torch::Utils.time_taken @start_time, @failure_time
+        def time_taken_str
+          Tiki::Torch::Utils.time_taken @start_time, @end_time
         end
 
       end
