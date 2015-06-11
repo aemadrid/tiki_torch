@@ -27,7 +27,7 @@ module Tiki
       alias :id :message_id
 
       def short_id
-        message_id[0,6]
+        message_id[0,3] + message_id[-3,3]
       end
 
       def finished?
