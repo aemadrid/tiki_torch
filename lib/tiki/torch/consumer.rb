@@ -4,9 +4,13 @@ module Tiki
   module Torch
     class Consumer
 
-      include Logging
-      include PublisherHelper
       extend Forwardable
+
+      include Logging
+
+      include PublisherHelper
+      include Hooks
+      include BackOff
 
       def self.inherited(subclass)
         ConsumerBroker.register_consumer subclass
@@ -16,42 +20,10 @@ module Tiki
         @event = event
       end
 
-      attr_reader :event, :success, :failure, :back_off
+      attr_reader :event
 
       delegate [:message, :payload, :properties, :message_id, :short_id] => :event
       delegate [:body, :attempts, :timestamp] => :message
-
-      def process
-        debug "Event ##{short_id} was processed"
-      end
-
-      def on_start
-        debug "Event ##{short_id} started"
-      end
-
-      def on_success(result)
-        info "Event ##{short_id} succeeded with #{result.inspect}"
-        @success = result
-        event.finish
-      end
-
-      def on_failure(exception)
-        error "Event ##{short_id} failed with #{exception.class.name} : #{exception.message}\n  #{exception.backtrace[0, 5].join("\n  ")}"
-        @failure = exception
-        @back_off  = self.class.back_off_strategy.new event, exception, self
-
-        if @back_off.requeue?
-          info "Event ##{short_id} will be requeued in #{@back_off.time} ms ..."
-          event.requeue @back_off.time
-        else
-          error "Event ##{short_id} will NOT be requeued ..."
-          event.finish
-        end
-      end
-
-      def on_end
-        debug "Event ##{short_id} ended"
-      end
 
       class << self
 
