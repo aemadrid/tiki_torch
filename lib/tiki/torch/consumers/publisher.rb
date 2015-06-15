@@ -1,7 +1,7 @@
 module Tiki
   module Torch
     class Consumer
-      module PublisherHelper
+      module Publishing
 
         def publish(topic, payload, properties = {})
           Torch.publish topic, payload, default_message_properties.merge(properties.dup)

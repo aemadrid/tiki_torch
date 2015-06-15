@@ -18,6 +18,28 @@ module Tiki
 
       module BackOff
 
+        def self.included(base)
+          base.extend ClassMethods
+        end
+
+        module ClassMethods
+
+          attr_writer :back_off, :max_attempts, :back_off_time_unit
+
+          def back_off_strategy
+            @back_off || BackOffStrategies::Default
+          end
+
+          def max_attempts
+            @max_attempts || config.max_attempts
+          end
+
+          def back_off_time_unit
+            @back_off_time_unit || config.back_off_time_unit
+          end
+
+        end
+
         private
 
         def back_off_event
