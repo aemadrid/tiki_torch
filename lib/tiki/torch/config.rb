@@ -38,9 +38,7 @@ module Tiki
       end
 
       def producer_connection_options(topic_name)
-        options              = {
-          topic: topic_name,
-        }
+        options              = { topic: topic_name }
         options[:nsqlookupd] = nsqlookupd unless nsqlookupd.nil?
         options[:nsqd]       = nsqd unless nsqd.nil?
         options
