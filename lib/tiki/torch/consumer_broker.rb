@@ -12,6 +12,8 @@ module Tiki
           @consumer_registry ||= Set.new
         end
 
+        alias :consumers :consumer_registry
+
         def register_consumer(consumer_class)
           # debug_var :consumer_registry, consumer_registry
           # debug_var :consumer_class, consumer_class
