@@ -13,13 +13,14 @@ module Tiki
         raise 'Missing topic name' unless options[:topic]
         raise 'Missing channel name' unless options[:channel]
 
-        setup_connection setup_options(options)
+        setup_options options
+        setup_connection
       end
 
       private
 
       def setup_options(options)
-        {
+        @options = {
           nsqd:               options[:nsqd] || Torch.config.nsqd,
           nsqlookupd:         options[:nsqlookupd] || Torch.config.nsqlookupd,
           topic:              options[:topic],
@@ -30,8 +31,8 @@ module Tiki
         }
       end
 
-      def setup_connection(options)
-        @connection = ::Nsq::Consumer.new options
+      def setup_connection
+        @connection = ::Nsq::Consumer.new @options
       end
 
     end
