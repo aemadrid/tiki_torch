@@ -1,6 +1,5 @@
 describe 'simple consumers', integration: true do
   let(:consumer) { SimpleConsumer }
-  before(:each) { clear_consumer consumer }
 
   it 'receives multiple messages' do
     max = 4

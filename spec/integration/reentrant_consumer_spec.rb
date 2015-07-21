@@ -1,6 +1,5 @@
 describe 'reentrant consumers', integration: true do
   let(:consumer) { TextProcessorConsumer }
-  before(:each) { clear_consumer consumer }
 
   it 'receives one message that produces several children messages' do
     Tiki::Torch.publish consumer.topic, 'abc'

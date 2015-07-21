@@ -121,6 +121,7 @@ module TestingHelpers
     end
     Tiki::Torch.logger.level = Logger::DEBUG if ENV['DEBUG'] == 'true'
     Tiki::Torch.start_polling
+    Tiki::Torch.consumer_broker.consumers.each { |x| clear_consumer x }
   end
 
   def take_down_torch
@@ -135,21 +136,31 @@ module TestingHelpers
   end
 
   def clear_consumer(consumer)
-    uri = URI "http://#{known_nsq_host}:4151/channel/empty?topic=#{consumer.topic}&channel=#{consumer.channel}"
+    uri = URI "http://#{known_nsq_host}:#{known_nsq_port}/channel/empty?topic=#{consumer.topic}&channel=#{consumer.channel}"
     # debug "clear_consumer | uri : #{uri}"
     res = Net::HTTP.post_form uri, {}
     # debug "clear_consumer | res : (#{res.class.name}) #{res.inspect}"
     if res.code == '200'
-      debug "clear_consumer | cleared : #{consumer.name} : #{consumer.topic} : #{consumer.channel} ..."
+      # debug "clear_consumer | cleared : #{consumer.name} : #{consumer.topic} : #{consumer.channel} ..."
       true
     else
-      debug "clear_consumer | could NOT clear #{consumer.name} : #{consumer.topic} : #{consumer.channel} ..."
+      # debug "clear_consumer | could NOT clear #{consumer.name} : #{consumer.topic} : #{consumer.channel} ..."
       false
     end
+  rescue Exception => e
+    debug "clear_consumer | could NOT clear #{consumer.name} : #{consumer.topic} : #{consumer.channel} | Exception: #{e.class.name} : #{e.message} ..."
+  end
+
+  def known_nsq
+    @known_nsq ||= Array(Tiki::Torch.config.nsqd).first
   end
 
   def known_nsq_host
-    Array(Tiki::Torch.config.nsqd).first.split(':').first
+    known_nsq.split(':').first
+  end
+
+  def known_nsq_port
+    known_nsq.split(':').last.to_i + 1
   end
 
   def debug(msg)

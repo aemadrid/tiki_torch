@@ -14,4 +14,3 @@ module Tiki
     end
   end
 end
-

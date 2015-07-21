@@ -1,6 +1,5 @@
 describe 'failing consumers', integration: true do
   let(:consumer) { FailingConsumer }
-  before(:each) { clear_consumer consumer }
 
   it 'receives multiple messages' do
     Tiki::Torch.publish consumer.topic, 'failure'

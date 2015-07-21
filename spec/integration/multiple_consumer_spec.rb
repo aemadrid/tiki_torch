@@ -1,6 +1,5 @@
 describe 'multiple consumers', integration: true do
   let(:consumers) { [MultipleFirstConsumer, MultipleSecondConsumer] }
-  before(:each) { consumers.each { |k| clear_consumer k } }
 
   it 'receives multiple messages' do
     max = 4
