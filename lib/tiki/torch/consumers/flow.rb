@@ -25,7 +25,7 @@ module Tiki
             @stats ||= Stats.new :started, :processed, :succeeded, :failed
 
             debug 'setting up process pool ...'
-            @process_pool ||= Tiki::Torch::ThreadPool.new :process, config.processor_count
+            @process_pool ||= Tiki::Torch::ThreadPool.new :process, 2
             @stopped      = false
 
             debug 'starting process loop ...'
@@ -57,14 +57,20 @@ module Tiki
             debug 'done stopping events ...'
           end
 
+          def poller_options
+            {
+              topic:              topic,
+              channel:            channel,
+              nsqd:               nsqd,
+              nsqlookupd:         nsqlookupd,
+              max_in_flight:      max_in_flight,
+              discovery_interval: discovery_interval,
+              msg_timeout:        msg_timeout
+            }
+          end
+
           def poller
-            @poller ||= Tiki::Torch::ConsumerPoller.new topic:              topic,
-                                                        channel:            channel,
-                                                        nsqd:               nsqd,
-                                                        nsqlookupd:         nsqlookupd,
-                                                        max_in_flight:      max_in_flight,
-                                                        discovery_interval: discovery_interval,
-                                                        msg_timeout:        msg_timeout
+            @poller ||= Tiki::Torch::ConsumerPoller.new poller_options
           end
 
           attr_writer :event_pool_size
