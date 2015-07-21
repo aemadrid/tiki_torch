@@ -1,4 +1,5 @@
-require 'concurrent/utility/processor_count'
+require 'concurrent'
+require 'concurrent/utility/processor_counter'
 
 module Tiki
   module Torch
@@ -25,11 +26,11 @@ module Tiki
 
         self.transcoder_code = 'json'
 
-        processor_counter             = Concurrent::ProcessorCounter.new
+        processor_counter             = ::Concurrent::Utility::ProcessorCounter.new
         self.processor_count          = processor_counter.processor_count
         self.physical_processor_count = processor_counter.physical_processor_count
+        self.event_pool_size          = processor_counter.processor_count
 
-        self.event_pool_size    = processor_counter.processor_count
         self.events_sleep_times = { idle: 1, busy: 0.1, empty: 0.5, }
 
         self.colorized = false
