@@ -24,12 +24,10 @@ module Tiki
             debug 'setting up stats'
             @stats ||= Stats.new :started, :processed, :succeeded, :failed
 
-            debug 'setting up process pool ...'
-            @process_pool ||= Tiki::Torch::ThreadPool.new :process, 2
-            @stopped      = false
+            @stopped = false
 
             debug 'starting process loop ...'
-            @process_pool.async { process_loop }
+            Thread.new { process_loop }
 
             debug 'started ...'
           end
@@ -37,7 +35,7 @@ module Tiki
           def stop
             debug 'stopping ...'
             @stopped = true
-            @process_pool.async { stop_events } if @process_pool
+            Thread.new { stop_events }
             debug 'sent stop message ...'
           end
 
@@ -82,7 +80,7 @@ module Tiki
           def process_loop
             debug 'Started running process loop ...'
             until @stopped
-              @event_pool ||= Tiki::Torch::ThreadPool.new(:events, event_pool_size)
+              @event_pool = Tiki::Torch::ThreadPool.new(:events, event_pool_size)
               # debug "got pool #{@event_pool} ..."
               if @event_pool.ready?
                 debug "event pool is ready : #{@event_pool}"
@@ -103,6 +101,7 @@ module Tiki
                 sleep_for :busy unless @stopped
               end
             end
+            @event_pool = nil
             debug 'Finished running process loop ...'
           end
 

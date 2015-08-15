@@ -8,9 +8,8 @@ describe 'reentrant consumers', integration: true do
     expect($messages.payloads).to eq %w{ abc bc c }
     expect($messages.results).to eq [[:ok, 'a'], [:ok, 'b'], [:ok, 'c']]
 
-    # Keeps track of parent ids
-    pmids  = $messages.all.map { |x| x.properties[:parent_message_id] }
-    epimds = [nil] + $messages.message_ids[0..-2]
-    expect(pmids).to eq epimds
+    exp_parent_message_ids = $messages.all.map { |x| x.properties[:parent_message_id] }
+    act_parent_message_ids = [nil] + $messages.message_ids[0..-2]
+    expect(exp_parent_message_ids).to eq act_parent_message_ids
   end
 end
