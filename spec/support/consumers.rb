@@ -95,7 +95,8 @@ class FailingConsumer < Tiki::Torch::Consumer
   def on_failure(exception)
     super
 
-    $lines << (back_off.requeue? ? 'requeued' : 'dead')
+    msg = ['failed', attempts.to_s, (back_off.requeue? ? 'requeued' : 'dead')]
+    $lines << msg.join(':')
   end
 
 end
@@ -159,7 +160,7 @@ class TextProcessorConsumer < Tiki::Torch::Consumer
     text = payload.to_s
     return [:error, 'missing text'] if text.empty?
 
-    head, tail = text[0,1], text[1..-1]
+    head, tail = text[0, 1], text[1..-1]
 
     publish self.class.topic, tail unless tail.empty?
     [:ok, head]
@@ -169,6 +170,22 @@ class TextProcessorConsumer < Tiki::Torch::Consumer
     super
 
     $messages.add_event self.class.name, event, result
+  end
+
+end
+
+class ConcurrentConsumer < Tiki::Torch::Consumer
+
+  topic 'test.concurrent'
+  channel 'events'
+
+  self.max_in_flight = 10
+
+  def process
+    $lines << 'started'
+    puts "waiting for #{payload} ..."
+    sleep payload
+    $lines << 'ended'
   end
 
 end

@@ -3,11 +3,10 @@ require 'rspec/expectations'
 module TestingHelpers
 
   class LogLines
-
     attr_reader :all
 
     def initialize
-      @all = []
+      @all = ThreadSafe::Array.new
     end
 
     def clear
@@ -18,21 +17,24 @@ module TestingHelpers
       @all << msg
     end
 
-    alias :<< :add
+    def wait_for_size(nr, timeout = 15)
+      last_time = Time.now + timeout
+      while @all.size < nr && Time.now < last_time
+        sleep 0.05
+      end
+      @all.size
+    end
 
+    alias :<< :add
   end
 
-
   class Messages
-
     Message = Struct.new(:consumer, :id, :payload, :properties, :attempts, :thread_id, :result) do
-
       def to_s
         %{[M|#{consumer}#{id.to_s[0, 6]}|#{payload.inspect}|#{properties}|#{thread_id}]}
       end
 
       alias :inspect :to_s
-
     end
 
     attr_reader :all
@@ -103,7 +105,6 @@ module TestingHelpers
     end
 
     alias :inspect :to_s
-
   end
 
   extend self
@@ -137,18 +138,11 @@ module TestingHelpers
 
   def clear_consumer(consumer)
     uri = URI "http://#{known_nsq_host}:#{known_nsq_port}/channel/empty?topic=#{consumer.topic}&channel=#{consumer.channel}"
-    # debug "clear_consumer | uri : #{uri}"
     res = Net::HTTP.post_form uri, {}
-    # debug "clear_consumer | res : (#{res.class.name}) #{res.inspect}"
-    if res.code == '200'
-      # debug "clear_consumer | cleared : #{consumer.name} : #{consumer.topic} : #{consumer.channel} ..."
-      true
-    else
-      # debug "clear_consumer | could NOT clear #{consumer.name} : #{consumer.topic} : #{consumer.channel} ..."
-      false
-    end
+    res.code == '200'
   rescue Exception => e
     debug "clear_consumer | could NOT clear #{consumer.name} : #{consumer.topic} : #{consumer.channel} | Exception: #{e.class.name} : #{e.message} ..."
+    false
   end
 
   def known_nsq

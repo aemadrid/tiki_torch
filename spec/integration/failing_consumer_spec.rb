@@ -3,11 +3,8 @@ describe 'failing consumers', integration: true do
 
   it 'receives multiple messages' do
     Tiki::Torch.publish consumer.topic, 'failure'
-    wait_for 1
+    $lines.wait_for_size 3
 
-    expect($messages.payloads).to eq %w{ failure failure failure }
-    expect($messages.attempts).to eq [1, 2, 3]
-    expect($messages.message_ids.uniq.size).to eq 1
-    expect($lines.all).to eq %w{ requeued requeued dead }
+    expect($lines.all).to eq %w{ failed:1:requeued failed:2:requeued failed:3:dead }
   end
 end
