@@ -5,7 +5,7 @@ cache: bundler
 rvm:
   - ruby-2.0.0-p598
   - ruby-2.2.0
-  - jruby-1.7.20
+  - jruby-19mode
   - jruby-9.0.0.0
 
 env:
