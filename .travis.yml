@@ -14,7 +14,7 @@ env:
     - JRUBY_OPTS="--server -J-Dfile.encoding=utf8 --2.0"
 
 install:
-  - wget https://s3.amazonaws.com/bitly-downloads/nsq/$NSQ_DOWNLOAD.tar.gz
+  - wget https://s3.amazonaws.com/bitly-downloads/nsq/$NSQ_DOWNLOAD
   - tar zxvf $NSQ_DOWNLOAD.tar.gz
   - export PATH=$NSQ_DOWNLOAD/bin:$PATH
   - $NSQ_DOWNLOAD/bin/nsqd --data-path=/tmp &
