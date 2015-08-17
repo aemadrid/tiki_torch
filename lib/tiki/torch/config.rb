@@ -17,7 +17,7 @@ module Tiki
 
       def initialize(options = {})
         self.topic_prefix       = 'tiki_torch-'
-        self.max_in_flight      = 1
+        self.max_in_flight      = 10
         self.discovery_interval = 60
         self.msg_timeout        = 60_000
 

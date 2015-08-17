@@ -1,13 +1,10 @@
 describe 'simple consumers', integration: true do
   let(:consumer) { SimpleConsumer }
 
-  it 'receives multiple messages' do
-    max = 4
-    max.times { |nr| Tiki::Torch.publish consumer.topic, "s#{nr + 1}" }
-    wait_for 2
+  it 'receive multiple messages' do
+    4.times { |nr| Tiki::Torch.publish consumer.topic, "s#{nr + 1}" }
+    $lines.wait_for_size 4
 
-    expect($messages.payloads).to eq %w{ s1 s2 s3 s4 }
-    expect($messages.consumer_count(consumer.name)).to eq max
-    expect($messages.thread_ids.uniq.size).to eq $messages.size
+    expect($lines.all.sort).to eq %w{ s1 s2 s3 s4 }
   end
 end

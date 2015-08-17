@@ -1,31 +1,42 @@
+module TestConsumerHelper
+
+  private
+
+  def sleep_if_necessary(period_time = 0.1, touch_event = false)
+    secs = payload.is_a?(Hash) ? payload[:sleep_time].to_f : nil
+    if secs
+      wake_up = Time.now + secs
+      debug "> Sleeping for until #{wake_up} ..."
+      while Time.now < wake_up
+        sleep period_time
+        event.touch if touch_event
+      end
+    end
+  end
+
+end
+
 class SimpleConsumer < Tiki::Torch::Consumer
 
   topic 'test.single'
   channel 'events'
 
   def process
-    $messages.add_event self.class.name, event
+    $lines << payload
   end
 
 end
 
 class SleepyConsumer < Tiki::Torch::Consumer
 
+  include TestConsumerHelper
+
   topic 'test.sleepy'
   channel 'events'
 
   def process
     sleep_if_necessary
-    $messages.add_event self.class.name, event
-  end
-
-  private
-
-  def sleep_if_necessary
-    if (secs = payload[:sleep_time].to_f) > 0
-      debug "> Sleeping for #{secs} ..."
-      sleep secs
-    end
+    $lines << payload[:message]
   end
 
 end
@@ -35,46 +46,45 @@ class SlowConsumer < Tiki::Torch::Consumer
   topic 'test.slow'
   channel 'events'
 
+  self.msg_timeout = 1_000
+
   def process
-    payload.times do |nr|
-      info "#{nr + 1}/#{payload} | waiting ..."
-      sleep 0.25
+    $lines << 'started'
+    done_time = Time.now + payload[:sleep_time]
+    while Time.now < done_time
+      $lines << 'waiting'
       event.touch
+      sleep payload[:period_time]
     end
-    $messages.add_event self.class.name, event
-  end
-
-  private
-
-  def sleep_if_necessary
-    if (secs = payload[:sleep_time].to_f) > 0
-      debug "> Sleeping for #{secs} ..."
-      sleep secs
-    end
+    $lines << 'ended'
   end
 
 end
 
 class MultipleFirstConsumer < Tiki::Torch::Consumer
 
+  include TestConsumerHelper
+
   topic 'test.multiple'
   channel 'first'
 
   def process
-    $messages.add_event self.class.name, event
-    sleep payload[:sleep_time] if payload.is_a?(Hash) && payload[:sleep_time]
+    $lines << "c1:#{payload}"
+    sleep_if_necessary
   end
 
 end
 
 class MultipleSecondConsumer < Tiki::Torch::Consumer
 
+  include TestConsumerHelper
+
   topic 'test.multiple'
   channel 'second'
 
   def process
-    $messages.add_event self.class.name, event
-    sleep payload[:sleep_time] if payload.is_a?(Hash) && payload[:sleep_time]
+    $lines << "c2:#{payload}"
+    sleep_if_necessary
   end
 
 end
@@ -88,15 +98,13 @@ class FailingConsumer < Tiki::Torch::Consumer
   self.back_off_time_unit = 100 # ms
 
   def process
-    $messages.add_event self.class.name, event
     raise 'I like to fail'
   end
 
   def on_failure(exception)
     super
 
-    msg = ['failed', attempts.to_s, (back_off.requeue? ? 'requeued' : 'dead')]
-    $lines << msg.join(':')
+    $lines << ['failed', attempts.to_s, (back_off.requeue? ? 'requeued' : 'dead')].join(':')
   end
 
 end
@@ -163,28 +171,22 @@ class TextProcessorConsumer < Tiki::Torch::Consumer
     head, tail = text[0, 1], text[1..-1]
 
     publish self.class.topic, tail unless tail.empty?
-    [:ok, head]
-  end
-
-  def on_success(result)
-    super
-
-    $messages.add_event self.class.name, event, result
+    $lines << "#{head}:#{tail}"
   end
 
 end
 
 class ConcurrentConsumer < Tiki::Torch::Consumer
 
+  include TestConsumerHelper
+
   topic 'test.concurrent'
   channel 'events'
-
-  self.max_in_flight = 10
 
   def process
     $lines << 'started'
     puts "waiting for #{payload} ..."
-    sleep payload
+    sleep_if_necessary
     $lines << 'ended'
   end
 

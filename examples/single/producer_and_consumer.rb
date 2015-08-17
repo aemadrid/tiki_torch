@@ -30,7 +30,6 @@ class MySingleConsumer < Tiki::Torch::Consumer
 
   topic 'single.events'
   channel 'events'
-  max_in_flight 10
 
   def process
     id_str = "##{object_id} : ##{Thread.current.object_id}"

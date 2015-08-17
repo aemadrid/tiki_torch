@@ -1,15 +1,10 @@
 describe 'reentrant consumers', integration: true do
   let(:consumer) { TextProcessorConsumer }
 
-  it 'receives one message that produces several children messages' do
+  it 'receive one message that produce another message until no longer necessary' do
     Tiki::Torch.publish consumer.topic, 'abc'
-    wait_for 1
+    $lines.wait_for_size 3
 
-    expect($messages.payloads).to eq %w{ abc bc c }
-    expect($messages.results).to eq [[:ok, 'a'], [:ok, 'b'], [:ok, 'c']]
-
-    exp_parent_message_ids = $messages.all.map { |x| x.properties[:parent_message_id] }
-    act_parent_message_ids = [nil] + $messages.message_ids[0..-2]
-    expect(exp_parent_message_ids).to eq act_parent_message_ids
+    expect($lines.all).to eq %w{ a:bc b:c c: }
   end
 end

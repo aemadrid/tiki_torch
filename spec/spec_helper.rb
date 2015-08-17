@@ -18,8 +18,7 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
     end
 
     config.before(:each, integration: true) do
-      $lines    = TestingHelpers::LogLines.new
-      $messages = TestingHelpers::Messages.new
+      $lines = TestingHelpers::LogLines.new
       TestingHelpers.setup_torch
     end
 

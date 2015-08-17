@@ -1,13 +1,10 @@
 describe 'slow consumers', integration: true do
   let(:consumer) { SlowConsumer }
 
-  it 'receives one message' do
-    Tiki::Torch.publish consumer.topic, 4
+  it 'stay alive after message timeout with touch' do
+    Tiki::Torch.publish consumer.topic, sleep_time: 1.25, period_time: 0.5
+    $lines.wait_for_size 5
 
-    wait_for(0.25) { expect($messages.size).to eq 0 }
-    wait_for(0.25) { expect($messages.size).to eq 0 }
-    wait_for(0.25) { expect($messages.size).to eq 0 }
-    wait_for(0.25) { expect($messages.size).to eq 0 }
-    wait_for(0.25) { expect($messages.size).to eq 1 }
+    expect($lines.all).to eq %w{ started waiting waiting waiting ended }
   end
 end
