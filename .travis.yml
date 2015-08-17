@@ -10,13 +10,15 @@ rvm:
 
 env:
   global:
-    - NSQ_DOWNLOAD=nsq-0.3.5.linux-amd64.go1.4.1
+    - NSQ_DOWNLOAD=nsq-0.3.5.linux-amd64.go1.4.2.tar.gz
     - JRUBY_OPTS="--server -J-Dfile.encoding=utf8 --2.0"
 
 install:
-  - wget http://bitly-downloads.s3.amazonaws.com/nsq/$NSQ_DOWNLOAD.tar.gz
+  - sudo apt-get install libsnappy-dev libevent-dev
+  - wget https://s3.amazonaws.com/bitly-downloads/nsq/$NSQ_DOWNLOAD.tar.gz
   - tar zxvf $NSQ_DOWNLOAD.tar.gz
   - export PATH=$NSQ_DOWNLOAD/bin:$PATH
+  - $NSQ_DOWNLOAD/bin/nsqd --data-path=/tmp &
   - bundle install --jobs=3 --retry=3
 
 script:
