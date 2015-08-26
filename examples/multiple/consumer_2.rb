@@ -10,38 +10,28 @@ Tiki::Torch.logger = lgr
 
 lgr.info 'Starting ...'
 
-lgr.info 'Setting url ...'
-Tiki::Torch.config.connection_url = 'amqp://localhost:5672'
-lgr.info 'Will colorize logs ...'
-Tiki::Torch.config.colorized = true
-
 lgr.info 'Defining consumer ...'
-class MySecondConsumer
+class MySecondConsumer < Tiki::Torch::Consumer
 
-  include Tiki::Torch::Consumer
+  consumes 'multiple.events', channel: 'my_second_consumer'
 
-  consume 'tiki.consumer.multiple.events'
-  #queue_name 'my_second_consumer'
-
-  def process(event)
+  def process
     debug ">>> ##{object_id} : class    : #{event.class.name}"
-    info  ">>> ##{object_id} : payload  : (#{event.payload.class.name}) #{event.payload.to_yaml}"
+    info ">>> ##{object_id} : payload  : (#{event.payload.class.name}) #{event.payload.to_yaml}"
     debug ">>> ##{object_id} : metadata : (#{event.metadata.class.name}) #{event.metadata.to_yaml}"
     debug ">>> ##{object_id} : delivery : (#{event.delivery.class.name}) #{event.delivery.to_yaml}"
   end
 
 end
 
-lgr.info 'Running ...'
-Tiki::Torch.run
 lgr.info 'Start polling for events ...'
-Tiki::Torch.event_broker.start_polling
+Tiki::Torch.start_polling
 
 lgr.info 'Waiting for a moment ...'
 sleep 30
 
 lgr.info 'Some stats ...'
-lgr.info "MySecondConsumer : #{MySecondConsumer.stats_hash.to_yaml}"
+lgr.info "MyFirstConsumer : #{MySecondConsumer.stats.to_hash.to_yaml}"
 
 lgr.info 'Shutting down ...'
 Tiki::Torch.shutdown

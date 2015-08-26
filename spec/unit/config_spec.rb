@@ -11,9 +11,8 @@ module Tiki
           it('max_attempts            ') { expect(subject.max_attempts).to eq 100 }
           it('back_off_time_unit      ') { expect(subject.back_off_time_unit).to eq 3000 }
           it('transcoder_code         ') { expect(subject.transcoder_code).to eq 'json' }
-          it('processor_count         ') { expect(subject.processor_count).to eq 8 }
-          it('physical_processor_count') { expect(subject.physical_processor_count).to eq 8 }
-          it('event_pool_size         ') { expect(subject.event_pool_size).to eq 8 }
+          it('processor_count         ') { expect(subject.processor_count).to eq Concurrent.processor_count }
+          it('event_pool_size         ') { expect(subject.event_pool_size).to eq Concurrent.processor_count }
           it('events_sleep_times      ') { expect(subject.events_sleep_times).to eq({ idle: 1, busy: 0.1, empty: 0.5 }) }
           it('colorized               ') { expect(subject.colorized).to eq false }
         end

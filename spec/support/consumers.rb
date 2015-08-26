@@ -18,8 +18,7 @@ end
 
 class SimpleConsumer < Tiki::Torch::Consumer
 
-  topic 'test.single'
-  channel 'events'
+  consumes 'test.single'
 
   def process
     $lines << payload
@@ -31,8 +30,7 @@ class SleepyConsumer < Tiki::Torch::Consumer
 
   include TestConsumerHelper
 
-  topic 'test.sleepy'
-  channel 'events'
+  consumes 'test.sleepy'
 
   def process
     sleep_if_necessary
@@ -43,10 +41,7 @@ end
 
 class SlowConsumer < Tiki::Torch::Consumer
 
-  topic 'test.slow'
-  channel 'events'
-
-  self.msg_timeout = 1_000
+  consumes 'test.slow', msg_timeout: 1_000
 
   def process
     $lines << 'started'
@@ -65,8 +60,7 @@ class MultipleFirstConsumer < Tiki::Torch::Consumer
 
   include TestConsumerHelper
 
-  topic 'test.multiple'
-  channel 'first'
+  consumes 'test.multiple', channel: 'first'
 
   def process
     $lines << "c1:#{payload}"
@@ -79,8 +73,7 @@ class MultipleSecondConsumer < Tiki::Torch::Consumer
 
   include TestConsumerHelper
 
-  topic 'test.multiple'
-  channel 'second'
+  consumes 'test.multiple', channel: 'second'
 
   def process
     $lines << "c2:#{payload}"
@@ -91,11 +84,9 @@ end
 
 class FailingConsumer < Tiki::Torch::Consumer
 
-  topic 'test.failing'
-  channel 'events'
-
-  self.max_attempts       = 3
-  self.back_off_time_unit = 100 # ms
+  consumes 'test.failing',
+           max_attempts: 3,
+           back_off_time_unit: 100 # ms
 
   def process
     raise 'I like to fail'
@@ -126,9 +117,7 @@ module CustomConsumer
   def on_failure(exception)
     super
 
-    puts "on_failure start ..."
     $lines << "failed with #{exception.class} : #{exception.message}"
-    puts "on_failure end ..."
   end
 
   def on_end
@@ -143,8 +132,7 @@ class CustomizedConsumer < Tiki::Torch::Consumer
 
   include CustomConsumer
 
-  topic 'test.customized'
-  channel 'events'
+  consumes 'test.customized'
 
   def process
     case payload[:status]
@@ -161,8 +149,7 @@ end
 
 class TextProcessorConsumer < Tiki::Torch::Consumer
 
-  topic 'test.reentrant'
-  channel 'events'
+  consumes 'test.reentrant'
 
   def process
     text = payload.to_s
@@ -180,12 +167,10 @@ class ConcurrentConsumer < Tiki::Torch::Consumer
 
   include TestConsumerHelper
 
-  topic 'test.concurrent'
-  channel 'events'
+  consumes 'test.concurrent'
 
   def process
     $lines << 'started'
-    puts "waiting for #{payload} ..."
     sleep_if_necessary
     $lines << 'ended'
   end

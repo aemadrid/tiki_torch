@@ -19,7 +19,7 @@ module TestingHelpers
 
     def wait_for_size(nr, timeout = 15)
       start_time = Time.now
-      last_time = start_time + timeout
+      last_time  = start_time + timeout
       while @all.size < nr && Time.now < last_time
         sleep 0.05
       end
@@ -27,6 +27,12 @@ module TestingHelpers
     end
 
     alias :<< :add
+  end
+
+  class FakeProcessorCounter
+    def processor_count
+      4
+    end
   end
 
   extend self

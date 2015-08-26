@@ -16,11 +16,11 @@ module Tiki
           Torch.logger
         end
 
-        def debug_var(var_name, var, meth = :inspect)
+        def debug_var(var_name, var, meth = :inspect, level = :debug)
           msg   = var.nil? ? 'NIL' : var.send(meth)
           msg   = msg[0..-2] if msg[-1, 1] == "\n"
           klass = var.is_a?(Class) ? var.name : var.class.name
-          debug "#{var_name} : (#{klass}:#{var.object_id}) #{msg}"
+          logger.send level, "#{var_name} : (#{klass}:#{var.object_id}) #{msg}"
         end
 
         def log(string, type = :debug, color = :blue)
@@ -65,8 +65,8 @@ module Tiki
         self.class.debug string
       end
 
-      def debug_var(name, var, meth = :inspect)
-        self.class.debug_var name, var, meth
+      def debug_var(name, var, meth = :inspect, level = :debug)
+        self.class.debug_var name, var, meth, level
       end
 
       def info(string)

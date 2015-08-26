@@ -16,15 +16,16 @@ module Tiki
         code = properties.delete(:transcoder_code) || Torch.config.transcoder_code
 
         full_name  = full_topic_name topic_name
-        nsqlookupd = properties.delete(:nsqlookupd) || Torch.config.nsqlookupd
-        nsqd       = properties.delete(:nsqd) || Torch.config.nsqd
+        nsqlookupd = Array(properties.delete(:nsqlookupd) || Torch.config.nsqlookupd).flatten
+        nsqd       = Array(properties.delete(:nsqd) || Torch.config.nsqd).flatten
 
         properties = Torch.config.default_message_properties.dup.
           merge(message_id: SecureRandom.hex).
           merge(properties)
         encoded    = Torch::Transcoder.encode payload, properties, code
 
-        res = get_or_set(full_name, nsqlookupd, nsqd).write encoded
+        topic = get_or_set(full_name, nsqlookupd, nsqd)
+        res   = topic.write encoded
         debug_var :res, res
         res
       end
@@ -47,8 +48,8 @@ module Tiki
       def key_for_options(name, nsqlookupd, nsqd)
         parts = []
         parts << "t:#{name}"
-        parts << "l:#{[nsqlookupd].flatten.map { |x| x.to_s }.join(':')}" unless nsqlookupd.nil?
-        parts << "n:#{[nsqd].flatten.map { |x| x.to_s }.join(':')}" unless nsqd.nil?
+        parts << "l:#{nsqlookupd.map { |x| x.to_s }.join(':')}" unless nsqlookupd.empty?
+        parts << "n:#{nsqd.map { |x| x.to_s }.join(':')}" unless nsqd.empty?
         parts.join('|')
       end
 
@@ -67,8 +68,8 @@ module Tiki
 
       def set(key, full_name, nsqlookupd, nsqd)
         options              = Torch.config.producer_connection_options full_name
-        options[:nsqlookupd] = nsqlookupd unless nsqlookupd.nil?
-        options[:nsqd]       = nsqd unless nsqd.nil?
+        options[:nsqlookupd] = nsqlookupd unless nsqlookupd.empty?
+        options[:nsqd]       = nsqd unless nsqd.empty?
 
         @producers[key] = ::Nsq::Producer.new options
       end

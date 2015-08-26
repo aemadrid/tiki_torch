@@ -63,18 +63,12 @@ module Tiki
               nsqlookupd:         nsqlookupd,
               max_in_flight:      max_in_flight,
               discovery_interval: discovery_interval,
-              msg_timeout:        msg_timeout
+              msg_timeout:        msg_timeout,
             }
           end
 
           def poller
             @poller ||= Tiki::Torch::ConsumerPoller.new poller_options
-          end
-
-          attr_writer :event_pool_size
-
-          def event_pool_size
-            @event_pool_size || config.event_pool_size
           end
 
           def process_loop
@@ -106,12 +100,12 @@ module Tiki
           end
 
           def sleep_for(name)
-            sleep_time = config.events_sleep_times[name]
+            sleep_time = events_sleep_times[name]
             debug "going to sleep on #{name} for #{sleep_time} secs ..."
             sleep sleep_time
           end
 
-          def process(event)
+          def process
             instance = new event
             debug_var :instance, instance
             begin

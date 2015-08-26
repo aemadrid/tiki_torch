@@ -9,47 +9,30 @@ module Tiki
       include Virtus.model
       include Logging
 
-      attr_accessor :topic_prefix
-      attr_accessor :nsqd
-      attr_accessor :nsqlookupd
-      attr_accessor :max_in_flight
-      attr_accessor :discovery_interval
-      attr_accessor :msg_timeout
-      attr_accessor :max_attempts
-      attr_accessor :back_off_time_unit
-      attr_accessor :transcoder_code
-      attr_accessor :event_pool_size
-      attr_accessor :events_sleep_times
-      attr_accessor :colorized
-      attr_accessor :processor_count
-      attr_accessor :physical_processor_count
+      attribute :nsqlookupd, Array[String], default: lambda { |_, _| [ENV['NSLOOKUPD_ADDRESS']].compact }
+      attribute :nsqd, Array[String], default: lambda { |config, _| config.safe_default_nsqd_address }
 
-      def initialize(options = {})
-        self.topic_prefix       = 'tiki_torch-'
-        self.max_in_flight      = 10
-        self.discovery_interval = 60
-        self.msg_timeout        = 60_000
+      attribute :topic_prefix, String, default: 'tiki_torch-'
+      attribute :max_in_flight, Integer, default: 10
+      attribute :discovery_interval, Integer, default: 60
+      attribute :msg_timeout, Integer, default: 60_000
 
-        self.max_attempts       = 100
-        self.back_off_time_unit = 3_000 # In milliseconds
+      attribute :back_off_strategy, Class
+      attribute :max_attempts, Integer, default: 100
+      attribute :back_off_time_unit, Integer, default: 3_000
 
-        self.transcoder_code = 'json'
+      attribute :transcoder_code, String, default: 'json'
 
-        self.processor_count          = self.class.processor_counter.processor_count
-        self.physical_processor_count = self.class.processor_counter.physical_processor_count
-        self.event_pool_size          = self.class.processor_counter.processor_count
+      attribute :event_pool_size, Integer, default: lambda { |_, _| Concurrent.processor_count }
+      attribute :events_sleep_times, Integer, default: { idle: 1, busy: 0.1, empty: 0.5, }
+      attribute :processor_count, Integer, default: lambda { |_, _| Concurrent.processor_count }
 
-        self.events_sleep_times = { idle: 1, busy: 0.1, empty: 0.5, }
-
-        self.colorized = false
-
-        options.each { |k, v| send "#{k}=", v }
-      end
+      attribute :colorized, Boolean, default: false
 
       def producer_connection_options(topic_name)
         options              = { topic: topic_name }
-        options[:nsqlookupd] = nsqlookupd unless nsqlookupd.nil?
-        options[:nsqd]       = nsqd unless nsqd.nil?
+        options[:nsqlookupd] = nsqlookupd unless nsqlookupd.empty?
+        options[:nsqd]       = nsqd unless nsqd.empty?
         options
       end
 
@@ -57,8 +40,10 @@ module Tiki
         @default_message_properties ||= {}
       end
 
-      def self.processor_counter
-        @processor_counter ||= ::Concurrent::Utility::ProcessorCounter.new
+      def safe_default_nsqd_address
+        return nil unless nsqlookupd.empty?
+        [ENV['NSQD_ADDRESS']] unless ENV['NSQD_ADDRESS'].nil?
+        ['localhost:4150']
       end
 
     end

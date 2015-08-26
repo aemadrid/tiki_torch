@@ -23,13 +23,11 @@ Tiki::Torch.configure do |c|
   end
   c.colorized = true
 end
-# puts Tiki::Torch.config.to_yaml
 
 lgr.info 'Defining consumer ...'
 class MySingleConsumer < Tiki::Torch::Consumer
 
-  topic 'single.events'
-  channel 'events'
+  consumes 'single.events'
 
   def process
     id_str = "##{object_id} : ##{Thread.current.object_id}"

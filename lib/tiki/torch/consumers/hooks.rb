@@ -40,6 +40,7 @@ module Tiki
         private
 
         def dlq_event
+          # @todo Add DLQ (Dead Letter Queue) processing ...
           debug "Event ##{short_id} will NOT be sent to a dead letter queue ..."
           false
         end

@@ -32,6 +32,8 @@ module Tiki
 
       end
 
+      attr_reader :counters
+
       def initialize(*names)
         @counters = ThreadSafe::Cache.new
         names.map { |x| get_or_set_counter x }
@@ -53,7 +55,7 @@ module Tiki
       end
 
       def to_hash
-        @counters.inject({}) { |h, (k, v)| h[k] = v.value; h }
+        @counters.keys.each_with_object({}) { |k, h| h[k] = @counters[k].value }
       end
 
       def to_s
