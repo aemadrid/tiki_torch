@@ -25,7 +25,7 @@ module Tiki
 
         def log(string, type = :debug, color = :blue)
           msg = "#{log_prefix} #{string}"
-          logger.send type, Torch.config.colorized ? msg.send(color) : msg
+          logger.send type, msg
         end
 
         def debug(string)

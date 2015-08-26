@@ -29,12 +29,6 @@ module TestingHelpers
     alias :<< :add
   end
 
-  class FakeProcessorCounter
-    def processor_count
-      4
-    end
-  end
-
   extend self
 
   def setup_torch
@@ -46,7 +40,6 @@ module TestingHelpers
       else
         c.nsqd = 'localhost:4150'
       end
-      c.colorized = false
     end
     Tiki::Torch.logger.level = Logger::DEBUG if ENV['DEBUG'] == 'true'
     Tiki::Torch.start_polling

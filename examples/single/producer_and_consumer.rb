@@ -21,7 +21,6 @@ Tiki::Torch.configure do |c|
   else
     c.nsqd = 'localhost:4150'
   end
-  c.colorized = true
 end
 
 lgr.info 'Defining consumer ...'

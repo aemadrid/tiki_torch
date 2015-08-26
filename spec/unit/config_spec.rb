@@ -14,7 +14,6 @@ module Tiki
           it('processor_count         ') { expect(subject.processor_count).to eq Concurrent.processor_count }
           it('event_pool_size         ') { expect(subject.event_pool_size).to eq Concurrent.processor_count }
           it('events_sleep_times      ') { expect(subject.events_sleep_times).to eq({ idle: 1, busy: 0.1, empty: 0.5 }) }
-          it('colorized               ') { expect(subject.colorized).to eq false }
         end
         context 'configure block' do
           it 'changes values' do

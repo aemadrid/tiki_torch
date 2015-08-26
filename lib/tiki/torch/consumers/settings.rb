@@ -27,8 +27,6 @@ module Tiki
           attribute :event_pool_size, Integer, default: lambda { |_, _| ::Tiki::Torch.config.event_pool_size }
           attribute :events_sleep_times, Integer, default: lambda { |_, _| ::Tiki::Torch.config.events_sleep_times }
 
-          attribute :colorized, Boolean, default: lambda { |_, _| ::Tiki::Torch.config.colorized }
-
           attr_reader :consumer
 
           def initialize(consumer, options = {})
@@ -60,8 +58,7 @@ module Tiki
                          :nsqlookupd, :nsqd,
                          :topic_prefix, :max_in_flight, :discovery_interval, :msg_timeout,
                          :back_off_strategy, :max_attempts, :back_off_time_unit,
-                         :event_pool_size, :events_sleep_times,
-                         :colorized
+                         :event_pool_size, :events_sleep_times
 
           def configure
             yield config
