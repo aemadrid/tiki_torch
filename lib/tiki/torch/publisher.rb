@@ -67,9 +67,11 @@ module Tiki
       end
 
       def set(key, full_name, nsqlookupd, nsqd)
-        options              = Torch.config.producer_connection_options full_name
-        options[:nsqlookupd] = nsqlookupd unless nsqlookupd.empty?
-        options[:nsqd]       = nsqd unless nsqd.empty?
+        options         = Torch.config.producer_connection_options(full_name).tap do |hsh|
+          hsh.delete_if { |_, v| v.is_a?(Array) && v.empty? }
+          hsh[:nsqlookupd] = nsqlookupd unless nsqlookupd.empty?
+          hsh[:nsqd]       = nsqd unless nsqd.empty?
+        end
 
         @producers[key] = ::Nsq::Producer.new options
       end

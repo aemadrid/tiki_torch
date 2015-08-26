@@ -64,10 +64,13 @@ module Tiki
               max_in_flight:      max_in_flight,
               discovery_interval: discovery_interval,
               msg_timeout:        msg_timeout,
-            }
+            }.tap do |options|
+              options.delete_if{|_,v| v.is_a?(Array) && v.empty? }
+            end
           end
 
           def poller
+            options = poller_options
             @poller ||= Tiki::Torch::ConsumerPoller.new poller_options
           end
 
@@ -105,7 +108,7 @@ module Tiki
             sleep sleep_time
           end
 
-          def process
+          def process(event)
             instance = new event
             debug_var :instance, instance
             begin

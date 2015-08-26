@@ -1,3 +1,13 @@
+class SimpleConsumer < Tiki::Torch::Consumer
+
+  consumes 'test.single'
+
+  def process
+    $lines << payload
+  end
+
+end
+
 module TestConsumerHelper
 
   private
@@ -12,16 +22,6 @@ module TestConsumerHelper
         event.touch if touch_event
       end
     end
-  end
-
-end
-
-class SimpleConsumer < Tiki::Torch::Consumer
-
-  consumes 'test.single'
-
-  def process
-    $lines << payload
   end
 
 end
