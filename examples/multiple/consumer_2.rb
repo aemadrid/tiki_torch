@@ -31,7 +31,7 @@ lgr.info 'Waiting for a moment ...'
 sleep 30
 
 lgr.info 'Some stats ...'
-lgr.info "MyFirstConsumer : #{MySecondConsumer.stats.to_hash.to_yaml}"
+lgr.info "MySecondConsumer : #{MySecondConsumer.stats.to_hash.to_yaml}"
 
 lgr.info 'Shutting down ...'
 Tiki::Torch.shutdown
