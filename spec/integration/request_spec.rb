@@ -6,7 +6,7 @@ describe 'request and response', integration: true do
     future = Tiki::Torch.request consumer.topic, hsh, timeout: 15
 
     expect(future).to be_a Concurrent::Future
-    expect(future.state).to eq :processing
+    expect([:pending, :processing]).to include(future.state)
     expect(future.value(0)).to be_nil
 
     $lines.wait_for_size 1
@@ -35,6 +35,19 @@ describe 'request and response', integration: true do
     expect(reason.topic_name).to eq consumer.topic
     expect(reason.payload).to eq hsh
     expect(reason.properties).to be_a Hash
+  end
+
+  it 'multiple requests concurrently' do
+    futures = 3.times.map do |nr|
+      hsh = { numbers: [1, nr], sleep_time: 1 }
+      Tiki::Torch.request consumer.topic, hsh, timeout: 15
+    end
+    start_time = Time.now
+    values = futures.map { |future| future.value }
+    secs = Time.now - start_time
+
+    expect(values).to eq [1,2,3]
+    expect(secs).to be < 2.0
   end
 
 end
