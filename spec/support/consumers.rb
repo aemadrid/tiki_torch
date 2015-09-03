@@ -85,7 +85,7 @@ end
 class FailingConsumer < Tiki::Torch::Consumer
 
   consumes 'test.failing',
-           max_attempts: 3,
+           max_attempts:       3,
            back_off_time_unit: 100 # ms
 
   def process
@@ -173,6 +173,22 @@ class ConcurrentConsumer < Tiki::Torch::Consumer
     $lines << 'started'
     sleep_if_necessary
     $lines << 'ended'
+  end
+
+end
+
+class AdderConsumer < Tiki::Torch::Consumer
+
+  include TestConsumerHelper
+
+  consumes 'test.adder'
+
+  def process
+    numbers = payload[:numbers]
+    res     = numbers.map { |x| x.to_i }.inject(0) { |t, x| t + x }
+    $lines << "#{numbers.inspect}|#{res}"
+    sleep_if_necessary
+    res
   end
 
 end

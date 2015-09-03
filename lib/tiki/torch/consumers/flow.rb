@@ -121,6 +121,8 @@ module Tiki
               success_result = instance.on_success result
               debug_var :success_result, success_result
               stats.increment :succeeded
+              rpc_result = instance.on_rpc_response result
+              debug_var :success_result, rpc_result
             rescue => e
               failure_result = instance.on_failure e
               debug_var :failure_result, failure_result

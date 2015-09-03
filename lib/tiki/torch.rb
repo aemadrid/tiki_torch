@@ -53,5 +53,6 @@ require 'tiki/torch/consumer'
 require 'tiki/torch/event'
 require 'tiki/torch/thread_pool'
 require 'tiki/torch/consumer_broker'
+require 'tiki/torch/node'
 
 require 'tiki/torch/publisher'

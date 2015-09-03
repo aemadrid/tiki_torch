@@ -24,6 +24,15 @@ module Tiki
           event.finish
         end
 
+        def on_rpc_response(result)
+          respond_to = properties[:respond_to]
+          request_id = properties[:request_message_id]
+          return nil if respond_to.nil? || request_id.nil?
+
+          Tiki::Torch.publish respond_to, result, request_message_id: request_id
+          [respond_to, request_id]
+        end
+
         def on_failure(exception)
           @end_time = Time.now
           @failure  = exception

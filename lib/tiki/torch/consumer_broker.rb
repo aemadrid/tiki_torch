@@ -42,6 +42,10 @@ module Tiki
 
         alias :shutdown :stop
 
+        def running?
+          !!@running
+        end
+
         def stopped?
           cnt = busy_consumers_count
           debug "#{cnt > 0 ? "still #{cnt}" : 'no'} busy consumers"
