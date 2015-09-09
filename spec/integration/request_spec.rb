@@ -54,13 +54,14 @@ describe 'request and response', integration: true do
     let(:custom_prefix) { 'custom-' }
 
     before do
-      $lines = TestingHelpers::LogLines.new
+      $lines           = TestingHelpers::LogLines.new
+      $previous_prefix = Tiki::Torch.config.topic_prefix
       Tiki::Torch.configure { |config| config.topic_prefix = custom_prefix }
       TestingHelpers.setup_torch
     end
 
     after do
-      Tiki::Torch.configure { |config| config.topic_prefix = '' }
+      Tiki::Torch.configure { |config| config.topic_prefix = $previous_prefix }
       TestingHelpers.take_down_torch
     end
 
