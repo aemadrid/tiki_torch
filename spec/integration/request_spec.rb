@@ -38,16 +38,45 @@ describe 'request and response', integration: true do
   end
 
   it 'multiple requests concurrently' do
-    futures = 3.times.map do |nr|
+    futures    = 3.times.map do |nr|
       hsh = { numbers: [1, nr], sleep_time: 1 }
       Tiki::Torch.request consumer.topic, hsh, timeout: 15
     end
     start_time = Time.now
-    values = futures.map { |future| future.value }
-    secs = Time.now - start_time
+    values     = futures.map { |future| future.value }
+    secs       = Time.now - start_time
 
-    expect(values).to eq [1,2,3]
+    expect(values).to eq [1, 2, 3]
     expect(secs).to be < 2.0
+  end
+
+  context 'with a custom prefix', integration: false do
+    let(:custom_prefix) { 'custom-' }
+
+    before do
+      $lines = TestingHelpers::LogLines.new
+      Tiki::Torch.configure { |config| config.topic_prefix = custom_prefix }
+      TestingHelpers.setup_torch
+    end
+
+    after do
+      Tiki::Torch.configure { |config| config.topic_prefix = '' }
+      TestingHelpers.take_down_torch
+    end
+
+    it 'should be able to successfully make a call' do
+      hsh    = { numbers: [1, 2, 3], sleep_time: 5 }
+      future = Tiki::Torch.request consumer.topic, hsh, timeout: 5
+
+      expect(future).to be_a Concurrent::Future
+      expect([:pending, :processing]).to include(future.state)
+      expect(future.value(0)).to be_nil
+
+      $lines.wait_for_size 1
+
+      expect(future.value).to eq 6
+      expect(future.state).to eq :fulfilled
+    end
   end
 
 end
