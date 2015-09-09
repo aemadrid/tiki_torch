@@ -6,7 +6,7 @@ module TestingHelpers
     attr_reader :all
 
     def initialize
-      @all = ThreadSafe::Array.new
+      @all = Concurrent::Array.new
     end
 
     def clear

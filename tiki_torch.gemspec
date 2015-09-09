@@ -19,8 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'nsq-ruby'
-  spec.add_dependency 'thread_safe'
-  spec.add_dependency 'concurrent-ruby'
+  spec.add_dependency 'concurrent-ruby', '1.0.0.pre1'
   spec.add_dependency 'lifeguard'
   spec.add_dependency 'multi_json'
   spec.add_dependency 'virtus'

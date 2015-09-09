@@ -8,7 +8,7 @@ module Tiki
 
         def initialize(name, initial_value = 0)
           @name  = name
-          @value = ThreadSafe::Util::Adder.new.tap do |c|
+          @value = Concurrent::ThreadSafe::Util::Adder.new.tap do |c|
             c.add(initial_value) unless initial_value == 0
           end
         end
@@ -35,7 +35,7 @@ module Tiki
       attr_reader :counters
 
       def initialize(*names)
-        @counters = ThreadSafe::Cache.new
+        @counters = Concurrent::Hash.new
         names.map { |x| get_or_set_counter x }
       end
 

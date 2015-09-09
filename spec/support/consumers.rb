@@ -192,3 +192,13 @@ class AdderConsumer < Tiki::Torch::Consumer
   end
 
 end
+
+class StatsConsumer < Tiki::Torch::Consumer
+
+  consumes 'test.stats'
+
+  def process
+    $lines << 'done'
+  end
+
+end

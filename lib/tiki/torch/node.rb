@@ -13,7 +13,7 @@ module Tiki
         end
 
         def node_topic_name
-          @node_topic_name ||= "#{node_host}_#{random_node_name}"
+          @node_topic_name ||= random_node_name
         end
 
         def random_node_name(syllables = 4, sep = 4)
@@ -24,7 +24,7 @@ module Tiki
         end
 
         def responses
-          @responses ||= ThreadSafe::Hash.new
+          @responses ||= Concurrent::Hash.new
         end
 
       end
