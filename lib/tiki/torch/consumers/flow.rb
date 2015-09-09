@@ -9,7 +9,7 @@ module Tiki
 
         module ClassMethods
 
-          attr_reader :event_pool, :stats
+          attr_reader :poller, :event_pool, :stats
 
           def busy_size
             event_pool ? event_pool.busy_size : 0
@@ -18,6 +18,7 @@ module Tiki
           def start
             debug 'starting ...'
 
+            @poller = Tiki::Torch::ConsumerPoller.new poller_options
             res = poller.connected?
             debug "connected : #{res}"
 
@@ -35,6 +36,7 @@ module Tiki
           def stop
             debug 'stopping ...'
             @stopped = true
+            @poller = nil
             Thread.new { stop_events }
             debug 'sent stop message ...'
           end
@@ -56,8 +58,8 @@ module Tiki
           end
 
           def poller_options
-            {
-              topic:              topic,
+            options = {
+              topic:              full_topic_name,
               channel:            channel,
               nsqd:               nsqd,
               nsqlookupd:         nsqlookupd,
@@ -67,11 +69,8 @@ module Tiki
             }.tap do |options|
               options.delete_if{|_,v| v.is_a?(Array) && v.empty? }
             end
-          end
-
-          def poller
-            options = poller_options
-            @poller ||= Tiki::Torch::ConsumerPoller.new poller_options
+            puts "poller_options (#{options.class.name}) #{options.inspect}"
+            options
           end
 
           def process_loop

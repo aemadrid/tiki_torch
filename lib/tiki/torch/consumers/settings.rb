@@ -15,7 +15,6 @@ module Tiki
           attribute :nsqlookupd, Array[String], default: lambda { |_, _| ::Tiki::Torch.config.nsqlookupd }
           attribute :nsqd, Array[String], default: lambda { |_, _| ::Tiki::Torch.config.nsqd }
 
-          attribute :topic_prefix, String, default: lambda { |_, _| ::Tiki::Torch.config.topic_prefix }
           attribute :max_in_flight, Integer, default: lambda { |_, _| ::Tiki::Torch.config.max_in_flight }
           attribute :discovery_interval, Integer, default: lambda { |_, _| ::Tiki::Torch.config.discovery_interval }
           attribute :msg_timeout, Integer, default: lambda { |_, _| ::Tiki::Torch.config.msg_timeout }
@@ -32,11 +31,6 @@ module Tiki
           def initialize(consumer, options = {})
             @consumer = consumer
             super(options)
-          end
-
-          def topic=(name)
-            name = "#{topic_prefix}#{name}" unless name.to_s.start_with? topic_prefix
-            super name
           end
 
         end
@@ -56,7 +50,7 @@ module Tiki
           def_delegators :config,
                          :topic, :channel,
                          :nsqlookupd, :nsqd,
-                         :topic_prefix, :max_in_flight, :discovery_interval, :msg_timeout,
+                         :max_in_flight, :discovery_interval, :msg_timeout,
                          :back_off_strategy, :max_attempts, :back_off_time_unit,
                          :event_pool_size, :events_sleep_times
 
@@ -67,6 +61,15 @@ module Tiki
           def consumes(topic_name, options = {})
             config.topic = topic_name
             options.each { |k, v| config.send "#{k}=", v }
+            puts "config : (#{config.class.name}) #{config.inspect}"
+          end
+
+          def full_topic_name
+            prefix   = ::Tiki::Torch.config.topic_prefix
+            new_name = topic.to_s
+            return new_name if new_name.start_with? prefix
+
+            "#{prefix}#{new_name}"
           end
 
         end

@@ -184,10 +184,14 @@ class AdderConsumer < Tiki::Torch::Consumer
   consumes 'test.adder'
 
   def process
+    puts ">>> process started ..."
     numbers = payload[:numbers]
     res     = numbers.map { |x| x.to_i }.inject(0) { |t, x| t + x }
+    puts ">>> lines ..."
     $lines << "#{numbers.inspect}|#{res}"
+    puts ">>> sleeping if necessary ..."
     sleep_if_necessary
+    puts ">>> done ..."
     res
   end
 

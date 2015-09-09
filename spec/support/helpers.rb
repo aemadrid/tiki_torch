@@ -31,6 +31,14 @@ module TestingHelpers
 
   extend self
 
+  def setup_vars
+    $all_consumers     ||= Tiki::Torch.consumer_broker.consumers.dup
+    $current_consumers = [$consumers].flatten.compact
+    $current_consumers = [$consumer].compact if $current_consumers.empty?
+    $current_consumers = $all_consumers.dup if $current_consumers.empty?
+    $current_consumers << Tiki::Torch::Node
+  end
+
   def setup_torch
     Tiki::Torch.configure do |c|
       if (lkd = ENV['NSLOOKUPD_ADDRESS'])
@@ -42,12 +50,21 @@ module TestingHelpers
       end
     end
     Tiki::Torch.logger.level = Logger::DEBUG if ENV['DEBUG'] == 'true'
+    Tiki::Torch.consumer_broker.consumer_registry.clear
+    $current_consumers.each { |x| Tiki::Torch.consumer_broker.register_consumer x }
     Tiki::Torch.start_polling
-    Tiki::Torch.consumer_broker.consumers.each { |x| clear_consumer x }
   end
 
   def take_down_torch
     Tiki::Torch.shutdown
+    Tiki::Torch.consumer_broker.consumer_registry.clear
+    $current_consumers.each { |x| clear_consumer x }
+  end
+
+  def take_down_vars
+    $consumers         = nil
+    $consumer          = nil
+    $current_consumers = nil
   end
 
   def wait_for(secs, msg = nil)
@@ -58,11 +75,27 @@ module TestingHelpers
   end
 
   def clear_consumer(consumer)
-    uri = URI "http://#{known_nsq_host}:#{known_nsq_port}/channel/empty?topic=#{consumer.topic}&channel=#{consumer.channel}"
+    [delete_channel(consumer), delete_topic(consumer)]
+  end
+
+  def delete_channel(consumer)
+    uri = URI "http://#{known_nsq_host}:#{known_nsq_port}/channel/delete" +
+                "?topic=#{consumer.full_topic_name}" +
+                "&channel=#{consumer.channel}"
     res = Net::HTTP.post_form uri, {}
     res.code == '200'
   rescue Exception => e
-    debug "clear_consumer | could NOT clear #{consumer.name} : #{consumer.topic} : #{consumer.channel} | Exception: #{e.class.name} : #{e.message} ..."
+    debug "delete_channel | could NOT clear #{consumer.name} : #{consumer.topic} : #{consumer.channel} | Exception: #{e.class.name} : #{e.message} ..."
+    false
+  end
+
+  def delete_topic(consumer)
+    uri = URI "http://#{known_nsq_host}:#{known_nsq_port}/topic/delete" +
+                "?topic=#{consumer.full_topic_name}"
+    res = Net::HTTP.post_form uri, {}
+    res.code == '200'
+  rescue Exception => e
+    debug "delete_topic | could NOT clear #{consumer.name} : #{consumer.topic} : #{consumer.channel} | Exception: #{e.class.name} : #{e.message} ..."
     false
   end
 

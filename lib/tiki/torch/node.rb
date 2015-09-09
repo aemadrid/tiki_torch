@@ -13,7 +13,7 @@ module Tiki
         end
 
         def node_topic_name
-          @node_topic_name ||= random_node_name
+          @node_topic_name ||= "node.#{node_host}.#{random_node_name}"
         end
 
         def random_node_name(syllables = 4, sep = 4)
@@ -35,6 +35,7 @@ module Tiki
         parent_id = event.properties[:request_message_id]
         raise 'Missing request_message_id property' if parent_id.nil?
 
+        puts "process : #{parent_id} : payload : (#{payload.class.name}) #{payload.inspect}"
         self.class.responses[parent_id] = payload
       end
 
@@ -67,23 +68,34 @@ module Tiki
       timeout    = properties.delete(:timeout) || 60
 
       properties[:request_message_id] ||= message_id
-      properties[:respond_to]         = node.topic
-      publisher.publish topic_name, payload, properties
+      properties[:respond_to]         = node.full_topic_name
+      mid = properties[:request_message_id][-4..-1]
+      puts "[#{mid}] request : topic_name : (#{topic_name.class.name}) #{topic_name.inspect}"
+      puts "[#{mid}] request : payload    : (#{payload.class.name}) #{payload.inspect}"
+      puts "[#{mid}] request : properties : (#{properties.class.name}) #{properties.inspect}"
+      published = publisher.publish topic_name, payload, properties
+      puts "[#{mid}] request : published  : (#{published.class.name}) #{published.inspect}"
 
       Concurrent::Future.execute do
         timeout_time = Time.now + timeout
         received     = false
+        cnt = 0
 
         while Time.now < timeout_time
+          cnt += 1
           if node.responses.key?(message_id)
             value    = node.responses.delete message_id
             received = true
+            puts "[#{mid}] request : value    : (#{value.class.name}) #{value.inspect}"
+            puts "[#{mid}] request : received : (#{received.class.name}) #{received.inspect}"
             break
           end
+          puts "[#{mid}] request : #{cnt}/#{node.responses.size} : waiting ..." if cnt % 20 == 0
           sleep 0.1
         end
 
         raise RequestTimedOutError.new(timeout, message_id, topic_name, payload, properties) unless received
+        puts "[#{mid}] request : final : value : (#{value.class.name}) #{value.inspect}"
         value
       end
     end

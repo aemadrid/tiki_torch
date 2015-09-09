@@ -27,8 +27,15 @@ module Tiki
         def on_rpc_response(result)
           respond_to = properties[:respond_to]
           request_id = properties[:request_message_id]
-          return nil if respond_to.nil? || request_id.nil?
+          puts "properties : (#{properties.class.name}) #{properties.inspect}"
+          puts "respond_to : (#{respond_to.class.name}) #{respond_to.inspect}"
+          puts "request_id : (#{request_id.class.name}) #{request_id.inspect}"
+          if respond_to.nil? || request_id.nil?
+            puts "returning nil ..."
+            return nil
+          end
 
+          puts "result : (#{result.class.name}) #{result.inspect}"
           Tiki::Torch.publish respond_to, result, request_message_id: request_id
           [respond_to, request_id]
         end

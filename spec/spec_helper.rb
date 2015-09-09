@@ -19,11 +19,16 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
 
     config.before(:each, integration: true) do
       $lines = TestingHelpers::LogLines.new
+      TestingHelpers.setup_vars
       TestingHelpers.setup_torch
     end
 
     config.after(:each, integration: true) do
       TestingHelpers.take_down_torch
+    end
+
+    config.after(:context, integration: true) do
+      TestingHelpers.take_down_vars
     end
 
   end
