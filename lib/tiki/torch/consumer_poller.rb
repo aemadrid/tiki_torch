@@ -13,7 +13,13 @@ module Tiki
         raise 'Missing topic name' unless options[:topic]
         raise 'Missing channel name' unless options[:channel]
 
-        setup_connection setup_options(options)
+        @options = setup_options options
+        setup_connection @options
+      end
+
+      def close
+        clear_queue
+        close_connection
       end
 
       private
@@ -28,12 +34,24 @@ module Tiki
           discovery_interval: options[:discovery_interval] || Torch.config.discovery_interval,
           msg_timeout:        options[:msg_timeout] || Torch.config.msg_timeout,
         }.tap do |hsh|
-          hsh.delete_if{|_,v| v.is_a?(Array) && v.empty?}
+          hsh.delete_if { |_, v| v.is_a?(Array) && v.empty? }
         end
       end
 
       def setup_connection(options)
         @connection = ::Nsq::Consumer.new options
+      end
+
+      def clear_queue
+        while connection.size > 0
+          debug "T:#{@options[:topic]} | C:#{@options[:channel]} | requeuing messages #{connection.size} in queue ..."
+          pop.requeue(1)
+        end
+      end
+
+      def close_connection
+        debug "T:#{@options[:topic]} | C:#{@options[:channel]} | closing connection  ..."
+        connection.terminate
       end
 
     end

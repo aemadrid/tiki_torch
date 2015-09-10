@@ -7,7 +7,7 @@ module Tiki
           it('topic_prefix            ') { expect(subject.topic_prefix).to eq 'tiki_torch-' }
           it('max_in_flight           ') { expect(subject.max_in_flight).to eq 10 }
           it('discovery_interval      ') { expect(subject.discovery_interval).to eq 60 }
-          it('msg_timeout             ') { expect(subject.msg_timeout).to eq 60000 }
+          it('msg_timeout             ') { expect(subject.msg_timeout).to eq 15_000 }
           it('max_attempts            ') { expect(subject.max_attempts).to eq 100 }
           it('back_off_time_unit      ') { expect(subject.back_off_time_unit).to eq 3000 }
           it('transcoder_code         ') { expect(subject.transcoder_code).to eq 'json' }

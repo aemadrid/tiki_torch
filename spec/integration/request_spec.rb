@@ -3,14 +3,14 @@ describe 'request and response', integration: true do
   before(:context) { $consumer = AdderConsumer }
 
   it 'requesting returns a future and in time we get a value' do
-    hsh    = { numbers: [1, 2, 3], sleep_time: 2 }
-    future = Tiki::Torch.request $consumer.full_topic_name, hsh, timeout: 15
+    hsh    = { numbers: [1, 2, 3], sleep_time: 1 }
+    future = Tiki::Torch.request $consumer.full_topic_name, hsh, timeout: 10
 
     expect(future).to be_a Concurrent::Future
     expect([:pending, :processing]).to include(future.state)
     expect(future.value(0)).to be_nil
 
-    $lines.wait_for_size 1
+    future.value # Block until we get a result or a timeout
 
     expect(future.state).to eq :fulfilled
     expect(future.value).to eq 6
@@ -39,10 +39,11 @@ describe 'request and response', integration: true do
   end
 
   it 'multiple requests concurrently' do
-    futures    = 3.times.map do |nr|
+    futures = 3.times.map do |nr|
       hsh = { numbers: [1, nr], sleep_time: 1 }
       Tiki::Torch.request $consumer.full_topic_name, hsh, timeout: 30
     end
+
     start_time = Time.now
     values     = futures.map { |future| future.value }
     secs       = Time.now - start_time
@@ -59,9 +60,7 @@ describe 'request and response with a custom prefix' do
   before(:context) do
     $consumer        = AdderConsumer
     $previous_prefix = Tiki::Torch.config.topic_prefix
-    puts "config.topic_prefix : #{Tiki::Torch.config.topic_prefix}"
     Tiki::Torch.configure { |config| config.topic_prefix = 'custom-' }
-    puts "config.topic_prefix : #{Tiki::Torch.config.topic_prefix}"
   end
 
   before(:each) do

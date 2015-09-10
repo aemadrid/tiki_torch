@@ -27,6 +27,13 @@ module TestingHelpers
     end
 
     alias :<< :add
+
+    def to_s
+      %{#<#{self.class.name} size=#{@all.size} all=#{@all.inspect}>}
+    end
+
+    alias :inspect :to_s
+
   end
 
   extend self
@@ -49,7 +56,8 @@ module TestingHelpers
         c.nsqd = 'localhost:4150'
       end
     end
-    Tiki::Torch.logger.level = Logger::DEBUG if ENV['DEBUG'] == 'true'
+    Tiki::Torch.logger.level       = Logger::DEBUG if ENV['DEBUG'] == 'true'
+    Tiki::Torch.config.msg_timeout = 15_000 # ms
     Tiki::Torch.consumer_broker.consumer_registry.clear
     $current_consumers.each { |x| Tiki::Torch.consumer_broker.register_consumer x }
     Tiki::Torch.start_polling
@@ -58,7 +66,7 @@ module TestingHelpers
   def take_down_torch
     Tiki::Torch.shutdown
     Tiki::Torch.consumer_broker.consumer_registry.clear
-    $current_consumers.each { |x| clear_consumer x }
+    $current_consumers.each { |x| clear_consumer x } if $current_consumers
   end
 
   def take_down_vars
@@ -67,36 +75,57 @@ module TestingHelpers
     $current_consumers = nil
   end
 
-  def wait_for(secs, msg = nil)
-    debug "[#{Time.now}] Waiting for #{secs} #{msg ? "to #{msg} " : nil}..."
-    sleep secs
-    yield if block_given?
-    true
+  def wait_for(secs, &blk)
+    ::Tiki::Torch::Utils.wait_for(secs){ blk.call if blk }
+  end
+
+  def clear_all_consumers
+    $all_consumers.each { |x| clear_consumer x }
   end
 
   def clear_consumer(consumer)
-    [delete_channel(consumer), delete_topic(consumer)]
+    delete_nsqd_channel consumer
+    delete_nsqd_topic consumer
+    delete_nsqadmin_topic consumer
   end
 
-  def delete_channel(consumer)
-    uri = URI "http://#{known_nsq_host}:#{known_nsq_port}/channel/delete" +
-                "?topic=#{consumer.full_topic_name}" +
-                "&channel=#{consumer.channel}"
+  def delete_nsqd_channel(consumer)
+    http_command :nsqd_chn_emp,
+                 "http://#{known_nsq_host}:#{known_nsq_port}/channel/empty",
+                 topic:   consumer.full_topic_name,
+                 channel: consumer.channel
+    http_command :nsqd_chn_del,
+                 "http://#{known_nsq_host}:#{known_nsq_port}/channel/delete",
+                 topic:   consumer.full_topic_name,
+                 channel: consumer.channel
+  end
+
+  def delete_nsqd_topic(consumer)
+    http_command :nsqd_top_emp,
+                 "http://#{known_nsq_host}:#{known_nsq_port}/topic/empty",
+                 topic: consumer.full_topic_name
+    http_command :nsqd_top_del,
+                 "http://#{known_nsq_host}:#{known_nsq_port}/topic/delete",
+                 topic: consumer.full_topic_name
+  end
+
+  def delete_nsqadmin_topic(consumer)
+    http_command :nsqa_top_emp,
+                 "http://#{known_nsq_host}:#{known_nsqadmin_port}/empty_topic",
+                 topic: consumer.full_topic_name
+    http_command :nsqa_top_del,
+                 "http://#{known_nsq_host}:#{known_nsqadmin_port}/delete_topic",
+                 topic: consumer.full_topic_name
+  end
+
+  def http_command(type, url, data = {})
+    qry = URI.encode data.map { |k, v| "#{k}=#{v}" }.join("&")
+    url = "#{url}?#{qry}" unless qry.empty?
+    uri = URI url
     res = Net::HTTP.post_form uri, {}
     res.code == '200'
   rescue Exception => e
-    debug "delete_channel | could NOT clear #{consumer.name} : #{consumer.topic} : #{consumer.channel} | Exception: #{e.class.name} : #{e.message} ..."
-    false
-  end
-
-  def delete_topic(consumer)
-    uri = URI "http://#{known_nsq_host}:#{known_nsq_port}/topic/delete" +
-                "?topic=#{consumer.full_topic_name}"
-    res = Net::HTTP.post_form uri, {}
-    res.code == '200'
-  rescue Exception => e
-    debug "delete_topic | could NOT clear #{consumer.name} : #{consumer.topic} : #{consumer.channel} | Exception: #{e.class.name} : #{e.message} ..."
-    false
+    debug "Exception: #{e.class.name} : #{e.message} |  #{e.backtrace[0, 5].join("\n  ")}"
   end
 
   def known_nsq
@@ -109,6 +138,10 @@ module TestingHelpers
 
   def known_nsq_port
     known_nsq.split(':').last.to_i + 1
+  end
+
+  def known_nsqadmin_port
+    known_nsq.split(':').last.to_i + 21
   end
 
   def debug(msg)

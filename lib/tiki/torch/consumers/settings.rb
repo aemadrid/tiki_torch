@@ -61,7 +61,6 @@ module Tiki
           def consumes(topic_name, options = {})
             config.topic = topic_name
             options.each { |k, v| config.send "#{k}=", v }
-            puts "config : (#{config.class.name}) #{config.inspect}"
           end
 
           def full_topic_name

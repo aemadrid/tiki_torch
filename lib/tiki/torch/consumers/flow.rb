@@ -36,9 +36,14 @@ module Tiki
           def stop
             debug 'stopping ...'
             @stopped = true
+            poller.close
             @poller = nil
             Thread.new { stop_events }
             debug 'sent stop message ...'
+          end
+
+          def polling?
+            !@stopped
           end
 
           def stop_events
@@ -58,7 +63,7 @@ module Tiki
           end
 
           def poller_options
-            options = {
+            {
               topic:              full_topic_name,
               channel:            channel,
               nsqd:               nsqd,
@@ -69,8 +74,6 @@ module Tiki
             }.tap do |options|
               options.delete_if{|_,v| v.is_a?(Array) && v.empty? }
             end
-            puts "poller_options (#{options.class.name}) #{options.inspect}"
-            options
           end
 
           def process_loop

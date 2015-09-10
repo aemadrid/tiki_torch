@@ -16,11 +16,13 @@ module TestConsumerHelper
     secs = payload.is_a?(Hash) ? payload[:sleep_time].to_f : nil
     if secs
       wake_up = Time.now + secs
-      debug "> Sleeping for until #{wake_up} ..."
+      debug "> Sleeping until #{wake_up} (#{secs}s) ..."
       while Time.now < wake_up
         sleep period_time
         event.touch if touch_event
       end
+    else
+      debug '> no need to sleep ...'
     end
   end
 
@@ -184,15 +186,11 @@ class AdderConsumer < Tiki::Torch::Consumer
   consumes 'test.adder'
 
   def process
-    puts ">>> process started ..."
     numbers = payload[:numbers]
-    res     = numbers.map { |x| x.to_i }.inject(0) { |t, x| t + x }
-    puts ">>> lines ..."
-    $lines << "#{numbers.inspect}|#{res}"
-    puts ">>> sleeping if necessary ..."
+    result  = numbers.map { |x| x.to_i }.inject(0) { |t, x| t + x }
     sleep_if_necessary
-    puts ">>> done ..."
-    res
+    $lines << "#{numbers.inspect}|#{result}"
+    result
   end
 
 end
