@@ -69,6 +69,9 @@ module Tiki
 
       properties[:request_message_id] ||= message_id
       properties[:respond_to]         = node.full_topic_name
+
+      mid = message_id[-4..-1]
+      node.debug "[#{mid}] requesting | #{topic_name} | (#{payload.class.name}) #{payload.inspect}"
       publisher.publish topic_name, payload, properties
 
       Concurrent::Future.execute do
@@ -78,16 +81,22 @@ module Tiki
 
         while Time.now < timeout_time
           cnt += 1
+          node.debug "[#{mid}] (#{cnt}) waiting for response ..." if cnt % 10 == 0
           break unless node.polling?
           if node.responses.key?(message_id)
             value    = node.responses.delete message_id
+            node.debug "[#{mid}] got response | (#{value.class.name}) #{value.inspect}"
             received = true
             break
           end
           sleep 0.1
         end
 
-        raise RequestTimedOutError.new(timeout, message_id, topic_name, payload, properties) unless received
+        unless received
+          node.debug "[#{mid}] never received response, timing out ..."
+          raise RequestTimedOutError.new(timeout, message_id, topic_name, payload, properties)
+        end
+
         value
       end
     end
