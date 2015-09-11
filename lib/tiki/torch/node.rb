@@ -35,8 +35,9 @@ module Tiki
         parent_id = event.properties[:request_message_id]
         raise 'Missing request_message_id property' if parent_id.nil?
 
-        debug "process : #{parent_id} : payload : (#{payload.class.name}) #{payload.inspect}"
+        debug "[#{parent_id[-4..-1]}] received (#{payload.class.name}) #{payload.inspect}"
         self.class.responses[parent_id] = payload
+        nil
       end
 
     end
