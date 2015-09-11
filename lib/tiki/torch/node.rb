@@ -29,14 +29,16 @@ module Tiki
 
       end
 
+      responses
       consumes node_topic_name, channel: 'node_events'
 
       def process
         parent_id = event.properties[:request_message_id]
         raise 'Missing request_message_id property' if parent_id.nil?
 
+        debug '[%s] received (%s) %s' % [parent_id[-4..-1], payload.class.name, payload.inspect]
         self.class.responses[parent_id] = payload
-        debug '[%s] (%s) received (%s) %s' % [parent_id[-4..-1], self.class.responses.size, payload.class.name, payload.inspect]
+        debug '[%s] We have now %i responses' % [parent_id[-4..-1], self.class.responses.size]
         nil
       end
 
