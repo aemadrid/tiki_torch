@@ -19,7 +19,7 @@ module Tiki
             debug 'starting ...'
 
             @poller = Tiki::Torch::ConsumerPoller.new poller_options
-            res = poller.connected?
+            res     = poller.connected?
             debug "connected : #{res}"
 
             debug 'setting up stats'
@@ -72,7 +72,7 @@ module Tiki
               discovery_interval: discovery_interval,
               msg_timeout:        msg_timeout,
             }.tap do |options|
-              options.delete_if{|_,v| v.is_a?(Array) && v.empty? }
+              options.delete_if { |_, v| v.is_a?(Array) && v.empty? }
             end
           end
 
@@ -97,7 +97,11 @@ module Tiki
                 end
               else
                 debug "event pool is NOT ready : #{@event_pool}"
-                sleep_for :busy unless @stopped
+                unless @stopped
+                  sleep_time = events_sleep_times[:busy]
+                  debug "going to sleep on busy for #{sleep_time} secs ..."
+                  sleep sleep_time
+                end
               end
             end
             @event_pool = nil
