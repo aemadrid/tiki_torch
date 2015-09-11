@@ -79,29 +79,37 @@ module Tiki
           def process_loop
             debug 'Started running process loop ...'
             until @stopped
-              @event_pool = Tiki::Torch::ThreadPool.new(:events, event_pool_size)
-              # debug "got pool #{@event_pool} ..."
-              if @event_pool.ready?
-                debug "event pool is ready : #{@event_pool}"
-                msg = poller.pop
-                if msg
-                  debug "got msg : #{msg}"
-                  event = Event.new msg
-                  debug "got event : #{event}, going to process async ..."
-                  @event_pool.async { process event }
-                  debug "sent to #{@event_pool}"
-                  sleep_for :busy unless @stopped
+              begin
+                @event_pool = Tiki::Torch::ThreadPool.new(:events, event_pool_size)
+                # debug "got pool #{@event_pool} ..."
+                if @event_pool.ready?
+                  debug "event pool is ready : #{@event_pool}"
+                  begin
+                    msg = poller.pop 0.5
+                  rescue ThreadError
+                    msg = nil
+                  end
+                  if msg
+                    debug "got msg : #{msg}"
+                    event = Event.new msg
+                    debug "got event : #{event}, going to process async ..."
+                    @event_pool.async { process event }
+                    debug "sent to #{@event_pool}"
+                    sleep_for :busy unless @stopped
+                  else
+                    debug 'did not get a msg ...'
+                    sleep_for :empty unless @stopped
+                  end
                 else
-                  debug 'did not get a msg ...'
-                  sleep_for :empty unless @stopped
+                  debug "event pool is NOT ready : #{@event_pool}"
+                  unless @stopped
+                    sleep_time = events_sleep_times[:busy]
+                    debug "going to sleep on busy for #{sleep_time} secs ..."
+                    sleep sleep_time
+                  end
                 end
-              else
-                debug "event pool is NOT ready : #{@event_pool}"
-                unless @stopped
-                  sleep_time = events_sleep_times[:busy]
-                  debug "going to sleep on busy for #{sleep_time} secs ..."
-                  sleep sleep_time
-                end
+              rescue Exception => e
+                error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
               end
             end
             @event_pool = nil
