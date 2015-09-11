@@ -20,28 +20,28 @@ module Tiki
           msg   = var.nil? ? 'NIL' : var.send(meth)
           msg   = msg[0..-2] if msg[-1, 1] == "\n"
           klass = var.is_a?(Class) ? var.name : var.class.name
-          logger.send level, "#{var_name} : (#{klass}:#{var.object_id}) #{msg}"
+          logger.send level, "#{log_prefix} #{var_name} : (#{klass}:#{var.object_id}) #{msg}"
         end
 
-        def log(string, type = :debug, color = :blue)
+        def log(string, type = :debug)
           msg = "#{log_prefix} #{string}"
           logger.send type, msg
         end
 
         def debug(string)
-          log string, :debug, :white
+          log string, :debug
         end
 
         def info(string)
-          log string, :info, :blue
+          log string, :info
         end
 
         def warn(string)
-          log string, :warn, :yellow
+          log string, :warn
         end
 
         def error(string)
-          log string, :error, :red
+          log string, :error
         end
 
         def log_prefix
