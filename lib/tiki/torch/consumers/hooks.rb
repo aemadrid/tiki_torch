@@ -27,14 +27,14 @@ module Tiki
         def on_rpc_response(result)
           respond_to = properties[:respond_to]
           request_id = properties[:request_message_id]
-          label      = request_id[-4..-1]
 
           debug_var :properties, properties
           if respond_to.nil? || request_id.nil?
-            debug "[#{label}] no RPC response properties found ..."
+            debug "no RPC response properties found ..."
             return nil
           end
 
+          label      = request_id[-4..-1]
           debug "[#{label}] publishing result: (#{result.class.name}) #{result.inspect}"
           Tiki::Torch.publish respond_to, result, request_message_id: request_id
           [respond_to, request_id]
