@@ -49,7 +49,9 @@ module Tiki
           prefix      = name
           _, _, label = log_prefix_labels
           prefix      += ".#{label}" if label
-          prefix.rjust(length, ' ')[-length, length] + ' | '
+          prefix      = prefix.rjust(length, ' ')[-length, length] + ' | '
+          prefix = 'T:%s | ' % Thread.current.object_id[-4..-1] if ENV['LOG_THREAD_ID'] == 'true'
+          prefix
         end
 
         def log_prefix_labels
