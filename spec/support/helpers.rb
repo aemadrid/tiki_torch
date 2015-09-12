@@ -57,6 +57,7 @@ module TestingHelpers
       end
     end
     Tiki::Torch.logger.level       = Logger::DEBUG if ENV['DEBUG'] == 'true'
+    Tiki::Torch::Node.topic        = 'node-test'
     Tiki::Torch.config.msg_timeout = 5_000 # ms
     Tiki::Torch.consumer_broker.consumer_registry.clear
     $current_consumers.each { |x| Tiki::Torch.consumer_broker.register_consumer x }
@@ -123,6 +124,7 @@ module TestingHelpers
     url = "#{url}?#{qry}" unless qry.empty?
     uri = URI url
     res = Net::HTTP.post_form uri, {}
+    # puts "HTTP #{type} | #{res.code} | #{res.body} | #{uri}"
     res.code == '200'
   rescue Exception => e
     debug "Exception: #{e.class.name} : #{e.message} |  #{e.backtrace[0, 5].join("\n  ")}"

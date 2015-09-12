@@ -1,3 +1,5 @@
+require 'socket'
+
 module Tiki
   module Torch
     class Utils
@@ -46,6 +48,17 @@ module Tiki
             end
             sleep 0.1
           end
+        end
+
+        def host
+          @host ||= Socket.gethostname
+        end
+
+        def random_name(syllables = 4, sep = 4)
+          consonants = %w{ b c d f g j k l m n p r s t z }
+          vowels     = %w{ a e i o u }
+          list       = syllables.times.map { consonants.sample + vowels.sample }.join.split('')
+          list.each_slice(sep).map { |x| x.join }.join('-')
         end
 
       end

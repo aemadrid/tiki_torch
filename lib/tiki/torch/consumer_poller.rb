@@ -22,6 +22,12 @@ module Tiki
         close_connection
       end
 
+      def to_s
+        %{#<CP|#{@options[:topic]}|#{@options[:channel]}|#{connection.size}>}
+      end
+
+      alias :inspect :to_s
+
       private
 
       def setup_options(options)

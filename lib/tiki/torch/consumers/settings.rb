@@ -9,28 +9,32 @@ module Tiki
 
           include Virtus.model
 
-          attribute :topic, String, default: lambda { |config, _| config.consumer.name.underscore }
-          attribute :channel, String, default: 'events'
+          attribute :topic, String
+          attribute :channel, String, default: lambda { |config, _| config.default_channel_name }, lazy: true
 
-          attribute :nsqlookupd, Array[String], default: lambda { |_, _| ::Tiki::Torch.config.nsqlookupd }
-          attribute :nsqd, Array[String], default: lambda { |_, _| ::Tiki::Torch.config.nsqd }
+          attribute :nsqlookupd, Array[String], default: lambda { |_, _| ::Tiki::Torch.config.nsqlookupd }, lazy: true
+          attribute :nsqd, Array[String], default: lambda { |_, _| ::Tiki::Torch.config.nsqd }, lazy: true
 
-          attribute :max_in_flight, Integer, default: lambda { |_, _| ::Tiki::Torch.config.max_in_flight }
-          attribute :discovery_interval, Integer, default: lambda { |_, _| ::Tiki::Torch.config.discovery_interval }
-          attribute :msg_timeout, Integer, default: lambda { |_, _| ::Tiki::Torch.config.msg_timeout }
+          attribute :max_in_flight, Integer, default: lambda { |_, _| ::Tiki::Torch.config.max_in_flight }, lazy: true
+          attribute :discovery_interval, Integer, default: lambda { |_, _| ::Tiki::Torch.config.discovery_interval }, lazy: true
+          attribute :msg_timeout, Integer, default: lambda { |_, _| ::Tiki::Torch.config.msg_timeout }, lazy: true
 
-          attribute :back_off_strategy, Integer, default: lambda { |_, _| ::Tiki::Torch.config.back_off_strategy }
-          attribute :max_attempts, Integer, default: lambda { |_, _| ::Tiki::Torch.config.max_attempts }
-          attribute :back_off_time_unit, Integer, default: lambda { |_, _| ::Tiki::Torch.config.back_off_time_unit }
+          attribute :back_off_strategy, Integer, default: lambda { |_, _| ::Tiki::Torch.config.back_off_strategy }, lazy: true
+          attribute :max_attempts, Integer, default: lambda { |_, _| ::Tiki::Torch.config.max_attempts }, lazy: true
+          attribute :back_off_time_unit, Integer, default: lambda { |_, _| ::Tiki::Torch.config.back_off_time_unit }, lazy: true
 
-          attribute :event_pool_size, Integer, default: lambda { |_, _| ::Tiki::Torch.config.event_pool_size }
-          attribute :events_sleep_times, Integer, default: lambda { |_, _| ::Tiki::Torch.config.events_sleep_times }
+          attribute :event_pool_size, Integer, default: lambda { |_, _| ::Tiki::Torch.config.event_pool_size }, lazy: true
+          attribute :events_sleep_times, Integer, default: lambda { |_, _| ::Tiki::Torch.config.events_sleep_times }, lazy: true
 
           attr_reader :consumer
 
           def initialize(consumer, options = {})
             @consumer = consumer
             super(options)
+          end
+
+          def default_channel_name
+            @consumer.name.underscore.gsub('/', '-')
           end
 
         end
@@ -48,7 +52,7 @@ module Tiki
           end
 
           def_delegators :config,
-                         :topic, :channel,
+                         :topic, :topic=, :channel, :channel=,
                          :nsqlookupd, :nsqd,
                          :max_in_flight, :discovery_interval, :msg_timeout,
                          :back_off_strategy, :max_attempts, :back_off_time_unit,

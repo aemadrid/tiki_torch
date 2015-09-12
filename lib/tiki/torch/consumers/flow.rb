@@ -28,7 +28,7 @@ module Tiki
             @stopped = false
 
             debug 'starting process loop ...'
-            Thread.new { process_loop }
+            @process_loop_thread = Thread.new { process_loop }
 
             debug 'started ...'
           end
@@ -58,6 +58,8 @@ module Tiki
               debug "shutting down #{event_pool} ..."
               event_pool.shutdown
               @event_pool = nil
+              @process_loop_thread.join
+              @process_loop_thread.terminate
             end
             debug 'done stopping events ...'
           end
@@ -99,11 +101,11 @@ module Tiki
                     sleep_for :empty unless @stopped
                   end
                 else
-                  sleep_for :busy  unless @stopped
+                  sleep_for :busy unless @stopped
                 end
               rescue Exception => e
                 error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
-                sleep_for :exception  unless @stopped
+                sleep_for :exception unless @stopped
               end
             end
             @event_pool = nil

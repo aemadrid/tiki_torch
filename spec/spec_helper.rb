@@ -13,6 +13,8 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
   RSpec.configure do |config|
     config.include TestingHelpers
 
+    config.filter_run focus: true if ENV['FOCUS'] == 'true'
+
     config.mock_with :rspec do |mocks|
       mocks.verify_partial_doubles = true
     end

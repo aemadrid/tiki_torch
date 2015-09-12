@@ -1,5 +1,3 @@
-require 'socket'
-
 module Tiki
   module Torch
     class Node < Consumer
@@ -8,19 +6,8 @@ module Tiki
 
         attr_writer :node_host, :node_name, :node_topic_name
 
-        def node_host
-          Socket.gethostname
-        end
-
-        def node_topic_name
-          @node_topic_name ||= "node.#{node_host}.#{random_node_name}"
-        end
-
-        def random_node_name(syllables = 4, sep = 4)
-          consonants = %w{ b c d f g j k l m n p r s t z }
-          vowels     = %w{ a e i o u }
-          list       = syllables.times.map { consonants.sample + vowels.sample }.join.split('')
-          list.each_slice(sep).map { |x| x.join }.join('-')
+        def default_topic_name
+          "node.#{Utils.host}.#{Utils.random_name}"
         end
 
         def responses
@@ -30,7 +17,7 @@ module Tiki
       end
 
       responses
-      consumes node_topic_name, channel: 'node_events'
+      consumes default_topic_name, channel: 'node_events'
 
       def process
         parent_id = event.properties[:request_message_id]
@@ -60,12 +47,6 @@ module Tiki
 
     extend self
 
-    def node
-      Node
-    end
-
-    node.responses
-
     def request(topic_name, payload = {}, properties = {})
       raise RuntimeError, 'The consumer broker is not polling' unless Tiki::Torch.consumer_broker.running?
 
@@ -73,9 +54,9 @@ module Tiki
       timeout = properties.delete(:timeout) || 60
 
       properties[:request_message_id] ||= mid
-      properties[:respond_to]         = node.full_topic_name
+      properties[:respond_to]         = Node.full_topic_name
 
-      node.debug "#{req_lbl(mid)} requesting | #{topic_name} | (#{payload.class.name}) #{payload.inspect}"
+      Node.debug "#{req_lbl(mid)} requesting | #{topic_name} | (#{payload.class.name}) #{payload.inspect}"
       publisher.publish topic_name, payload, properties
 
       Concurrent::Future.execute { respond_to_request(topic_name, payload, properties, timeout) }
@@ -88,14 +69,15 @@ module Tiki
       timeout_time = Time.now + timeout
       received     = false
       cnt          = 0
+      value        = nil
 
       while Time.now < timeout_time
         cnt += 1
-        node.debug "#{req_lbl(mid)} (#{cnt}) waiting for response ..." if cnt % 10 == 0
-        break unless node.polling?
-        if node.responses.key?(mid)
-          value = node.responses.delete mid
-          node.debug "#{req_lbl(mid)} got response | (#{value.class.name}) #{value.inspect}"
+        Node.debug "#{req_lbl(mid)} (#{cnt}) waiting for response ..." if cnt % 10 == 0
+        break unless Node.polling?
+        if Node.responses.key?(mid)
+          value = Node.responses.delete mid
+          Node.debug "#{req_lbl(mid)} got response | (#{value.class.name}) #{value.inspect}"
           received = true
           break
         end
@@ -103,7 +85,7 @@ module Tiki
       end
 
       unless received
-        node.debug "#{req_lbl(mid)} never received response, timing out ..."
+        Node.debug "#{req_lbl(mid)} never received response, timing out ..."
         raise RequestTimedOutError.new(timeout, mid, topic_name, payload, properties)
       end
 
@@ -111,7 +93,7 @@ module Tiki
     end
 
     def req_lbl(message_id)
-      '[M:%s|R:%i:%s]' % [message_id[-4..-1], node.responses.size, node.responses.keys.sort.join(',')]
+      '[M:%s|R:%i:%s]' % [message_id[-4..-1], Node.responses.size, Node.responses.keys.sort.join(',')]
     end
 
   end

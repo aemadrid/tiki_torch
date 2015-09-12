@@ -17,7 +17,7 @@ describe 'request and response', integration: true do
   end
 
   it 'requesting returns a future that times out' do
-    hsh    = { numbers: [1, 2, 3], sleep_time: 5 }
+    hsh    = { numbers: [1, 2, 3], sleep_time: 3 }
     future = Tiki::Torch.request $consumer.full_topic_name, hsh, timeout: 2
 
     expect(future).to be_a Concurrent::Future
@@ -36,6 +36,7 @@ describe 'request and response', integration: true do
     expect(reason.topic_name).to eq $consumer.full_topic_name
     expect(reason.payload).to eq hsh
     expect(reason.properties).to be_a Hash
+    $lines.clear
   end
 
   it 'multiple requests concurrently' do
@@ -55,7 +56,7 @@ describe 'request and response', integration: true do
 
 end
 
-describe 'request and response with a custom prefix' do
+describe 'request and response with a custom prefix', focus: true do
 
   before(:context) do
     $consumer        = AdderConsumer
@@ -70,8 +71,10 @@ describe 'request and response with a custom prefix' do
   end
 
   after(:each) do
-    Tiki::Torch.configure { |config| config.topic_prefix = $previous_prefix }
     TestingHelpers.take_down_torch
+    TestingHelpers.take_down_vars
+    $lines.clear
+    Tiki::Torch.configure { |config| config.topic_prefix = $previous_prefix }
   end
 
   after(:context) do

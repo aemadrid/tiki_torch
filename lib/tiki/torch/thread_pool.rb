@@ -36,8 +36,10 @@ module Tiki
       end
 
       def to_s
-        %{#<#{self.class.name} name=#{@name} size=#{busy_size}/#{@pool.pool_size} status=#{free? ? 'F' : '_'}|#{ready? ? 'R' : '_'}|#{busy? ? 'B' : '_'} >}
+        %{#<TP:#{@name}|#{busy_size}/#{@pool.pool_size}|#{free? ? 'F' : 'f'}:#{ready? ? 'R' : 'r'}:#{busy? ? 'B' : 'b'}>}
       end
+
+      alias :inspect :to_s
 
     end
 
