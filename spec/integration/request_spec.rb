@@ -54,9 +54,35 @@ describe 'request and response', integration: true do
     expect(secs).to be < 2.5
   end
 
+  it 'subsequent requests to obtain a final result' do
+    hsh   = { numbers: [1, 2], sleep_time: 0.5 }
+    three = Tiki::Torch.request($consumer.full_topic_name, hsh, timeout: 5).value
+    hsh   = { numbers: [three, 4], sleep_time: 0.5 }
+    seven = Tiki::Torch.request($consumer.full_topic_name, hsh, timeout: 5).value
+
+    expect(seven).to eq 7
+  end
+
+  context 'recurrent' do
+
+    before(:context) { $consumer = RecurrentAdderConsumer }
+
+    it 'requests to obtain a final result' do
+      hsh = { numbers: [1, 2, 3, 4], sleep_time: 0 }
+      result = Tiki::Torch.request($consumer.full_topic_name, hsh).value
+
+      expect(result).to eq 10
+      expect($lines.all).to eq %w{
+        n:4|r:4
+        n:3,4|r:7
+        n:2,3,4|r:9
+        n:1,2,3,4|r:10
+      }
+    end
+  end
 end
 
-describe 'request and response with a custom prefix', focus: true do
+describe 'request and response with a custom prefix' do
 
   before(:context) do
     $consumer        = AdderConsumer

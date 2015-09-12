@@ -195,6 +195,34 @@ class AdderConsumer < Tiki::Torch::Consumer
 
 end
 
+class RecurrentAdderConsumer < Tiki::Torch::Consumer
+
+  consumes 'test.adder_nested'
+
+  def process
+    result = add payload[:numbers]
+    $lines << "#{numbers_str}|r:#{result}"
+    result
+  end
+
+  def add(numbers)
+    case numbers.size
+      when 1
+        numbers[0]
+      else
+        numbers[0] + req_add(numbers[1..-1])
+    end
+  end
+
+  def req_add(nums)
+    Tiki::Torch.request(self.class.full_topic_name, { numbers: nums }).value
+  end
+
+  def numbers_str
+    "n:#{payload[:numbers].map { |x| x.to_s }.join(',')}"
+  end
+
+end
 class StatsConsumer < Tiki::Torch::Consumer
 
   consumes 'test.stats'
