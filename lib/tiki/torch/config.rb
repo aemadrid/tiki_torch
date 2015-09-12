@@ -24,7 +24,7 @@ module Tiki
       attribute :transcoder_code, String, default: 'json'
 
       attribute :event_pool_size, Integer, default: lambda { |_, _| Concurrent.processor_count }
-      attribute :events_sleep_times, Integer, default: { idle: 1, busy: 0.1, empty: 0.5, }
+      attribute :events_sleep_times, Integer, default: { idle: 1, busy: 0.1, received: 0.1, empty: 0.5, exception: 0.5 }
       attribute :processor_count, Integer, default: lambda { |_, _| Concurrent.processor_count }
 
       def producer_connection_options(topic_name)

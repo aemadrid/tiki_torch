@@ -50,7 +50,7 @@ describe 'request and response', integration: true do
 
     expect(futures.map { |x| x.state }).to eq [:fulfilled, :fulfilled, :fulfilled]
     expect(values).to eq [1, 2, 3]
-    expect(secs).to be < 2.0
+    expect(secs).to be < 2.5
   end
 
 end

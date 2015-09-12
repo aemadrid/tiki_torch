@@ -44,12 +44,6 @@ module Tiki
 
     end
 
-    extend self
-
-    def node
-      Node
-    end
-
     class RequestTimedOutError < RuntimeError
 
       attr_reader :timeout, :message_id, :topic_name, :payload, :properties
@@ -64,47 +58,61 @@ module Tiki
 
     end
 
-    def request(topic_name, payload = {}, properties = {})
-      raise RuntimeError, 'The consumer broker is not polling' unless Tiki::Torch.consumer_broker.running?
+    extend self
 
-      message_id = properties[:request_message_id] || SecureRandom.hex
-      timeout    = properties.delete(:timeout) || 60
-      label      = message_id[-4..-1]
-
-      properties[:request_message_id] ||= message_id
-      properties[:respond_to]         = node.full_topic_name
-
-      node.debug "[#{label}] requesting | #{topic_name} | (#{payload.class.name}) #{payload.inspect}"
-      publisher.publish topic_name, payload, properties
-
-      Concurrent::Future.execute do
-        timeout_time = Time.now + timeout
-        received     = false
-        cnt          = 0
-
-        while Time.now < timeout_time
-          cnt += 1
-          node.debug "[#{label}] (#{cnt}) waiting for response ..." if cnt % 10 == 0
-          break unless node.polling?
-          if node.responses.key?(message_id)
-            value = node.responses.delete message_id
-            node.debug "[#{label}] got response | (#{value.class.name}) #{value.inspect}"
-            received = true
-            break
-          end
-          sleep 0.1
-        end
-
-        unless received
-          node.debug "[#{label}] never received response, timing out ..."
-          raise RequestTimedOutError.new(timeout, message_id, topic_name, payload, properties)
-        end
-
-        value
-      end
+    def node
+      Node
     end
 
     node.responses
+
+    def request(topic_name, payload = {}, properties = {})
+      raise RuntimeError, 'The consumer broker is not polling' unless Tiki::Torch.consumer_broker.running?
+
+      mid     = properties[:request_message_id] || SecureRandom.hex
+      timeout = properties.delete(:timeout) || 60
+
+      properties[:request_message_id] ||= mid
+      properties[:respond_to]         = node.full_topic_name
+
+      node.debug "#{req_lbl(mid)} requesting | #{topic_name} | (#{payload.class.name}) #{payload.inspect}"
+      publisher.publish topic_name, payload, properties
+
+      Concurrent::Future.execute { respond_to_request(topic_name, payload, properties, timeout) }
+    end
+
+    private
+
+    def respond_to_request(topic_name, payload, properties, timeout)
+      mid          = properties[:request_message_id]
+      timeout_time = Time.now + timeout
+      received     = false
+      cnt          = 0
+
+      while Time.now < timeout_time
+        cnt += 1
+        node.debug "#{req_lbl(mid)} (#{cnt}) waiting for response ..." if cnt % 10 == 0
+        break unless node.polling?
+        if node.responses.key?(mid)
+          value = node.responses.delete mid
+          node.debug "#{req_lbl(mid)} got response | (#{value.class.name}) #{value.inspect}"
+          received = true
+          break
+        end
+        sleep 0.1
+      end
+
+      unless received
+        node.debug "#{req_lbl(mid)} never received response, timing out ..."
+        raise RequestTimedOutError.new(timeout, mid, topic_name, payload, properties)
+      end
+
+      value
+    end
+
+    def req_lbl(message_id)
+      '[M:%s|R:%i:%s]' % [message_id[-4..-1], node.responses.size, node.responses.keys.sort.join(',')]
+    end
 
   end
 end

@@ -57,7 +57,7 @@ module TestingHelpers
       end
     end
     Tiki::Torch.logger.level       = Logger::DEBUG if ENV['DEBUG'] == 'true'
-    Tiki::Torch.config.msg_timeout = 15_000 # ms
+    Tiki::Torch.config.msg_timeout = 5_000 # ms
     Tiki::Torch.consumer_broker.consumer_registry.clear
     $current_consumers.each { |x| Tiki::Torch.consumer_broker.register_consumer x }
     Tiki::Torch.start_polling
