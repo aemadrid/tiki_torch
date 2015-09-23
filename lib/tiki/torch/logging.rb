@@ -51,6 +51,7 @@ module Tiki
           prefix    += ".#{lbl}" if lbl
           prefix    = prefix.rjust(length, ' ')[-length, length]
           prefix    += ' T%s' % Thread.current.object_id.to_s[-4..-1] if ENV['LOG_THREAD_ID'] == 'true'
+          prefix    += 'C%03i' % Thread.list.count if ENV['LOG_THREAD_COUNT'] == 'true'
           prefix    += ' | '
           prefix
         end
