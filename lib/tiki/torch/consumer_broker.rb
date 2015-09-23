@@ -48,8 +48,9 @@ module Tiki
 
         def stopped?
           cnt = busy_consumers_count
-          debug "#{cnt > 0 ? "still #{cnt}" : 'no'} busy consumers"
-          !@running && cnt == 0
+          res = !running? && cnt == 0
+          debug "res : (#{res.class.name}) #{res} | #{cnt > 0 ? "still #{cnt}" : 'no'} busy consumers | cnt : #{cnt} | @running : #{@running}"
+          res
         end
 
         def busy_consumers_count

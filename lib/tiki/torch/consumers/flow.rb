@@ -80,12 +80,12 @@ module Tiki
 
           def process_loop
             debug 'Started running process loop ...'
+            @event_pool = Tiki::Torch::ThreadPool.new(:events, event_pool_size)
+            # debug "got pool #{@event_pool} ..."
             until @stopped
               begin
-                @event_pool = Tiki::Torch::ThreadPool.new(:events, event_pool_size)
-                # debug "got pool #{@event_pool} ..."
-                if @event_pool.ready?
-                  debug "event pool is ready, polling : #{@event_pool}"
+                if event_pool.ready?
+                  debug "event pool is ready, polling : #{event_pool}"
                   begin
                     msg = poller.pop 0.25
                   rescue ThreadError
@@ -95,7 +95,7 @@ module Tiki
                     debug "got msg : #{msg}"
                     event = Event.new msg
                     debug "got event : #{event}, going to process async ..."
-                    @event_pool.async { process event }
+                    event_pool.async { process event }
                     sleep_for :received unless @stopped
                   else
                     sleep_for :empty unless @stopped
@@ -108,7 +108,6 @@ module Tiki
                 sleep_for :exception unless @stopped
               end
             end
-            @event_pool = nil
             debug 'Finished running process loop ...'
           end
 

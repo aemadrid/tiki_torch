@@ -40,7 +40,7 @@ describe 'request and response', integration: true do
   end
 
   it 'multiple requests concurrently' do
-    futures = 3.times.map do |nr|
+    futures = 4.times.map do |nr|
       hsh = { numbers: [1, nr], sleep_time: 1 }
       Tiki::Torch.request $consumer.full_topic_name, hsh, timeout: 30
     end
@@ -49,9 +49,9 @@ describe 'request and response', integration: true do
     values     = futures.map { |future| future.value }
     secs       = Time.now - start_time
 
-    expect(futures.map { |x| x.state }).to eq [:fulfilled, :fulfilled, :fulfilled]
-    expect(values).to eq [1, 2, 3]
-    expect(secs).to be < 2.5
+    expect(futures.map { |x| x.state }).to eq [:fulfilled, :fulfilled, :fulfilled, :fulfilled]
+    expect(values).to eq [1, 2, 3, 4]
+    expect(secs).to be < 3
   end
 
   it 'subsequent requests to obtain a final result' do

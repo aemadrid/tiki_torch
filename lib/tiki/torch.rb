@@ -19,14 +19,31 @@ module Tiki
 
     def shutdown
       processes.each do |x|
-        logger.debug " shutting down #{x} ".center(90, '=')
+        logger.debug " shutting down (#{x.class.name}) #{x} ".center(90, '=')
         send(x).shutdown
       end
-      until processes.all?{|x| send(x).stopped? }
-        logger.debug 'waiting for all to stop ...'
+      final_time = Time.now + 10
+      cnt = 0
+      until all_stopped? || Time.now >= final_time
+        cnt += 1
+        logger.debug "[#{cnt}] waiting for all to stop ..."
         sleep 0.25
       end
       logger.debug 'all shut down ...'
+    end
+
+    private
+
+    def all_stopped?
+      stopped_responses.all? { |_, result| result == true }
+    end
+
+    def stopped_responses
+      processes.map do |x|
+        res = send(x).stopped?
+        logger.debug 'stopped_responses : %-15.15s : stopped? : %s' % [x, res]
+        [x, res]
+      end
     end
 
     at_exit { shutdown }

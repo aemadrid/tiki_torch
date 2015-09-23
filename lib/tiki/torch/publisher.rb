@@ -32,9 +32,13 @@ module Tiki
 
       def stop
         debug 'Shutting down ...'
-        @producers.values.each { |p| p.terminate }
+        @producers.values.each do |p|
+          debug "[#{@producers.size}] terminating #{p} ..."
+          p.terminate
+          debug "[#{@producers.size}] terminated #{p} ..."
+        end
         @producers.clear
-        debug 'Shut down ...'
+        debug "[#{@producers.size}] Shutdown!"
       end
 
       alias :shutdown :stop
