@@ -24,6 +24,15 @@ module Tiki
           event.finish
         end
 
+        def on_failure(exception)
+          @end_time = Time.now
+          @failure  = exception
+          error "Event ##{short_id} failed with #{exception.class.name} : #{exception.message}\n  " +
+                  "#{exception.backtrace[0, 5].join("\n  ")}\n in #{time_taken_str}"
+
+          back_off_event || dlq_event || finish_event
+        end
+
         def on_rpc_response(result)
           respond_to = properties[:respond_to]
           request_id = properties[:request_message_id]
@@ -38,15 +47,6 @@ module Tiki
           debug "[#{label}] publishing result: (#{result.class.name}) #{result.inspect}"
           Tiki::Torch.publish respond_to, result, request_message_id: request_id
           [respond_to, request_id]
-        end
-
-        def on_failure(exception)
-          @end_time = Time.now
-          @failure  = exception
-          error "Event ##{short_id} failed with #{exception.class.name} : #{exception.message}\n  " +
-                  "#{exception.backtrace[0, 5].join("\n  ")}\n in #{time_taken_str}"
-
-          back_off_event || dlq_event || finish_event
         end
 
         def on_end
