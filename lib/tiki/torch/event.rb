@@ -9,9 +9,9 @@ module Tiki
       include Logging
 
       attr_reader :message, :payload, :properties
+      attr_accessor :started_at, :succeeded_at, :failed_at
 
       def initialize(message)
-        # debug_var :message, message
         @message              = message
         @payload, @properties = Torch::Transcoder.decode message.body
         @finished             = false
