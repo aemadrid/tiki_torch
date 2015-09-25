@@ -91,40 +91,45 @@ module TestingHelpers
   end
 
   def delete_nsqd_channel(consumer)
-    http_command :nsqd_chn_emp,
-                 "http://#{known_nsq_host}:#{known_nsq_port}/channel/empty",
-                 topic:   consumer.full_topic_name,
-                 channel: consumer.channel
-    http_command :nsqd_chn_del,
-                 "http://#{known_nsq_host}:#{known_nsq_port}/channel/delete",
-                 topic:   consumer.full_topic_name,
-                 channel: consumer.channel
+    http_command :nsqd_chn_emp, topic: consumer.full_topic_name, channel: consumer.channel
+    http_command :nsqd_chn_del, topic: consumer.full_topic_name, channel: consumer.channel
+    http_command :nsqd_chn_emp, topic: consumer.full_dlq_topic_name, channel: consumer.channel
+    http_command :nsqd_chn_del, topic: consumer.full_dlq_topic_name, channel: consumer.channel
   end
 
   def delete_nsqd_topic(consumer)
-    http_command :nsqd_top_emp,
-                 "http://#{known_nsq_host}:#{known_nsq_port}/topic/empty",
-                 topic: consumer.full_topic_name
-    http_command :nsqd_top_del,
-                 "http://#{known_nsq_host}:#{known_nsq_port}/topic/delete",
-                 topic: consumer.full_topic_name
+    http_command :nsqd_top_emp, topic: consumer.full_topic_name
+    http_command :nsqd_top_del, topic: consumer.full_topic_name
+    http_command :nsqd_top_emp, topic: consumer.full_dlq_topic_name
+    http_command :nsqd_top_del, topic: consumer.full_dlq_topic_name
   end
 
   def delete_nsqadmin_topic(consumer)
-    http_command :nsqa_top_emp,
-                 "http://#{known_nsq_host}:#{known_nsqadmin_port}/empty_topic",
-                 topic: consumer.full_topic_name
-    http_command :nsqa_top_del,
-                 "http://#{known_nsq_host}:#{known_nsqadmin_port}/delete_topic",
-                 topic: consumer.full_topic_name
+    http_command :nsqa_top_emp, topic: consumer.full_topic_name
+    http_command :nsqa_top_del, topic: consumer.full_topic_name
+    http_command :nsqa_top_emp, topic: consumer.full_dlq_topic_name
+    http_command :nsqa_top_del, topic: consumer.full_dlq_topic_name
   end
 
-  def http_command(type, url, data = {})
+  def http_command_urls(type)
+    @http_command_urls ||= {
+      nsqd_stats:   "http://#{known_nsq_host}:#{known_nsq_port}/stats?format=json",
+      nsqd_chn_emp: "http://#{known_nsq_host}:#{known_nsq_port}/channel/empty",
+      nsqd_chn_del: "http://#{known_nsq_host}:#{known_nsq_port}/channel/delete",
+      nsqd_top_emp: "http://#{known_nsq_host}:#{known_nsq_port}/topic/empty",
+      nsqd_top_del: "http://#{known_nsq_host}:#{known_nsq_port}/topic/delete",
+      nsqa_top_emp: "http://#{known_nsq_host}:#{known_nsqadmin_port}/empty_topic",
+      nsqa_top_del: "http://#{known_nsq_host}:#{known_nsqadmin_port}/delete_topic",
+    }
+    @http_command_urls[type]
+  end
+
+  def http_command(type, data = {})
+    url = http_command_urls(type)
     qry = URI.encode data.map { |k, v| "#{k}=#{v}" }.join("&")
     url = "#{url}?#{qry}" unless qry.empty?
     uri = URI url
     res = Net::HTTP.post_form uri, {}
-    # puts "HTTP #{type} | #{res.code} | #{res.body} | #{uri}"
     res.code == '200'
   rescue Exception => e
     debug "Exception: #{e.class.name} : #{e.message} |  #{e.backtrace[0, 5].join("\n  ")}"
@@ -144,6 +149,30 @@ module TestingHelpers
 
   def known_nsqadmin_port
     known_nsq.split(':').last.to_i + 21
+  end
+
+  def nsq_stats
+    url = http_command_urls :nsqd_stats
+    uri = URI url
+    res = Net::HTTP.get_response uri
+    raise 'could not obtain NSQ stats' unless res.code == '200'
+    MultiJson.load res.body, symbolize_keys: true
+  end
+
+  def nsq_topic(name)
+    stats = nsq_stats
+    topics = stats[:data][:topics]
+    topics.select { |h| h[:topic_name] == name }.first
+  end
+
+  def expect_nsq_topic_count(name, exp_cnt)
+    topic = nsq_topic(name)
+    if topic
+      actual_cnt = topic[:message_count]
+      expect(actual_cnt).to eq(exp_cnt), "expected topic #{name} to have #{exp_cnt} messages but found #{actual_cnt}"
+    else
+      expect(0).to eq(exp_cnt), "expected topic #{name} to have #{exp_cnt} messages but found 0"
+    end
   end
 
   def debug(msg)

@@ -89,7 +89,6 @@ module Tiki
           def process_loop
             debug 'Started running process loop ...'
             @event_pool = Tiki::Torch::ThreadPool.new(:events, event_pool_size)
-            # debug "got pool #{@event_pool} ..."
             until @stopped
               begin
                 if event_pool.ready?
@@ -134,12 +133,8 @@ module Tiki
               result = instance.process
               instance.on_success result
               instance.on_rpc_response result
-
             rescue => e
-              stats.increment :failed
               instance.on_failure e
-              stats.increment :failed
-
             ensure
               instance.on_end
             end

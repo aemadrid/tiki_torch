@@ -31,7 +31,7 @@ module Tiki
           debug_var :properties, properties
           return nil if respond_to.nil? || request_id.nil?
 
-          Tiki::Torch.publish respond_to, result, request_message_id: request_id
+          publish respond_to, result, request_message_id: request_id
           [:responded, respond_to, request_id]
         end
 
@@ -42,8 +42,14 @@ module Tiki
         private
 
         def dlq_event
-          # @todo Add DLQ (Dead Letter Queue) processing ...
-          false
+          topic_name = self.class.dlq_topic
+          options = {
+            original_message_id: message_id,
+            original_topic: self.class.topic,
+            original_channel: self.class.channel,
+          }
+          publish topic_name, payload, options
+          [:dlq, topic_name]
         end
 
         def finish_event

@@ -11,6 +11,7 @@ module Tiki
 
           attribute :topic, String
           attribute :channel, String, default: lambda { |config, _| config.default_channel_name }, lazy: true
+          attribute :dlq_topic, String
 
           attribute :nsqlookupd, Array[String], default: lambda { |_, _| ::Tiki::Torch.config.nsqlookupd }, lazy: true
           attribute :nsqd, Array[String], default: lambda { |_, _| ::Tiki::Torch.config.nsqd }, lazy: true
@@ -52,7 +53,7 @@ module Tiki
           end
 
           def_delegators :config,
-                         :topic, :topic=, :channel, :channel=,
+                         :topic, :topic=, :channel, :channel=, :dlq_topic, :dlq_topic=,
                          :nsqlookupd, :nsqd,
                          :max_in_flight, :discovery_interval, :msg_timeout,
                          :back_off_strategy, :max_attempts, :back_off_time_unit,
@@ -64,12 +65,21 @@ module Tiki
 
           def consumes(topic_name, options = {})
             config.topic = topic_name
+            config.dlq_topic = config.topic[0,60].strip + '-dlq'
             options.each { |k, v| config.send "#{k}=", v }
           end
 
           def full_topic_name
             prefix   = ::Tiki::Torch.config.topic_prefix
             new_name = topic.to_s
+            return new_name if new_name.start_with? prefix
+
+            "#{prefix}#{new_name}"
+          end
+
+          def full_dlq_topic_name
+            prefix   = ::Tiki::Torch.config.topic_prefix
+            new_name = dlq_topic.to_s
             return new_name if new_name.start_with? prefix
 
             "#{prefix}#{new_name}"
