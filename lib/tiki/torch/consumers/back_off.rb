@@ -21,13 +21,11 @@ module Tiki
         private
 
         def back_off_event
-          debug "Event ##{short_id} will be evaluated to back off ..."
           @back_off = self.class.back_off_strategy.new event, failure, self
           if @back_off.requeue?
-            info "Event ##{short_id} will be reran in #{@back_off.time} ms ..."
             event.requeue @back_off.time
+            [:backoff, @back_off.time]
           else
-            info "Event ##{short_id} will NOT be backed off ..."
             false
           end
         end

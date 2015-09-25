@@ -7,9 +7,17 @@ module Tiki
           base.extend ClassMethods
         end
 
+        def stats
+          self.class.stats
+        end
+
         module ClassMethods
 
-          attr_reader :poller, :event_pool, :stats
+          attr_reader :poller, :event_pool
+
+          def stats
+            @stats ||= Stats.new :started, :processed, :succeeded, :failed, :responded
+          end
 
           def busy_size
             event_pool ? event_pool.busy_size : 0
@@ -23,7 +31,7 @@ module Tiki
             debug "connected : #{res}"
 
             debug 'setting up stats'
-            @stats ||= Stats.new :started, :processed, :succeeded, :failed, :responded
+            stats
 
             @stopped = false
 
@@ -120,29 +128,20 @@ module Tiki
           def process(event)
             instance = new event
             debug_var :instance, instance
+
             begin
-              event.started_at = Time.now
-              start_result = instance.on_start
-              debug_var :start_result, start_result
-              stats.increment :started
+              instance.on_start
               result = instance.process
-              debug_var :result, result
-              stats.increment :processed
-              event.succeeded_at = Time.now
-              success_result = instance.on_success result
-              debug_var :success_result, success_result
-              stats.increment :succeeded
-              rpc_result = instance.on_rpc_response result
-              stats.increment :responded if rpc_result
-              debug_var :success_result, rpc_result
+              instance.on_success result
+              instance.on_rpc_response result
+
             rescue => e
-              event.failed_at = Time.now
-              failure_result = instance.on_failure e
-              debug_var :failure_result, failure_result
               stats.increment :failed
+              instance.on_failure e
+              stats.increment :failed
+
             ensure
               instance.on_end
-              event.finished_at = Time.now
             end
           end
 

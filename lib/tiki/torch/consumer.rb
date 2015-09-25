@@ -13,6 +13,7 @@ module Tiki
       include Hooks
       include BackOff
       include Flow
+      include Monitoring
 
       def self.inherited(subclass)
         ConsumerBroker.register_consumer subclass

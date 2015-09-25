@@ -9,7 +9,6 @@ module Tiki
       include Logging
 
       attr_reader :message, :payload, :properties
-      attr_accessor :started_at, :succeeded_at, :failed_at
 
       def initialize(message)
         @message              = message
