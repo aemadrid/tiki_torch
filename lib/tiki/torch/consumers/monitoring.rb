@@ -11,7 +11,6 @@ module Tiki
 
         def on_success(result)
           @end_time = Time.now
-          stats.increment :processed
           stats.increment :succeeded
           debug_var :result, result
           super result
@@ -26,7 +25,6 @@ module Tiki
 
         def on_failure(exception)
           @end_time = Time.now
-          stats.increment :processed
           stats.increment :failed
           monitor_failure exception, super(exception)
         end

@@ -16,7 +16,7 @@ module Tiki
           attr_reader :poller, :event_pool
 
           def stats
-            @stats ||= Stats.new :started, :processed, :succeeded, :failed, :responded
+            @stats ||= Stats.new :started, :succeeded, :failed, :responded
           end
 
           def busy_size
