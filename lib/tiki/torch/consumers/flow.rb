@@ -7,10 +7,6 @@ module Tiki
           base.extend ClassMethods
         end
 
-        def stats
-          self.class.stats
-        end
-
         module ClassMethods
 
           attr_reader :poller, :event_pool
@@ -140,6 +136,10 @@ module Tiki
             end
           end
 
+        end
+
+        def stats
+          self.class.stats
         end
 
       end

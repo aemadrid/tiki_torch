@@ -15,13 +15,13 @@ module Tiki
         end
 
         def on_success(result)
-          @success  = result
+          @success = result
           event.finish
         end
 
         def on_failure(exception)
-          @failure  = exception
-          back_off_event || dlq_event || finish_event
+          @failure = exception
+          back_off_event || dlq_event
         end
 
         def on_rpc_response(result)
@@ -37,24 +37,6 @@ module Tiki
 
         def on_end
           debug "Event ##{short_id} ended"
-        end
-
-        private
-
-        def dlq_event
-          topic_name = self.class.dlq_topic
-          options = {
-            original_message_id: message_id,
-            original_topic: self.class.topic,
-            original_channel: self.class.channel,
-          }
-          publish topic_name, payload, options
-          [:dlq, topic_name]
-        end
-
-        def finish_event
-          event.finish
-          [:finished]
         end
 
       end

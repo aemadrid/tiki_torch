@@ -13,6 +13,7 @@ module Tiki
       include Hooks
       include BackOff
       include Flow
+      include DLQ
       include Monitoring
 
       def self.inherited(subclass)

@@ -35,11 +35,8 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
 
     config.after(:suite) do
       secs = Tiki::Torch.config.msg_timeout / 1000.0 + 1
-      puts "Waiting for #{secs} secs ..."
       Tiki::Torch::Utils.wait_for secs
-      puts "Waited for #{secs} secs ..."
       TestingHelpers.clear_all_consumers
-      puts "cleared all consumers ..."
     end
 
   end

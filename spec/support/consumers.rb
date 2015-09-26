@@ -87,6 +87,7 @@ end
 class FailingConsumer < Tiki::Torch::Consumer
 
   consumes 'test.failing',
+           msg_timeout:        1_000,
            max_attempts:       3,
            back_off_time_unit: 100 # ms
 
