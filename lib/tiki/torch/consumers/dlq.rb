@@ -41,6 +41,7 @@ module Tiki
           }
           event.finish
           publish topic_name, payload, options
+          stats.increment :dead
           [:dlq, topic_name]
         end
 
