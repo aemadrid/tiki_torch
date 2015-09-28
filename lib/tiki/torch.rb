@@ -22,14 +22,26 @@ module Tiki
         logger.debug " shutting down (#{x.class.name}) #{x} ".center(90, '=')
         send(x).shutdown
       end
-      final_time = Time.now + 10
-      cnt = 0
+
+      final_time, cnt = Time.now + 10, 0
+      logger.debug "all_stopped? : #{all_stopped?}"
       until all_stopped? || Time.now >= final_time
         cnt += 1
         logger.debug "[#{cnt}] waiting for all to stop ..."
         sleep 0.25
       end
+
+      after_shutdown_calls.each_with_index do |blk, idx|
+        logger.debug "running #{idx + 1}/#{after_shutdown_calls.size} call ..."
+        blk.call
+      end
+
       logger.debug 'all shut down ...'
+    end
+
+    def run_after_shutdown(&blk)
+      return false unless block_given?
+      after_shutdown_calls << blk
     end
 
     private
@@ -44,6 +56,10 @@ module Tiki
         logger.debug 'stopped_responses : %-15.15s : stopped? : %s' % [x, res]
         [x, res]
       end
+    end
+
+    def after_shutdown_calls
+      @after_shutdown_calls ||= []
     end
 
     at_exit { shutdown }
