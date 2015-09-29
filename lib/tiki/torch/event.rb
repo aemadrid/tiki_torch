@@ -29,6 +29,16 @@ module Tiki
         message_id[0,3] + message_id[-3,3]
       end
 
+      def parent_message_id
+        properties[:parent_message_id] || ' ' * 32
+      end
+
+      alias :parent_id :parent_message_id
+
+      def parent_short_id
+        parent_message_id[0,3] + parent_message_id[-3,3]
+      end
+
       def finished?
         @finished
       end

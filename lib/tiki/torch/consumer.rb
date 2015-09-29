@@ -26,7 +26,7 @@ module Tiki
 
       attr_reader :event
 
-      delegate [:message, :payload, :properties, :message_id, :short_id] => :event
+      delegate [:message, :payload, :properties, :message_id, :short_id, :parent_short_id] => :event
       delegate [:body, :attempts, :timestamp] => :message
 
     end
