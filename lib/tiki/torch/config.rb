@@ -21,7 +21,7 @@ module Tiki
       attribute :max_attempts, Integer, default: 100
       attribute :back_off_time_unit, Integer, default: 3_000
 
-      attribute :transcoder_code, String, default: 'json'
+      attribute :transcoder_code, String, default: 'yaml'
 
       attribute :event_pool_size, Integer, default: lambda { |_, _| Concurrent.processor_count }
       attribute :events_sleep_times, Integer, default: { idle: 1, busy: 0.1, received: 0.1, empty: 0.5, exception: 0.5 }

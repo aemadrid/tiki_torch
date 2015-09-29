@@ -73,6 +73,7 @@ require 'tiki/torch/config'
 
 require 'tiki/torch/transcoder'
 require 'tiki/torch/transcoders/json'
+require 'tiki/torch/transcoders/yaml'
 
 require 'tiki/torch/stats'
 require 'tiki/torch/consumer_poller'
