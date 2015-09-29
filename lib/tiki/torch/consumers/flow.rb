@@ -1,3 +1,5 @@
+require 'timeout'
+
 module Tiki
   module Torch
     class Consumer
@@ -91,7 +93,7 @@ module Tiki
                   debug "event pool is ready, polling : #{event_pool}"
                   begin
                     msg = poller.pop 0.25
-                  rescue ThreadError
+                  rescue Timeout::Error
                     msg = nil
                   end
                   if msg

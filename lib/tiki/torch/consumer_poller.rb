@@ -39,6 +39,7 @@ module Tiki
           max_in_flight:      options[:max_in_flight] || Torch.config.max_in_flight,
           discovery_interval: options[:discovery_interval] || Torch.config.discovery_interval,
           msg_timeout:        options[:msg_timeout] || Torch.config.msg_timeout,
+          queue:              options[:queue] || Torch.config.queue_class.new
         }.tap do |hsh|
           hsh.delete_if { |_, v| v.is_a?(Array) && v.empty? }
         end
