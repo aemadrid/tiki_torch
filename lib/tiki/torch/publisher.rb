@@ -1,6 +1,3 @@
-require 'thread'
-require 'nsq'
-
 module Tiki
   module Torch
     class Publisher

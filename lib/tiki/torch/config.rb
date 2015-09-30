@@ -1,8 +1,3 @@
-require 'virtus'
-require 'concurrent'
-require 'concurrent-edge'
-require 'concurrent/utility/processor_counter'
-
 module Tiki
   module Torch
     class Config
@@ -24,7 +19,7 @@ module Tiki
 
       attribute :transcoder_code, String, default: 'yaml'
 
-      attribute :queue_class, Object, default: lambda {|_, _| Tiki::Torch::QueueWithSleepTimeout }
+      attribute :queue_class, Object, default: lambda {|_, _| Tiki::Torch::ChannelQueueWithTimeout }
 
       attribute :event_pool_size, Integer, default: lambda { |_, _| Concurrent.processor_count }
       attribute :events_sleep_times, Integer, default: { idle: 1, busy: 0.1, received: 0.1, empty: 0.5, exception: 0.5 }

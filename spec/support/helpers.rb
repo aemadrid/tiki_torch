@@ -81,7 +81,7 @@ module TestingHelpers
   end
 
   def clear_all_consumers
-    $all_consumers.each { |x| clear_consumer x }
+    ($all_consumers || []).each { |x| clear_consumer x }
   end
 
   def clear_consumer(consumer)

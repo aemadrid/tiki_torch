@@ -1,5 +1,3 @@
-require 'socket'
-
 module Tiki
   module Torch
     class Utils

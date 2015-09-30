@@ -1,6 +1,3 @@
-require 'multi_json'
-require 'forwardable'
-
 module Tiki
   module Torch
     class Event

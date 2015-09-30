@@ -1,5 +1,3 @@
-require 'multi_json'
-
 module Tiki
   module Torch
     class JsonTranscoder < Transcoder

@@ -1,5 +1,3 @@
-require 'set'
-
 module Tiki
   module Torch
     class Consumer

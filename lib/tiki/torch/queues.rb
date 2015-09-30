@@ -1,5 +1,3 @@
-require 'thread'
-
 module Tiki
   module Torch
     class QueueWithSleepTimeout
@@ -27,7 +25,7 @@ module Tiki
 
       def pop_with_timeout(timeout = 0.5)
         deadline = Time.now + timeout
-        found = nil
+        found    = nil
         @mutex.synchronize do
           while Time.now < deadline && found.nil?
             if @queue.empty?
@@ -43,6 +41,44 @@ module Tiki
 
       def size
         @mutex.synchronize { @queue.size }
+      end
+
+      alias length size
+
+      def empty?
+        size == 0
+      end
+
+    end
+
+    class ChannelQueueWithTimeout
+
+      def initialize(max = 1_000)
+        @queue = ::Concurrent::Channel.new size: max
+      end
+
+      def push(x)
+        @queue << x
+      end
+
+      alias enq push
+      alias << push
+
+      def pop(timeout = 0.5)
+        item = ::Concurrent::Channel.select do |s|
+          s.take(@queue) { |msg| msg }
+          s.after(timeout)
+        end
+        raise Timeout::Error, "Waited #{timeout}s" unless item
+        item
+      end
+
+      alias deq pop
+      alias shift pop
+      alias pop_with_timeout pop
+
+      def size
+        @queue.size
       end
 
       alias length size

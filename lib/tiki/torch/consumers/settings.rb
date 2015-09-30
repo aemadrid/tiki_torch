@@ -1,5 +1,3 @@
-require 'virtus'
-
 module Tiki
   module Torch
     class Consumer

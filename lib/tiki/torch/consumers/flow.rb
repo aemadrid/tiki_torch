@@ -1,5 +1,3 @@
-require 'timeout'
-
 module Tiki
   module Torch
     class Consumer

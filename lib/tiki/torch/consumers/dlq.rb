@@ -22,7 +22,7 @@ module Tiki
 
           def pop_dlq_message(timeout)
             dlq_poller.pop timeout
-          rescue ThreadError
+          rescue Timeout::Error
             return nil
           end
 

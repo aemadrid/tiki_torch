@@ -1,7 +1,3 @@
-require 'colorize'
-require 'yaml'
-require 'logger'
-
 module Tiki
   module Torch
     module Logging

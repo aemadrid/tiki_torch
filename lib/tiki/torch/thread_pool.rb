@@ -1,6 +1,3 @@
-require 'lifeguard'
-require 'forwardable'
-
 module Tiki
   module Torch
     class ThreadPool

@@ -52,7 +52,11 @@ module Tiki
       def clear_queue
         while connection.size > 0
           debug "T:#{@options[:topic]} | C:#{@options[:channel]} | requeuing messages #{connection.size} in queue ..."
-          pop.requeue(1)
+          begin
+            pop.requeue(1)
+          rescue Timeout::Error
+            break
+          end
         end
       end
 

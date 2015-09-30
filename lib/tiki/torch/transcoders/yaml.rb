@@ -1,5 +1,3 @@
-require 'yaml'
-
 module Tiki
   module Torch
     class YamlTranscoder < Transcoder
