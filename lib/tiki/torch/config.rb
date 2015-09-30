@@ -1,5 +1,6 @@
 require 'virtus'
 require 'concurrent'
+require 'concurrent-edge'
 require 'concurrent/utility/processor_counter'
 
 module Tiki

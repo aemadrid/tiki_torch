@@ -1,4 +1,4 @@
-require 'thread_safe'
+require 'concurrent/thread_safe/util/adder'
 
 module Tiki
   module Torch
