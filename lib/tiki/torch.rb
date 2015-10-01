@@ -84,6 +84,7 @@ end
 
 require 'tiki/torch/utils'
 require 'tiki/torch/logging'
+require 'tiki/torch/queues'
 require 'tiki/torch/config'
 
 require 'tiki/torch/transcoder'

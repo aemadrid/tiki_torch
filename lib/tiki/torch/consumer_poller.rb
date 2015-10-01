@@ -47,7 +47,8 @@ module Tiki
           msg_timeout:        options[:msg_timeout] || Torch.config.msg_timeout,
           queue:              options[:queue] || Torch.config.queue_class.new
         }.tap do |hsh|
-          hsh.delete_if { |_, v| v.is_a?(Array) && v.empty? }
+          hsh.delete(:nsqd) if hsh[:nsqd].respond_to?(:empty?) && hsh[:nsqd].empty?
+          hsh.delete(:nsqlookupd) if hsh[:nsqlookupd].respond_to?(:empty?) && hsh[:nsqlookupd].empty?
         end
       end
 
