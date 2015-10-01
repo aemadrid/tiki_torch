@@ -82,7 +82,6 @@ module Tiki
   end
 end
 
-require 'tiki/torch/queues'
 require 'tiki/torch/utils'
 require 'tiki/torch/logging'
 require 'tiki/torch/config'

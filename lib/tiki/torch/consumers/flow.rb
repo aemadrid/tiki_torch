@@ -89,11 +89,7 @@ module Tiki
               begin
                 if event_pool.ready?
                   debug "event pool is ready, polling : #{event_pool}"
-                  begin
-                    msg = poller.pop 0.25
-                  rescue Timeout::Error
-                    msg = nil
-                  end
+                  msg = poller.pop
                   if msg
                     debug "got msg : #{msg}"
                     event = Event.new msg

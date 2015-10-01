@@ -7,7 +7,7 @@ module Tiki
 
       attr_reader :connection
 
-      delegate [:connected?, :pop] => :connection
+      delegate [:connected?] => :connection
 
       def initialize(options = {})
         raise 'Missing topic name' unless options[:topic]
@@ -15,6 +15,12 @@ module Tiki
 
         @options = setup_options options
         setup_connection @options
+      end
+
+      def pop(non_block = true)
+        connection.pop non_block
+      rescue ThreadError
+        return nil
       end
 
       def close
@@ -52,11 +58,7 @@ module Tiki
       def clear_queue
         while connection.size > 0
           debug "T:#{@options[:topic]} | C:#{@options[:channel]} | requeuing messages #{connection.size} in queue ..."
-          begin
-            pop.requeue(1)
-          rescue Timeout::Error
-            break
-          end
+          pop.requeue 1
         end
       end
 
