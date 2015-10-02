@@ -28,6 +28,10 @@ module TestingHelpers
 
     alias :<< :add
 
+    def size
+      @all.size
+    end
+
     def to_s
       %{#<#{self.class.name} size=#{@all.size} all=#{@all.inspect}>}
     end
@@ -177,5 +181,15 @@ module TestingHelpers
 
   def debug(msg)
     puts msg
+  end
+
+  def time_it
+    start_time = Time.now
+    yield
+    Time.now - start_time
+  end
+
+  def varied_secs(max = 60, min = 5)
+    rand(max - min + 1) + min
   end
 end

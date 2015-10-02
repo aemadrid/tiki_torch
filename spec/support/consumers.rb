@@ -58,6 +58,20 @@ class SlowConsumer < Tiki::Torch::Consumer
 
 end
 
+class VariedSlowConsumer < Tiki::Torch::Consumer
+
+  include TestConsumerHelper
+
+  consumes 'test.varied_slow', msg_timeout: 180_000
+
+  def process
+    sleep_if_necessary
+    $lines << 'varied_slow'
+    :ok
+  end
+
+end
+
 class MultipleFirstConsumer < Tiki::Torch::Consumer
 
   include TestConsumerHelper

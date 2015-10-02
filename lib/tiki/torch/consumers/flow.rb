@@ -12,7 +12,7 @@ module Tiki
           attr_reader :poller, :event_pool
 
           def stats
-            @stats ||= Stats.new :started, :succeeded, :failed, :responded, :dead
+            @stats ||= Stats.new :started, :succeeded, :failed, :responded, :dead, :requeued
           end
 
           def busy_size
@@ -46,8 +46,12 @@ module Tiki
             debug 'sent stop message ...'
           end
 
+          def stopped?
+            @stopped
+          end
+
           def polling?
-            !@stopped
+            @polling
           end
 
           def stop_events
@@ -85,38 +89,57 @@ module Tiki
           def process_loop
             debug 'Started running process loop ...'
             @event_pool = Tiki::Torch::ThreadPool.new(:events, event_pool_size)
-            until @stopped
-              begin
-                if event_pool.ready?
-                  debug "event pool is ready, polling : #{event_pool}"
-                  msg = poller.pop
-                  if msg
-                    debug "got msg : #{msg}"
-                    event = Event.new msg
-                    debug "got event : #{event}, going to process async ..."
-                    event_pool.async { process event }
-                    sleep_for :received unless @stopped
-                  else
-                    sleep_for :empty unless @stopped
-                  end
-                else
-                  sleep_for :busy unless @stopped
-                end
-              rescue Exception => e
-                error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
-                sleep_for :exception unless @stopped
-              end
-            end
+            debug "got @event_pool : #{@event_pool.inspect}"
+            poll_and_process_message until @stopped
             debug 'Finished running process loop ...'
           end
 
+          def poll_and_process_message
+            if event_pool && event_pool.ready?
+              @polling = true
+              debug "event pool is ready, polling : #{event_pool}"
+              msg = poller ? poller.pop : nil
+              process_message msg
+              @polling = false
+            else
+              sleep_for :busy
+            end
+          rescue Exception => e
+            error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
+            sleep_for :exception
+          end
+
+          def process_message(msg)
+            if msg
+              debug "got msg : (#{msg.class.name}) ##{msg.id}"
+              event = Event.new msg
+              debug "got event : (#{event.class.name}) ##{event.short_id}, going to process async ..."
+              if event_pool && event_pool.ready?
+                debug "sending event ##{event.short_id} to event pool ..."
+                event_pool.async { process_event event }
+                sleep_for :received
+              else
+                debug "event pool was not there or ready to process, requeueing event ##{event.short_id} ..."
+                event.requeue
+                stats.increment :requeued
+              end
+            else
+              sleep_for :empty
+            end
+          rescue Exception => e
+            error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
+            sleep_for :exception
+          end
+
           def sleep_for(name)
+            return nil if @stopped
+
             sleep_time = events_sleep_times[name]
             debug "going to sleep on #{name} for #{sleep_time} secs ..."
             sleep sleep_time
           end
 
-          def process(event)
+          def process_event(event)
             instance = new event
             debug_var :instance, instance
 
