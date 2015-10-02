@@ -95,18 +95,22 @@ module Tiki
           end
 
           def poll_and_process_message
-            if event_pool && event_pool.ready?
-              @polling = true
-              debug "event pool is ready, polling : #{event_pool}"
-              msg = poller ? poller.pop : nil
-              process_message msg
-              @polling = false
+            if event_pool
+              if event_pool.ready?
+                @polling = true
+                debug "event pool is ready, polling : #{event_pool}"
+                msg = poller ? poller.pop : nil
+                process_message msg
+                @polling = false
+              else
+                sleep_for :busy, event_pool.tag
+              end
             else
-              sleep_for :busy
+              sleep_for :busy, 'no event pool present'
             end
           rescue Exception => e
             error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
-            sleep_for :exception
+            sleep_for :exception, "#{e.class.name}/#{e.message}"
           end
 
           def process_message(msg)
@@ -115,7 +119,7 @@ module Tiki
               event = Event.new msg
               debug "got event : (#{event.class.name}) ##{event.short_id}, going to process async ..."
               if event_pool && event_pool.ready?
-                debug "sending event ##{event.short_id} to event pool ..."
+                debug "sending event ##{event.short_id} to event pool #{event_pool}..."
                 event_pool.async { process_event event }
                 sleep_for :received
               else
@@ -128,15 +132,17 @@ module Tiki
             end
           rescue Exception => e
             error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
-            sleep_for :exception
+            sleep_for :exception, "#{e.class.name}/#{e.message}"
           end
 
-          def sleep_for(name)
+          def sleep_for(name, msg = nil)
             return nil if @stopped
 
             sleep_time = events_sleep_times[name]
-            debug "going to sleep on #{name} for #{sleep_time} secs ..."
+            debug "going to sleep on #{name}#{msg ? " (#{msg})" : ''}for #{sleep_time} secs ..."
             sleep sleep_time
+          rescue Exception => e
+            error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
           end
 
           def process_event(event)

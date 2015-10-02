@@ -16,15 +16,19 @@ module Tiki
         nsqlookupd = Array(properties.delete(:nsqlookupd) || Torch.config.nsqlookupd).flatten
         nsqd       = Array(properties.delete(:nsqd) || Torch.config.nsqd).flatten
 
+        message_id = SecureRandom.hex
         properties = Torch.config.default_message_properties.dup.
-          merge(message_id: SecureRandom.hex).
+          merge(message_id: message_id).
           merge(properties)
         encoded    = Torch::Transcoder.encode payload, properties, code
 
-        topic = get_or_set(full_name, nsqlookupd, nsqd)
-        res   = topic.write encoded
-        debug_var :res, res
-        res
+        topic           = get_or_set(full_name, nsqlookupd, nsqd)
+        short_id        = message_id[0, 3] + message_id[-3, 3]
+        parent_id       = properties[:parent_message_id]
+        parent_short_id = parent_id ? parent_id[0, 3] + parent_id[-3, 3] : nil
+        debug "publishing ##{short_id}#{parent_short_id ? ":##{parent_short_id}" : ''} ..."
+        topic.write encoded
+        true
       end
 
       def stop
@@ -68,7 +72,7 @@ module Tiki
       end
 
       def set(key, full_name, nsqlookupd, nsqd)
-        options         = Torch.config.producer_connection_options(full_name).tap do |hsh|
+        options = Torch.config.producer_connection_options(full_name).tap do |hsh|
           hsh.delete_if { |_, v| v.is_a?(Array) && v.empty? }
           hsh[:nsqlookupd] = nsqlookupd unless nsqlookupd.empty?
           hsh[:nsqd]       = nsqd unless nsqd.empty?

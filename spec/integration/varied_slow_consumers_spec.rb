@@ -23,16 +23,20 @@ describe 'varied slow consumers', integration: true do
           results = []
 
           took = time_it do
+            debug " [ #{Time.now} : requesting ] ".center(120, '=')
             futures = qty.times.map { Tiki::Torch.request $consumer.topic, payload, options }
+            debug " [ #{Time.now} : gathering ] ".center(120, '=')
             results = futures.map { |x| x.value }
+            debug " [ #{Time.now} : done ] ".center(120, '=')
           end
 
-          found_hsh = results.each_with_object(Hash.new(0)) { |x, h| h[x.to_s] += 1 }
-          puts "found_hsh : (#{found_hsh.class.name}) #{found_hsh.inspect}"
+          found_hsh = results.each_with_object(Hash.new(0)) { |x, h| h[x.to_s] += 1; h['total'] += 1 }
+
+          puts "found_hsh : (#{found_hsh.class.name}) #{found_hsh.to_yaml}"
           ratio = 1 + qty * (qty > $consumer.event_pool_size ? 1 : 0.25)
 
-          expect(found_hsh['']).to eq(0), "expected list of results to have no failures but found #{found_hsh['']}"
-          expect(found_hsh['']).to eq(0), "expected list of results to have #{qty} successes but found #{found_hsh['ok']}"
+          expect(found_hsh['']).to eq(0), "expected list of results to have no failures but found #{found_hsh['']}/#{found_hsh['total']}"
+          expect(found_hsh['']).to eq(0), "expected list of results to have #{qty} successes but found #{found_hsh['ok']}/#{found_hsh['total']}"
           expect(took).to be_within(ratio).of(secs), "expected to finish in #{secs}s with a range of #{ratio}s but finished in #{took}s"
         end
       end

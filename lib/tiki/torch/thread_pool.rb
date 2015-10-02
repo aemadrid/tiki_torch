@@ -32,8 +32,12 @@ module Tiki
         @pool.async *args, &block
       end
 
+      def tag
+        "#{busy_size}/#{@pool.pool_size}|#{free? ? 'F' : 'f'}:#{ready? ? 'R' : 'r'}:#{busy? ? 'B' : 'b'}"
+      end
+
       def to_s
-        %{#<TP:#{@name}|#{busy_size}/#{@pool.pool_size}|#{free? ? 'F' : 'f'}:#{ready? ? 'R' : 'r'}:#{busy? ? 'B' : 'b'}>}
+        %{#<TP:#{@name}|#{tag}>}
       end
 
       alias :inspect :to_s

@@ -16,13 +16,13 @@ module TestConsumerHelper
     secs = payload.is_a?(Hash) ? payload[:sleep_time].to_f : nil
     if secs
       wake_up = Time.now + secs
-      debug "> Sleeping until #{wake_up} (#{secs}s) ..."
+      debug "[#{event.short_id}]> Sleeping until #{wake_up} (#{secs}s) ..."
       while Time.now < wake_up
         sleep period_time
         event.touch if touch_event
       end
     else
-      debug '> no need to sleep ...'
+      debug "[#{event.short_id}]> no need to sleep ..."
     end
   end
 
