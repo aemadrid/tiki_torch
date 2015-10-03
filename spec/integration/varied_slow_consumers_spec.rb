@@ -1,4 +1,4 @@
-describe 'varied slow consumers', integration: true do
+describe 'varied slow consumers', integration: true, performance: true do
 
   before(:context) { $consumer = VariedSlowConsumer }
 
