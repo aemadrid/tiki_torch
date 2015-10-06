@@ -1,5 +1,5 @@
-describe 'custom consumer', integration: true do
-  before(:context) { $consumer =  CustomizedConsumer  }
+describe 'custom consumer', integration: true, focus: true do
+  before(:context) { $consumer = CustomizedConsumer }
 
   it 'receives successful message and overrides successful hooks' do
     Tiki::Torch.publish $consumer.topic, status: 'ok'

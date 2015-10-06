@@ -20,6 +20,9 @@ module Tiki
           end
 
           def start
+            return true if running?
+
+            @running = true
             debug 'starting ...'
 
             @poller = Tiki::Torch::ConsumerPoller.new poller_options
@@ -38,37 +41,35 @@ module Tiki
           end
 
           def stop
+            return false if stopped?
+
             debug 'stopping ...'
             @stopped = true
-            poller.close
+            poller.close if poller
             @poller = nil
             Thread.new { stop_events }
             debug 'sent stop message ...'
           end
 
+          def running?
+            !!@running
+          end
+
           def stopped?
-            @stopped
+            !!@stopped
           end
 
           def polling?
-            @polling
+            !!@polling
           end
+
+          private
 
           def stop_events
             debug 'stopping events ...'
-            if event_pool
-              cnt = 0
-              until event_pool.free?
-                cnt += 1
-                debug "[#{cnt}] event #{event_pool} is not free"
-                sleep 0.25
-              end
-              debug "shutting down #{event_pool} ..."
-              event_pool.shutdown
-              @event_pool = nil
-              @process_loop_thread.join
-              @process_loop_thread.terminate
-            end
+            stop_event_pool
+            stop_loop_thread
+            @running = false
             debug 'done stopping events ...'
           end
 
@@ -92,6 +93,27 @@ module Tiki
             debug "got @event_pool : #{@event_pool.inspect}"
             poll_and_process_message until @stopped
             debug 'Finished running process loop ...'
+          end
+
+          def stop_loop_thread
+            if @process_loop_thread
+              @process_loop_thread.join
+              @process_loop_thread.terminate
+            end
+          end
+
+          def stop_event_pool
+            if event_pool
+              cnt = 0
+              until event_pool.free?
+                cnt += 1
+                debug "[#{cnt}] event #{event_pool} is not free"
+                sleep 0.25
+              end
+              debug "shutting down #{event_pool} ..."
+              event_pool.shutdown
+              @event_pool = nil
+            end
           end
 
           def poll_and_process_message
@@ -135,16 +157,6 @@ module Tiki
             sleep_for :exception, "#{e.class.name}/#{e.message}"
           end
 
-          def sleep_for(name, msg = nil)
-            return nil if @stopped
-
-            sleep_time = events_sleep_times[name]
-            debug "going to sleep on #{name}#{msg ? " (#{msg})" : ''}for #{sleep_time} secs ..."
-            sleep sleep_time
-          rescue Exception => e
-            error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
-          end
-
           def process_event(event)
             instance = new event
             debug_var :instance, instance
@@ -159,6 +171,16 @@ module Tiki
             ensure
               instance.on_end
             end
+          end
+
+          def sleep_for(name, msg = nil)
+            return nil if @stopped
+
+            sleep_time = events_sleep_times[name]
+            debug "going to sleep on #{name}#{msg ? " (#{msg})" : ''}for #{sleep_time} secs ..."
+            sleep sleep_time
+          rescue Exception => e
+            error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
           end
 
         end
