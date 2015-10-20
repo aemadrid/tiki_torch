@@ -8,32 +8,25 @@ module Tiki
           include Virtus.model
 
           attribute :topic, String
-          attribute :channel, String, default: lambda { |config, _| config.default_channel_name }, lazy: true
-          attribute :dlq_topic, String
+          attribute :topic_prefix, String, default: lambda { |_, _| Torch.config.topic_prefix }, lazy: true
+          attribute :channel, String, default: 'events'
+          attribute :dlq_postfix, String, default: lambda { |_, _| Torch.config.dlq_postfix }, lazy: true
 
-          attribute :nsqlookupd, Array[String], default: lambda { |_, _| ::Tiki::Torch.config.nsqlookupd }, lazy: true
-          attribute :nsqd, Array[String], default: lambda { |_, _| ::Tiki::Torch.config.nsqd }, lazy: true
+          attribute :visibility_timeout, Integer, default: lambda { |_, _| Torch.config.visibility_timeout }, lazy: true
+          attribute :message_retention_period, Integer, default: lambda { |_, _| Torch.config.message_retention_period }, lazy: true
 
-          attribute :max_in_flight, Integer, default: lambda { |_, _| ::Tiki::Torch.config.max_in_flight }, lazy: true
-          attribute :discovery_interval, Integer, default: lambda { |_, _| ::Tiki::Torch.config.discovery_interval }, lazy: true
-          attribute :msg_timeout, Integer, default: lambda { |_, _| ::Tiki::Torch.config.msg_timeout }, lazy: true
+          attribute :max_in_flight, Integer, default: lambda { |_, _| Torch.config.max_in_flight }, lazy: true
+          attribute :max_attempts, Integer, default: lambda { |_, _| Torch.config.max_attempts }, lazy: true
 
-          attribute :back_off_strategy, Integer, default: lambda { |_, _| ::Tiki::Torch.config.back_off_strategy }, lazy: true
-          attribute :max_attempts, Integer, default: lambda { |_, _| ::Tiki::Torch.config.max_attempts }, lazy: true
-          attribute :back_off_time_unit, Integer, default: lambda { |_, _| ::Tiki::Torch.config.back_off_time_unit }, lazy: true
-
-          attribute :event_pool_size, Integer, default: lambda { |_, _| ::Tiki::Torch.config.event_pool_size }, lazy: true
-          attribute :events_sleep_times, Integer, default: lambda { |_, _| ::Tiki::Torch.config.events_sleep_times }, lazy: true
+          attribute :event_pool_size, Integer, default: lambda { |_, _| Torch.config.event_pool_size }, lazy: true
+          attribute :transcoder_code, String, default: lambda { |_, _| Torch.config.transcoder_code }, lazy: true
+          attribute :events_sleep_times, Hash, default: lambda { |_, _| Torch.config.events_sleep_times }, lazy: true
 
           attr_reader :consumer
 
           def initialize(consumer, options = {})
             @consumer = consumer
             super(options)
-          end
-
-          def default_channel_name
-            @consumer.name.underscore.gsub('/', '-')
           end
 
         end
@@ -51,11 +44,10 @@ module Tiki
           end
 
           def_delegators :config,
-                         :topic, :topic=, :channel, :channel=, :dlq_topic, :dlq_topic=,
-                         :nsqlookupd, :nsqd,
-                         :max_in_flight, :discovery_interval, :msg_timeout,
-                         :back_off_strategy, :max_attempts, :back_off_time_unit,
-                         :event_pool_size, :events_sleep_times
+                         :topic, :topic=, :topic_prefix, :topic_prefix=, :channel, :channel=, :dlq_postfix, :dlq_postfix=,
+                         :visibility_timeout, :visibility_timeout=, :message_retention_period, :message_retention_period=,
+                         :max_in_flight, :max_in_flight=, :max_attempts, :max_attempts=,
+                         :event_pool_size, :transcoder_code, :events_sleep_times
 
           def configure
             yield config
@@ -63,24 +55,16 @@ module Tiki
 
           def consumes(topic_name, options = {})
             config.topic = topic_name
-            config.dlq_topic = config.topic[0,60].strip + '-dlq'
             options.each { |k, v| config.send "#{k}=", v }
           end
 
-          def full_topic_name
-            prefix   = ::Tiki::Torch.config.topic_prefix
-            new_name = topic.to_s
-            return new_name if new_name.start_with? prefix
-
-            "#{prefix}#{new_name}"
+          def queue_name
+            prefix = config.topic_prefix || ::Tiki::Torch.config.topic_prefix || 'prefix'
+            "#{prefix}-#{topic}-#{channel}"
           end
 
-          def full_dlq_topic_name
-            prefix   = ::Tiki::Torch.config.topic_prefix
-            new_name = dlq_topic.to_s
-            return new_name if new_name.start_with? prefix
-
-            "#{prefix}#{new_name}"
+          def dead_letter_queue_name
+            "#{queue_name}-#{dlq_postfix}"
           end
 
         end

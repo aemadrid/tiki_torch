@@ -2,18 +2,27 @@ module Tiki
   module Torch
     describe Config do
       context 'default' do
+        before(:context) { TestingHelpers.config_torch }
         subject { ::Tiki::Torch.config }
         context 'values' do
-          it('topic_prefix            ') { expect(subject.topic_prefix).to eq 'tiki_torch-' }
+          it('access_key_id           ') { expect(subject.access_key_id).to eq ENV.fetch('AWS_TEST_ACCESS_KEY_ID', 'fake_access_key') }
+          it('secret_access_key       ') { expect(subject.secret_access_key).to eq ENV.fetch('AWS_TEST_SECRET_ACCESS_KEY', 'fake_secret_key') }
+          it('region                  ') { expect(subject.region).to eq ENV.fetch('AWS_TEST_REGION', 'fake_region') }
+
+          it('sqs_endpoint            ') { expect(subject.sqs_endpoint).to eq "http://#{$fake_sqs.options[:sqs_endpoint]}:#{$fake_sqs.options[:sqs_port]}" }
+          it('session_token           ') { expect(subject.session_token).to be_nil }
+
+          it('topic_prefix            ') { expect(subject.topic_prefix).to eq 'tiki_torch' }
+          it('dlq_postfix             ') { expect(subject.dlq_postfix).to eq 'dlq' }
+          it('channel                 ') { expect(subject.channel).to eq 'events' }
+          it('visibility_timeout      ') { expect(subject.visibility_timeout).to eq 600 }
+          it('message_retention_period') { expect(subject.message_retention_period).to eq 345600 }
+
           it('max_in_flight           ') { expect(subject.max_in_flight).to eq 10 }
-          it('discovery_interval      ') { expect(subject.discovery_interval).to eq 60 }
-          it('msg_timeout             ') { expect(subject.msg_timeout).to eq 5_000 }
-          it('max_attempts            ') { expect(subject.max_attempts).to eq 100 }
-          it('back_off_time_unit      ') { expect(subject.back_off_time_unit).to eq 3000 }
-          it('transcoder_code         ') { expect(subject.transcoder_code).to eq 'yaml' }
-          it('queue_class             ') { expect(subject.queue_class).to eq Queue }
-          it('processor_count         ') { expect(subject.processor_count).to eq Concurrent.processor_count }
+          it('max_attempts            ') { expect(subject.max_attempts).to eq 10 }
+
           it('event_pool_size         ') { expect(subject.event_pool_size).to eq Concurrent.processor_count }
+          it('transcoder_code         ') { expect(subject.transcoder_code).to eq 'yaml' }
           it('events_sleep_times      ') { expect(subject.events_sleep_times).to eq({ idle: 1, busy: 0.1, received: 0.1, empty: 0.5, exception: 0.5 }) }
         end
         context 'configure block' do

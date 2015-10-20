@@ -5,67 +5,36 @@ module Tiki
       include Logging
       extend Forwardable
 
-      attr_reader :connection
+      def_delegators :@consumer, :queue_name
 
-      delegate [:connected?] => :connection
-
-      def initialize(options = {})
-        raise 'Missing topic name' unless options[:topic]
-        raise 'Missing channel name' unless options[:channel]
-
-        @options = setup_options options
-        setup_connection @options
+      def initialize(consumer, client)
+        @consumer = consumer
+        @client   = client
       end
 
-      def pop(non_block = true)
-        connection.pop non_block
-      rescue ThreadError
-        return nil
-      end
-
-      def close
-        clear_queue
-        close_connection
+      def pop(qty = 1, timeout = 0)
+        options = {
+          max_number_of_messages: max_qty(qty),
+          wait_time_seconds:      timeout,
+          visibility_timeout:     @consumer.visibility_timeout,
+        }
+        queue.receive_messages options
       end
 
       def to_s
-        %{#<CP|#{@options[:topic]}|#{@options[:channel]}|#{connection.size}>}
+        %{#<CP|#{queue_name}>}
       end
 
       alias :inspect :to_s
 
       private
 
-      def setup_options(options)
-        {
-          nsqd:               Array(options[:nsqd] || Torch.config.nsqd).flatten,
-          nsqlookupd:         Array(options[:nsqlookupd] || Torch.config.nsqlookupd).flatten,
-          topic:              options[:topic],
-          channel:            options[:channel],
-          max_in_flight:      options[:max_in_flight] || Torch.config.max_in_flight,
-          discovery_interval: options[:discovery_interval] || Torch.config.discovery_interval,
-          msg_timeout:        options[:msg_timeout] || Torch.config.msg_timeout,
-          queue:              options[:queue] || Torch.config.queue_class.new
-        }.tap do |hsh|
-          hsh.delete(:nsqd) if hsh[:nsqd].respond_to?(:empty?) && hsh[:nsqd].empty?
-          hsh.delete(:nsqlookupd) if hsh[:nsqlookupd].respond_to?(:empty?) && hsh[:nsqlookupd].empty?
-        end
+      def queue
+        @client.queue queue_name
       end
 
-      def setup_connection(options)
-        @connection = ::Nsq::Consumer.new options
-      end
-
-      def clear_queue
-        while connection.size > 0
-          debug "T:#{@options[:topic]} | C:#{@options[:channel]} | requeuing messages #{connection.size} in queue ..."
-          pop.requeue 1
-        end
-      end
-
-      def close_connection
-        debug "T:#{@options[:topic]} | C:#{@options[:channel]} | closing connection  ..."
-        connection.terminate
+      def max_qty(qty)
+        qty > 10 ? 10 : qty
       end
 
     end

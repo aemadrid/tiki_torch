@@ -4,7 +4,7 @@ module Tiki
       module Hooks
 
         def self.included(base)
-          base.send :attr_reader, :success, :failure, :back_off
+          base.send :attr_reader, :success, :failure
         end
 
         def on_start
@@ -21,18 +21,6 @@ module Tiki
 
         def on_failure(exception)
           @failure = exception
-          back_off_event || dlq_event
-        end
-
-        def on_rpc_response(result)
-          respond_to = properties[:respond_to]
-          request_id = properties[:request_message_id]
-
-          debug_var :properties, properties
-          return nil if respond_to.nil? || request_id.nil?
-
-          publish respond_to, result, request_message_id: request_id
-          [:responded, respond_to, request_id]
         end
 
         def on_end

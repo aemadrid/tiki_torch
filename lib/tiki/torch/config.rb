@@ -5,41 +5,28 @@ module Tiki
       include Virtus.model
       include Logging
 
-      attribute :nsqlookupd, Array[String], default: lambda { |_, _| [ENV['NSLOOKUPD_ADDRESS']].compact }
-      attribute :nsqd, Array[String], default: lambda { |config, _| config.safe_default_nsqd_address }
+      attribute :access_key_id, String, default: lambda { |_, _| ENV['AWS_ACCESS_KEY_ID'] }
+      attribute :secret_access_key, String, default: lambda { |_, _| ENV['AWS_SECRET_ACCESS_KEY'] }
+      attribute :region, String, default: lambda { |_, _| ENV['AWS_REGION'] }
 
-      attribute :topic_prefix, String, default: 'tiki_torch-'
+      attribute :sqs_endpoint, String
+      attribute :session_token, String
+
+      attribute :topic_prefix, String, default: 'tiki_torch'
+      attribute :dlq_postfix, String, default: 'dlq'
+      attribute :channel, String, default: 'events'
+      attribute :visibility_timeout, Integer, default: 600
+      attribute :message_retention_period, Integer, default: 345600
+
       attribute :max_in_flight, Integer, default: 10
-      attribute :discovery_interval, Integer, default: 60
-      attribute :msg_timeout, Integer, default: 60_000
-
-      attribute :back_off_strategy, Class
-      attribute :max_attempts, Integer, default: 100
-      attribute :back_off_time_unit, Integer, default: 3_000
-
-      attribute :transcoder_code, String, default: 'yaml'
-
-      attribute :queue_class, Object, default: lambda {|_, _| Queue }
+      attribute :max_attempts, Integer, default: 10
 
       attribute :event_pool_size, Integer, default: lambda { |_, _| Concurrent.processor_count }
-      attribute :events_sleep_times, Integer, default: { idle: 1, busy: 0.1, received: 0.1, empty: 0.5, exception: 0.5 }
-      attribute :processor_count, Integer, default: lambda { |_, _| Concurrent.processor_count }
-
-      def producer_connection_options(topic_name)
-        options              = { topic: topic_name }
-        options[:nsqlookupd] = nsqlookupd unless nsqlookupd.empty?
-        options[:nsqd]       = nsqd unless nsqd.empty?
-        options
-      end
+      attribute :transcoder_code, String, default: 'yaml'
+      attribute :events_sleep_times, Hash, default: { idle: 1, busy: 0.1, received: 0.1, empty: 0.5, exception: 0.5 }
 
       def default_message_properties
         @default_message_properties ||= {}
-      end
-
-      def safe_default_nsqd_address
-        return nil unless nsqlookupd.empty?
-        [ENV['NSQD_ADDRESS']] unless ENV['NSQD_ADDRESS'].nil?
-        ['localhost:4150']
       end
 
     end
@@ -53,6 +40,18 @@ module Tiki
     end
 
     config
+
+    def aws_options
+      @aws_options ||= {
+        access_key_id:     config.access_key_id,
+        secret_access_key: config.secret_access_key,
+        region:            config.region,
+      }
+    end
+
+    def setup_aws(options = {})
+      ::Aws.config = aws_options.merge options
+    end
 
   end
 end

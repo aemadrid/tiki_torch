@@ -18,7 +18,7 @@ module Tiki
           registry.find { |klass| klass.code == code.to_s }
         end
 
-        def encode(payload = {}, properties = {}, code = Torch.config.transcoder_code)
+        def encode(payload = {}, properties = {}, code = 'yaml')
           transcoder = transcoder_for(code)
           raise "Unknown transcoder code [#{code}]" unless transcoder
 

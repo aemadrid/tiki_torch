@@ -7,25 +7,21 @@ module Tiki
       include Logging
 
       include Settings
-      include Publishing
       include Hooks
-      include BackOff
-      include Flow
-      include DLQ
-      include Monitoring
+      include Publishing
 
       def self.inherited(subclass)
-        ConsumerBroker.register_consumer subclass
+        ConsumerRegistry.add subclass
       end
 
-      def initialize(event)
+      def initialize(event, broker)
         @event = event
+        @broker = broker
       end
 
-      attr_reader :event
+      attr_reader :event, :broker
 
-      delegate [:message, :payload, :properties, :message_id, :short_id, :parent_short_id] => :event
-      delegate [:body, :attempts, :timestamp] => :message
+      delegate [:message, :payload, :properties] => :event
 
     end
   end

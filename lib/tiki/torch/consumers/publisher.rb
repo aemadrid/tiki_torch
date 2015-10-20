@@ -3,16 +3,23 @@ module Tiki
     class Consumer
       module Publishing
 
-        def publish(topic, payload, properties = {})
-          Torch.publish topic, payload, default_message_properties.merge(properties.dup)
+        def publish(queue_name, payload, properties = {})
+          defaults = Torch.config.default_message_properties
+          custom   = { parent_message_id: event.message_id }.merge properties.dup
+          Torch.publish queue_name, payload, defaults.merge(custom)
         end
 
-        private
+        def self.included(base)
+          base.extend ClassMethods
+        end
 
-        def default_message_properties
-          {
-            parent_message_id: event.message_id,
-          }
+        module ClassMethods
+
+          def publish(payload, properties = {})
+            defaults = Torch.config.default_message_properties
+            Torch.publish queue_name, payload, defaults.merge(properties.dup)
+          end
+
         end
 
       end

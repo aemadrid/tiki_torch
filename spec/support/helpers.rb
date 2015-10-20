@@ -1,12 +1,25 @@
 require 'rspec/expectations'
+require 'rspec/core/shared_context'
+require 'json'
+require 'socket'
+require 'timeout'
 
 module TestingHelpers
 
+  extend RSpec::Core::SharedContext
+
   class LogLines
+
+    include Tiki::Torch::Logging
+
     attr_reader :all
 
     def initialize
       @all = Concurrent::Array.new
+    end
+
+    def sorted
+      all.sort { |a, b| a <=> b }
     end
 
     def clear
@@ -18,11 +31,24 @@ module TestingHelpers
     end
 
     def wait_for_size(nr, timeout = 15)
-      start_time = Time.now
-      last_time  = start_time + timeout
-      while @all.size < nr && Time.now < last_time
+      start_time  = Time.now
+      last_time   = start_time + timeout
+      cnt, status = 0, nil
+      loop do
+        cnt    += 1
+        status = if @all.size >= nr
+                   :enough
+                 elsif Time.now >= last_time
+                   :timed_out
+                 else
+                   :keep
+                 end
+        break unless status == :keep
+        debug 'cnt : %i | status : %s | size: %i/%i | left : %.2fs' % [cnt, status, @all.size, nr, last_time - Time.now] if cnt % 10 == 0
         sleep 0.05
       end
+      took = last_time - Time.now
+      debug 'cnt : %i | status : %s | size: %i/%i | took : %.2fs (%.2fr/s)' % [cnt, status, @all.size, nr, took, cnt / took.to_f]
       Time.now - start_time
     end
 
@@ -40,156 +66,172 @@ module TestingHelpers
 
   end
 
-  extend self
+  module Consumer
 
-  def setup_vars
-    $all_consumers     ||= Tiki::Torch.consumer_broker.consumers.dup
-    $current_consumers = [$consumers].flatten.compact
-    $current_consumers = [$consumer].compact if $current_consumers.empty?
-    $current_consumers = $all_consumers.dup if $current_consumers.empty?
-    $current_consumers << Tiki::Torch::Node
-  end
+    private
 
-  def setup_torch
-    Tiki::Torch.configure do |c|
-      if (lkd = ENV['NSLOOKUPD_ADDRESS'])
-        c.nsqlookupd = lkd
-      elsif (nsd = ENV['NSQD_ADDRESS'])
-        c.nsqd = nsd
+    def sleep_if_necessary(period_time = 0.1, touch_event = false)
+      secs = payload.is_a?(Hash) ? payload[:sleep_time].to_f : nil
+      if secs
+        wake_up = Time.now + secs
+        debug "[#{event.short_id}]> Sleeping until #{wake_up} (#{secs}s) ..."
+        while Time.now < wake_up
+          sleep period_time
+          event.touch if touch_event
+        end
       else
-        c.nsqd = 'localhost:4150'
+        debug "[#{event.short_id}]> no need to sleep ..."
       end
     end
-    Tiki::Torch.logger.level       = Logger::DEBUG if ENV['DEBUG'] == 'true'
-    Tiki::Torch::Node.topic        = 'node-test'
-    Tiki::Torch.config.msg_timeout = 5_000 # ms
-    Tiki::Torch.consumer_broker.consumer_registry.clear
-    $current_consumers.each { |x| Tiki::Torch.consumer_broker.register_consumer x }
-    Tiki::Torch.start_polling
+
   end
 
-  def take_down_torch
-    Tiki::Torch.shutdown
-    Tiki::Torch.consumer_broker.consumer_registry.clear
-    $current_consumers.each { |x| clear_consumer x } if $current_consumers
-  end
+  let(:config) { Tiki::Torch.config }
+  let(:consumer) { described_class }
+  let(:consumers) { [consumer] }
+  let(:polling_pattern) { %r{#{consumers.map { |x| x.name }.join('|') }} }
+  let(:manager_client) { Tiki::Torch.client }
+  let(:manager_options) { Tiki::Torch.config }
+  let(:manager) { Tiki::Torch::Manager.new manager_client, manager_options }
+  let(:queue_name) { 'fake-sqs-queue' }
+  let(:queue) { Tiki::Torch.client.queue queue_name }
 
-  def take_down_vars
-    $consumers         = nil
-    $consumer          = nil
-    $current_consumers = nil
-  end
-
-  def wait_for(secs, &blk)
-    ::Tiki::Torch::Utils.wait_for(secs){ blk.call if blk }
-  end
-
-  def clear_all_consumers
-    ($all_consumers || []).each { |x| clear_consumer x }
-  end
-
-  def clear_consumer(consumer)
-    delete_nsqd_channel consumer
-    delete_nsqd_topic consumer
-    delete_nsqadmin_topic consumer
-  end
-
-  def delete_nsqd_channel(consumer)
-    http_command :nsqd_chn_emp, topic: consumer.full_topic_name, channel: consumer.channel
-    http_command :nsqd_chn_del, topic: consumer.full_topic_name, channel: consumer.channel
-    http_command :nsqd_chn_emp, topic: consumer.full_dlq_topic_name, channel: consumer.channel
-    http_command :nsqd_chn_del, topic: consumer.full_dlq_topic_name, channel: consumer.channel
-  end
-
-  def delete_nsqd_topic(consumer)
-    http_command :nsqd_top_emp, topic: consumer.full_topic_name
-    http_command :nsqd_top_del, topic: consumer.full_topic_name
-    http_command :nsqd_top_emp, topic: consumer.full_dlq_topic_name
-    http_command :nsqd_top_del, topic: consumer.full_dlq_topic_name
-  end
-
-  def delete_nsqadmin_topic(consumer)
-    http_command :nsqa_top_emp, topic: consumer.full_topic_name
-    http_command :nsqa_top_del, topic: consumer.full_topic_name
-    http_command :nsqa_top_emp, topic: consumer.full_dlq_topic_name
-    http_command :nsqa_top_del, topic: consumer.full_dlq_topic_name
-  end
-
-  def http_command_urls(type)
-    @http_command_urls ||= {
-      nsqd_stats:   "http://#{known_nsq_host}:#{known_nsq_port}/stats?format=json",
-      nsqd_chn_emp: "http://#{known_nsq_host}:#{known_nsq_port}/channel/empty",
-      nsqd_chn_del: "http://#{known_nsq_host}:#{known_nsq_port}/channel/delete",
-      nsqd_top_emp: "http://#{known_nsq_host}:#{known_nsq_port}/topic/empty",
-      nsqd_top_del: "http://#{known_nsq_host}:#{known_nsq_port}/topic/delete",
-      nsqa_top_emp: "http://#{known_nsq_host}:#{known_nsqadmin_port}/empty_topic",
-      nsqa_top_del: "http://#{known_nsq_host}:#{known_nsqadmin_port}/delete_topic",
-    }
-    @http_command_urls[type]
-  end
-
-  def http_command(type, data = {})
-    url = http_command_urls(type)
-    qry = URI.encode data.map { |k, v| "#{k}=#{v}" }.join("&")
-    url = "#{url}?#{qry}" unless qry.empty?
-    uri = URI url
-    res = Net::HTTP.post_form uri, {}
-    res.code == '200'
-  rescue Exception => e
-    debug "Exception: #{e.class.name} : #{e.message} |  #{e.backtrace[0, 5].join("\n  ")}"
-  end
-
-  def known_nsq
-    @known_nsq ||= Array(Tiki::Torch.config.nsqd).first
-  end
-
-  def known_nsq_host
-    known_nsq.split(':').first
-  end
-
-  def known_nsq_port
-    known_nsq.split(':').last.to_i + 1
-  end
-
-  def known_nsqadmin_port
-    known_nsq.split(':').last.to_i + 21
-  end
-
-  def nsq_stats
-    url = http_command_urls :nsqd_stats
-    uri = URI url
-    res = Net::HTTP.get_response uri
-    raise 'could not obtain NSQ stats' unless res.code == '200'
-    MultiJson.load res.body, symbolize_keys: true
-  end
-
-  def nsq_topic(name)
-    stats = nsq_stats
-    topics = stats[:data][:topics]
-    topics.select { |h| h[:topic_name] == name }.first
-  end
-
-  def expect_nsq_topic_count(name, exp_cnt)
-    topic = nsq_topic(name)
-    if topic
-      actual_cnt = topic[:message_count]
-      expect(actual_cnt).to eq(exp_cnt), "expected topic #{name} to have #{exp_cnt} messages but found #{actual_cnt}"
-    else
-      expect(0).to eq(exp_cnt), "expected topic #{name} to have #{exp_cnt} messages but found 0"
-    end
-  end
+  extend self
 
   def debug(msg)
     puts msg
   end
 
-  def time_it
-    start_time = Time.now
-    yield
-    Time.now - start_time
+  def bnr(msg, chr = '=')
+    debug " [ #{msg} ] ".center(120, chr)
   end
 
-  def varied_secs(max = 60, min = 5)
-    rand(max - min + 1) + min
+  def time_it(msg = nil, chr = '=')
+    start_time = Time.now
+    bnr "#{msg} - start", chr if msg
+    yield
+    took = Time.now - start_time
+    bnr "#{msg} - end - #{took}s", chr if msg
+    took
   end
+
+  def random_closed_port(start = 3000, limit = 1000)
+    port, closed = nil, false
+    until closed
+      port   = start + rand(limit) + 1
+      closed = !port_open?(port)
+    end
+    port
+  end
+
+  def port_open?(port, ip = '127.0.0.1', seconds = 0.5)
+    Timeout::timeout(seconds) do
+      begin
+        TCPSocket.new(ip, port).close
+        debug "port_open? : #{ip} : #{port} : true"
+        true
+      rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+        debug "port_open? : #{ip} : #{port} : false"
+        false
+      end
+    end
+  rescue Timeout::Error
+    false
+  end
+
+  def use_real_sqs
+    ENV['USE_REAL_SQS'].to_s == 'true'
+  end
+
+  FAKE_SQS_DB       = ENV.fetch('FAKE_SQS_DATABASE', ':memory:')
+  FAKE_SQS_HOST     = ENV.fetch('FAKE_SQS_HOST', '127.0.0.1')
+  FAKE_SQS_PORT     = ENV.fetch('FAKE_SQS_PORT', random_closed_port).to_i
+  FAKE_SQS_ENDPOINT = "http://#{FAKE_SQS_HOST}:#{FAKE_SQS_PORT}"
+
+  def setup_fake_sqs
+    if use_real_sqs
+      puts ' [ Running from a real SQS queue ] '.center(120, '=')
+    elsif $fake_sqs
+      # Already setup fake SQS
+    else
+      puts " [ Running from a fake SQS queue : #{FAKE_SQS_ENDPOINT} ] ".center(120, '=')
+      $fake_sqs = FakeSQS::TestIntegration.new database:     FAKE_SQS_DB,
+                                               sqs_endpoint: FAKE_SQS_HOST,
+                                               sqs_port:     FAKE_SQS_PORT
+    end
+  end
+
+  def start_fake_sqs
+    return false if use_real_sqs
+    puts '>>> starting fake sqs ...'
+    $fake_sqs.start
+  end
+
+  def stop_fake_sqs
+    return false if use_real_sqs
+    puts '>>> stopping fake sqs ...'
+    $fake_sqs.stop
+  end
+
+  def config_torch
+    Tiki::Torch.configure do |c|
+      if use_real_sqs
+        c.access_key_id     = ENV['AWS_TEST_ACCESS_KEY_ID'].to_s.strip
+        c.secret_access_key = ENV['AWS_TEST_SECRET_ACCESS_KEY'].to_s.strip
+        c.region            = ENV['AWS_TEST_REGION'].to_s.strip
+        raise "Missing ENV['AWS_TEST_ACCESS_KEY_ID']" if c.access_key_id.empty?
+        raise "Missing ENV['AWS_TEST_SECRET_ACCESS_KEY']" if c.secret_access_key.empty?
+        raise "Missing ENV['AWS_TEST_REGION']" if c.region.empty?
+        c.topic_prefix = "tiki.torch.test.#{rand(9000) + 1001}"
+      else
+        c.sqs_endpoint      = FAKE_SQS_ENDPOINT
+        c.access_key_id     = ENV.fetch 'AWS_TEST_ACCESS_KEY_ID', 'fake_access_key'
+        c.secret_access_key = ENV.fetch 'AWS_TEST_SECRET_ACCESS_KEY', 'fake_secret_key'
+        c.region            = ENV.fetch 'AWS_TEST_REGION', 'fake_region'
+      end
+    end
+    Tiki::Torch.logger.level = Logger::DEBUG if ENV['DEBUG'] == 'true'
+    puts "Tiki::Torch.config : #{Tiki::Torch.config.to_yaml}"
+  end
+
+  def setup_torch
+    config_torch
+    Tiki::Torch.client.sqs = nil
+    Tiki::Torch.setup_aws
+  end
+
+  def take_down_torch
+    Tiki::Torch.client = nil
+  end
+
+  def delete_queues
+    return false unless use_real_sqs
+
+    Tiki::Torch.client.queues.each do |queue|
+      puts "> Deleting queue #{queue.name} ..."
+      Tiki::Torch.client.sqs.delete_queue queue_url: queue.url
+    end
+  end
+
+  around(:example, integration: true) do |example|
+    puts '>>> starting integration ...'
+    $lines = LogLines.new
+    start_fake_sqs
+    setup_torch
+    puts '>>> running integration ...'
+    example.run
+    puts '>>> ending integration ...'
+    take_down_torch
+    stop_fake_sqs
+  end
+
+  around(:example, polling: true) do |example|
+    puts '>>> starting polling ...'
+    manager.start_polling polling_pattern
+    puts '>>> running polling ...'
+    example.run
+    puts '>>> ending polling ...'
+    manager.stop_polling
+  end
+
 end

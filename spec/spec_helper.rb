@@ -7,8 +7,11 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
 
   require 'tiki_torch'
 
+  SPEC_ROOT = File.dirname File.expand_path(__FILE__)
+
+  require 'fake_sqs/test_integration'
   require 'support/helpers'
-  require 'support/consumers'
+  Dir.glob("#{SPEC_ROOT}/support/consumers/**/*.rb").map { |path| require path }
 
   RSpec.configure do |c|
     c.include TestingHelpers
@@ -20,24 +23,14 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
       mocks.verify_partial_doubles = true
     end
 
-    c.before(:each, integration: true) do
-      $lines = TestingHelpers::LogLines.new
-      TestingHelpers.setup_vars
-      TestingHelpers.setup_torch
-    end
-
-    c.after(:each, integration: true) do
-      TestingHelpers.take_down_torch
-    end
-
-    c.after(:context, integration: true) do
-      TestingHelpers.take_down_vars
+    c.before(:suite) do
+      puts '>>> starting suite ...'
+      TestingHelpers.setup_fake_sqs
     end
 
     c.after(:suite) do
-      secs = Tiki::Torch.config.msg_timeout / 1000.0 + 1
-      Tiki::Torch::Utils.wait_for secs
-      TestingHelpers.clear_all_consumers
+      puts '>>> ending suite ...'
+      TestingHelpers.delete_queues
     end
 
   end

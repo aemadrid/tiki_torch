@@ -41,7 +41,7 @@ module Tiki
         end
 
         def log_prefix
-          length           = 40
+          length           = 60
           prefix           = name
           _, _, lbl        = log_prefix_labels
           prefix           += ".#{lbl}" if lbl
