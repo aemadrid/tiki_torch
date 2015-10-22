@@ -43,13 +43,13 @@ module Tiki
         found_attributes = queue.attributes
         new_attributes   = exp_attrs.each_with_object({}) do |(k, v), h|
           current = found_attributes[k].to_s
-          h[k] = v.to_s unless current == v.to_s
+          h[k]    = v.to_s unless current == v.to_s
         end
         unless new_attributes.empty?
-          puts "> Updating attributes : #{new_attributes.to_yaml}"
+          debug "Updating #{queue.name} (#{new_attributes.size}) ..."
           queue.attributes = new_attributes
         else
-          puts '> No need to update attributes ...'
+          debug "No need to update #{queue.name} ..."
         end
       end
 

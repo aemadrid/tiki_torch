@@ -1,13 +1,14 @@
 module Tiki
   module Torch
+
     class Manager
 
       include Logging
       extend Forwardable
 
-      attr_reader :client, :config, :brokers, :publisher
+      attr_reader :brokers, :publisher
 
-      def_delegators :@config,
+      def_delegators :config,
                      :topic_prefix, :discovery_interval, :msg_timeout,
                      :back_off_strategy, :max_attempts, :back_off_time_unit,
                      :transcoder_code, :queue_class,
@@ -15,44 +16,53 @@ module Tiki
 
       def_delegator :@publisher, :publish
 
-      def initialize(client, options = {})
-        @client    = client
-        @config    = build_config options
+      def initialize
         @brokers   = build_brokers
         @publisher = build_publisher
         at_exit { shutdown }
       end
 
-      def configure
-        yield @config
+      def client
+        Torch.client
       end
 
-      def brokers_for(pattern)
+      def config
+        Torch.config
+      end
+
+      def brokers_for(pattern, action = :noop)
         brokers.select do |c|
           case pattern
             when Class
+              debug "#{c.name} : #{action} | pattern : Class : #{pattern.inspect}"
               c.consumer == pattern
             when Regexp
+              debug "#{c.name} : #{action} | pattern : Regexp : #{pattern.inspect}"
               c.name =~ pattern
             when String
+              debug "#{c.name} : #{action} | pattern : String : #{pattern.inspect}"
               c.name == pattern
             when :all, 'all'
+              debug "#{c.name} : #{action} | pattern : All : #{pattern.inspect}"
               true
             else
-              raise "Unknown pattern [#{pattern.class.name}:#{pattern.inspect}]"
+              debug "#{c.name} : #{action} | pattern : Unknown : (#{pattern.class.name}) #{pattern.inspect} ..."
+              false
           end
         end
       end
 
-      def start_polling(pattern = /.*/)
-        brokers_for(pattern).map do |c|
+      def start_polling(pattern = :all)
+        debug "starting to poll | pattern (#{pattern.class.name}) #{pattern.inspect}"
+        brokers_for(pattern, :start).map do |c|
           debug "[#{pattern}] start #{c.name} : #{c.topic} : #{c.channel}".center(120, '~')
           Concurrent::Future.execute { [c.name, c.start] }
         end.map { |x| x.value }
       end
 
-      def stop_polling(pattern = /.*/)
-        brokers_for(pattern).map do |c|
+      def stop_polling(pattern = :all)
+        debug "stop polling | pattern (#{pattern.class.name}) #{pattern.inspect}"
+        brokers_for(pattern, :stop).map do |c|
           debug "[#{pattern}] stop #{c.name} : #{c.topic} : #{c.channel}".center(120, '~')
           Concurrent::Future.execute { [c.name, c.stop] }
         end.map { |x| x.value }
@@ -66,23 +76,15 @@ module Tiki
       end
 
       def to_s
-        %{#<T:T:Manager brokers=#{brokers.size} config=#{config} client=#{client}>}
+        %{#<T:T:Manager brokers=#{brokers.size}>}
       end
 
       alias :inspect :to_s
 
       private
 
-      def build_config(options)
-        if options.is_a? Config
-          options
-        else
-          Config.new options
-        end
-      end
-
       def build_publisher
-        Publisher.new self
+        Publisher.new
       end
 
       def build_brokers
@@ -94,7 +96,7 @@ module Tiki
     extend self
 
     def build_default_manager
-      Manager.new client, config
+      Manager.new
     end
 
     attr_writer :manager

@@ -1,4 +1,6 @@
 ON_REAL_SQS = ENV['USE_REAL_SQS'].to_s == 'true'
+FOCUSED     = ENV['FOCUS'] == 'true'
+PERFORMANCE = ENV['PERFORMANCE'] == 'true'
 
 if ON_REAL_SQS
   TEST_ACCESS_KEY_ID     = ENV['AWS_TEST_ACCESS_KEY_ID'].to_s.strip

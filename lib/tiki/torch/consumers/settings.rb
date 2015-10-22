@@ -5,32 +5,72 @@ module Tiki
 
         class Config
 
-          include Virtus.model
-
-          attribute :topic, String
-          attribute :topic_prefix, String, default: lambda { |_, _| Torch.config.topic_prefix }, lazy: true
-          attribute :channel, String, default: lambda { |_, _| Torch.config.channel }, lazy: true
-
-          attribute :default_delay, Integer, default: lambda { |_, _| Torch.config.default_delay }, lazy: true
-          attribute :max_size, Integer, default: lambda { |_, _| Torch.config.max_size }, lazy: true
-          attribute :retention_period, Integer, default: lambda { |_, _| Torch.config.retention_period }, lazy: true
-          attribute :policy, String, default: lambda { |_, _| Torch.config.policy }, lazy: true
-          attribute :receive_delay, Integer, default: lambda { |_, _| Torch.config.receive_delay }, lazy: true
-          attribute :visibility_timeout, Integer, default: lambda { |_, _| Torch.config.visibility_timeout }, lazy: true
-
-          attribute :use_dlq, Boolean, default: lambda { |_, _| Torch.config.use_dlq }, lazy: true
-          attribute :dlq_postfix, String, default: lambda { |_, _| Torch.config.dlq_postfix }, lazy: true
-          attribute :max_attempts, Integer, default: lambda { |_, _| Torch.config.max_attempts }, lazy: true
-
-          attribute :event_pool_size, Integer, default: lambda { |_, _| Torch.config.event_pool_size }, lazy: true
-          attribute :transcoder_code, String, default: lambda { |_, _| Torch.config.transcoder_code }, lazy: true
-          attribute :events_sleep_times, Hash, default: lambda { |_, _| Torch.config.events_sleep_times }, lazy: true
+          attr_accessor :topic
+          attr_writer :topic_prefix, :channel
+          attr_writer :default_delay, :max_size, :retention_period, :policy, :receive_delay, :visibility_timeout
+          attr_writer :use_dlq, :dlq_postfix, :max_attempts
+          attr_writer :event_pool_size, :transcoder_code, :events_sleep_times
 
           attr_reader :consumer
 
           def initialize(consumer, options = {})
             @consumer = consumer
-            super(options)
+          end
+
+          def topic_prefix
+            @topic_prefix || Torch.config.topic_prefix
+          end
+
+          def channel
+            @channel || Torch.config.channel
+          end
+
+          def default_delay
+            @default_delay || Torch.config.default_delay
+          end
+
+          def max_size
+            @max_size || Torch.config.max_size
+          end
+
+          def retention_period
+            @retention_period || Torch.config.retention_period
+          end
+
+          def policy
+            @policy || Torch.config.policy
+          end
+
+          def receive_delay
+            @receive_delay || Torch.config.receive_delay
+          end
+
+          def visibility_timeout
+            @visibility_timeout || Torch.config.visibility_timeout
+          end
+
+          def use_dlq
+            @use_dlq || Torch.config.use_dlq
+          end
+
+          def dlq_postfix
+            @dlq_postfix || Torch.config.dlq_postfix
+          end
+
+          def max_attempts
+            @max_attempts || Torch.config.max_attempts
+          end
+
+          def event_pool_size
+            @event_pool_size || Torch.config.event_pool_size
+          end
+
+          def transcoder_code
+            @transcoder_code || Torch.config.transcoder_code
+          end
+
+          def events_sleep_times
+            @events_sleep_times || Torch.config.events_sleep_times
           end
 
           def to_s

@@ -88,9 +88,7 @@ module TestingHelpers
   let(:consumer) { described_class }
   let(:consumers) { [consumer] }
   let(:polling_pattern) { %r{#{consumers.map { |x| x.name }.join('|') }} }
-  let(:manager_client) { Tiki::Torch.client }
-  let(:manager_options) { Tiki::Torch.config }
-  let(:manager) { Tiki::Torch::Manager.new manager_client, manager_options }
+  let(:manager) { Tiki::Torch::Manager.new }
   let(:queue_name) { 'fake-sqs-queue' }
   let(:queue) { Tiki::Torch.client.queue queue_name }
 
@@ -142,6 +140,7 @@ module TestingHelpers
   end
 
   def config_torch
+    puts ' [ Configuring torch ... ] '.center(120, '-')
     Tiki::Torch.configure do |c|
       c.access_key_id     = TEST_ACCESS_KEY_ID
       c.secret_access_key = TEST_SECRET_ACCESS_KEY
@@ -152,6 +151,7 @@ module TestingHelpers
   end
 
   def setup_torch
+    config_torch
     Tiki::Torch.client.sqs = nil
     Tiki::Torch.setup_aws
   end
@@ -174,23 +174,23 @@ module TestingHelpers
   end
 
   around(:example, integration: true) do |example|
-    # debug '>>> starting integration ...'
+    debug '>>> starting integration ...'
     $lines = LogLines.new
     start_fake_sqs
     setup_torch
-    # debug '>>> running integration ...'
+    debug '>>> running integration ...'
     example.run
-    # debug '>>> ending integration ...'
+    debug '>>> ending integration ...'
     take_down_torch
     stop_fake_sqs
   end
 
   around(:example, polling: true) do |example|
-    # debug '>>> starting polling ...'
+    debug '>>> starting polling ...'
     manager.start_polling polling_pattern
-    # debug '>>> running polling ...'
+    debug '>>> running polling ...'
     example.run
-    # debug '>>> ending polling ...'
+    debug '>>> ending polling ...'
     manager.stop_polling
   end
 

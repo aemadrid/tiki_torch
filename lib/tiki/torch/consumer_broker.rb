@@ -67,6 +67,8 @@ module Tiki
         @status = :running
         debug "#{lbl} running consumer!"
         @status
+      rescue Exception => e
+        puts "Exception thrown: #{e.class.name} : #{e.message}\n  #{e.backtrace[0,5].join("\n  ")}"
       end
 
       def stop
@@ -113,13 +115,16 @@ module Tiki
       end
 
       def build_consumer
+        debug "build consumer | @already_built : #{@already_built} ..."
         return false if @already_built
 
+        debug 'building consumer ...'
         ConsumerBuilder.new(@consumer, @manager).build
         @already_built = true
       end
 
       def start_poller
+        debug 'starting poller ...'
         @poller = Tiki::Torch::ConsumerPoller.new consumer, client
         debug "#{lbl} @poller : #{@poller}"
       end

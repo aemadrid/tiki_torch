@@ -35,8 +35,8 @@ module Tiki
       end
 
       def get(name)
-        if (full_name = ATTR_NAMES[name])
-          attributes[full_name]
+        if ATTR_NAMES.key? name
+          send name
         else
           attributes[name.to_s]
         end

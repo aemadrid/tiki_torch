@@ -1,20 +1,31 @@
-describe FailingConsumer, integration: true, polling: true do
-  let(:queue_name) { consumer.queue_name }
-  it 'report failures and sends to DLQ in the end', on_real_sqs: true do
-    expect(queue.attributes).to be_a Tiki::Torch::AwsQueueAttributes
-    expect(queue[:visible_count]).to eq 0
-    expect(queue[:invisible_count]).to eq 0
-    expect(queue[:visibility_timeout]).to eq 30
+describe FailingConsumer, integration: true, polling: true, on_real_sqs: true, focus: true do
+  let(:config) { described_class.config }
+  let(:queue_name) { described_class.queue_name }
+  let(:dlq_name) { described_class.dead_letter_queue_name }
+  context 'queue' do
+    let(:queue) { Tiki::Torch.client.queue queue_name }
+    it 'attributes' do
+      attrs = queue.attributes
+      expect(attrs.visible_count).to eq 0
+      expect(attrs.invisible_count).to eq 0
+      expect(attrs.visibility_timeout).to eq 3
 
+      policy = JSON.parse attrs.redrive_policy
+      expect(policy['deadLetterTargetArn']).to match /#{dlq_name}$/
+      expect(policy['maxReceiveCount']).to eq consumer.max_attempts
+    end
+  end
+
+  it 'report failures and sends to DLQ in the end' do
     consumer.publish 'failure'
-    $lines.wait_for_size 3, 15
+    $lines.wait_for_size 3, 10
 
     expect($lines.all).to eq %w{ failed:left_for_dead failed:left_for_dead failed:left_for_dead }
-    sleep 5
+    sleep consumer.visibility_timeout + 1
 
-    expect(queue[:visible_count]).to eq 0
-    expect(queue[:invisible_count]).to eq 0
-    # @todo: create DLQ and make sure it has the message there
+    attrs = queue.attributes
+    expect(attrs.visible_count).to eq 0
+    expect(attrs.invisible_count).to eq 0
   end
 end
 

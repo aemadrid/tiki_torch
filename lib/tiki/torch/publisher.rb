@@ -5,12 +5,6 @@ module Tiki
       include Logging
       extend Forwardable
 
-      def_delegators :@manager, :config, :client
-
-      def initialize(manager)
-        @manager = manager
-      end
-
       def publish(topic_name, payload = {}, properties = {})
         debug "topic_name : #{topic_name} | payload : (#{payload.class.name}) #{payload.inspect} | properties : (#{properties.class.name}) #{properties.inspect}"
         properties = build_properties properties
@@ -25,14 +19,14 @@ module Tiki
       private
 
       def build_properties(properties)
-        config.default_message_properties.dup.
+        Torch.config.default_message_properties.dup.
           merge(message_id: SecureRandom.hex).
           merge(properties)
       end
 
-      def build_queue_name(name, channel = config.channel)
+      def build_queue_name(name, channel = Torch.config.channel)
         new_name = ''
-        prefix = @manager.config.topic_prefix
+        prefix = Torch.config.topic_prefix
         new_name << "#{prefix}-" unless name.start_with? prefix
         new_name << name
         new_name << "-#{channel}" unless name.end_with? channel
@@ -40,7 +34,7 @@ module Tiki
       end
 
       def build_code(properties)
-        properties.delete(:transcoder_code) || @manager.config.transcoder_code
+        properties.delete(:transcoder_code) || Torch.config.transcoder_code
       end
 
       def encode(payload, properties, code)
@@ -48,8 +42,7 @@ module Tiki
       end
 
       def write(name, encoded)
-        debug_var :client, client
-        queue = client.queue name
+        queue = Torch.client.queue name
         debug_var :queue, queue
         raise "Could not obtain queue [#{name}]" unless queue.is_a? AwsQueue
 

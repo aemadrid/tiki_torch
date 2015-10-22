@@ -17,9 +17,9 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
   RSpec.configure do |c|
     c.include TestingHelpers
 
-    c.filter_run focus: true if ENV['FOCUS'] == 'true'
+    c.filter_run focus: true if FOCUSED
 
-    c.filter_run_excluding performance: true unless ENV['PERFORMANCE'] == 'true'
+    c.filter_run_excluding performance: true unless PERFORMANCE
 
     if ON_REAL_SQS
       c.filter_run_excluding on_fake_sqs: true
@@ -32,12 +32,11 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
     end
 
     c.before(:suite) do
-      puts '>>> starting suite ...'
       TestingHelpers.setup_fake_sqs
+      TestingHelpers.setup_torch
     end
 
     c.after(:suite) do
-      puts '>>> ending suite ...'
       TestingHelpers.delete_queues
     end
 

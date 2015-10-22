@@ -17,6 +17,7 @@ module Tiki
 
           def publish(payload, properties = {})
             defaults = Torch.config.default_message_properties
+            debug "queue_name : #{queue_name}"
             Torch.publish queue_name, payload, defaults.merge(properties.dup)
           end
 

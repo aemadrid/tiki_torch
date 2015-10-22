@@ -2,7 +2,7 @@ describe SimpleConsumer, integration: true, polling: true do
   let(:config) { described_class.config }
   context 'queue' do
     let(:queue) { Tiki::Torch.client.queue described_class.queue_name }
-    context 'attributes', focus: true do
+    context 'attributes' do
       let!(:attrs) { queue.attributes }
       context 'computed' do
         it('visible_count     ') { expect(attrs.visible_count).to eq 0 }
@@ -19,6 +19,23 @@ describe SimpleConsumer, integration: true, polling: true do
         context 'on sqs', on_real_sqs: true do
           it('created_at        ') { expect(attrs.created_at).to be_a Time }
           it('updated_at        ') { expect(attrs.updated_at).to be_a Time }
+        end
+      end
+      context 'computed - hash' do
+        it('visible_count     ') { expect(attrs[:visible_count]).to eq 0 }
+        it('invisible_count   ') { expect(attrs[:invisible_count]).to eq 0 }
+        it('visibility_timeout') { expect(attrs[:visibility_timeout]).to eq config.visibility_timeout }
+        it('policy            ') { expect(attrs[:policy]).to be_nil }
+        it('max_size          ') { expect(attrs[:max_size]).to eq config.max_size }
+        it('retention_period  ') { expect(attrs[:retention_period]).to eq config.retention_period }
+        it('arn               ') { expect(attrs[:arn]).to match /^arn\:/ }
+        it('delayed_count     ') { expect(attrs[:delayed_count]).to eq 0 }
+        it('default_delay     ') { expect(attrs[:default_delay]).to eq 0 }
+        it('receive_delay     ') { expect(attrs[:receive_delay]).to eq 0 }
+        it('redrive_policy    ') { expect(attrs[:redrive_policy]).to be_nil }
+        context 'on sqs', on_real_sqs: true do
+          it('created_at        ') { expect(attrs[:created_at]).to be_a Time }
+          it('updated_at        ') { expect(attrs[:updated_at]).to be_a Time }
         end
       end
       context 'native' do

@@ -40,15 +40,13 @@ module Tiki
 
     end
 
-    def self.config
+    def config
       @config ||= Config.new
     end
 
-    def self.configure
+    def configure
       yield config
     end
-
-    config
 
     def aws_options
       @aws_options ||= {
@@ -61,6 +59,8 @@ module Tiki
     def setup_aws(options = {})
       ::Aws.config = aws_options.merge options
     end
+
+    config
 
   end
 end
