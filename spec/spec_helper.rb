@@ -10,6 +10,7 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
   SPEC_ROOT = File.dirname File.expand_path(__FILE__)
 
   require 'fake_sqs/test_integration'
+  require 'support/constants'
   require 'support/helpers'
   Dir.glob("#{SPEC_ROOT}/support/consumers/**/*.rb").map { |path| require path }
 
@@ -17,8 +18,11 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
     c.include TestingHelpers
 
     c.filter_run focus: true if ENV['FOCUS'] == 'true'
+
     c.filter_run_excluding performance: true unless ENV['PERFORMANCE'] == 'true'
-    c.filter_run_excluding on_real_sqs: true unless TestingHelpers.on_real_sqs
+
+    c.filter_run_excluding on_fake_sqs: true if ON_REAL_SQS
+    c.filter_run_excluding on_real_sqs: true unless ON_REAL_SQS
 
     c.mock_with :rspec do |mocks|
       mocks.verify_partial_doubles = true

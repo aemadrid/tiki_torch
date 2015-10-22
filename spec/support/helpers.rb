@@ -139,18 +139,13 @@ module TestingHelpers
     false
   end
 
-  def on_real_sqs
-    ENV['USE_REAL_SQS'].to_s == 'true'
-  end
-
   FAKE_SQS_DB       = ENV.fetch('FAKE_SQS_DATABASE', ':memory:')
   FAKE_SQS_HOST     = ENV.fetch('FAKE_SQS_HOST', '127.0.0.1')
   FAKE_SQS_PORT     = ENV.fetch('FAKE_SQS_PORT', random_closed_port).to_i
   FAKE_SQS_ENDPOINT = "http://#{FAKE_SQS_HOST}:#{FAKE_SQS_PORT}"
-  REAL_SQS_CODE     = "#{rand(9000) + 1001}"
 
   def setup_fake_sqs
-    if on_real_sqs
+    if ON_REAL_SQS
       debug ' [ Running from a real SQS queue ] '.center(120, '=')
     elsif $fake_sqs
       # Already setup fake SQS
@@ -163,34 +158,24 @@ module TestingHelpers
   end
 
   def start_fake_sqs
-    return false if on_real_sqs
+    return false if ON_REAL_SQS
     # debug '>>> starting fake sqs ...'
     $fake_sqs.start
   end
 
   def stop_fake_sqs
-    return false if on_real_sqs
+    return false if ON_REAL_SQS
     # debug '>>> stopping fake sqs ...'
     $fake_sqs.stop
   end
 
+
   def config_torch
     Tiki::Torch.configure do |c|
-      if on_real_sqs
-        c.access_key_id     = ENV['AWS_TEST_ACCESS_KEY_ID'].to_s.strip
-        c.secret_access_key = ENV['AWS_TEST_SECRET_ACCESS_KEY'].to_s.strip
-        c.region            = ENV['AWS_TEST_REGION'].to_s.strip
-        raise "Missing ENV['AWS_TEST_ACCESS_KEY_ID']" if c.access_key_id.empty?
-        raise "Missing ENV['AWS_TEST_SECRET_ACCESS_KEY']" if c.secret_access_key.empty?
-        raise "Missing ENV['AWS_TEST_REGION']" if c.region.empty?
-        c.topic_prefix = "test_#{REAL_SQS_CODE}"
-      else
-        c.sqs_endpoint      = FAKE_SQS_ENDPOINT
-        c.access_key_id     = ENV.fetch 'AWS_TEST_ACCESS_KEY_ID', 'fake_access_key'
-        c.secret_access_key = ENV.fetch 'AWS_TEST_SECRET_ACCESS_KEY', 'fake_secret_key'
-        c.region            = ENV.fetch 'AWS_TEST_REGION', 'fake_region'
-        c.topic_prefix      = 'test'
-      end
+      c.access_key_id     = TEST_ACCESS_KEY_ID
+      c.secret_access_key = TEST_SECRET_ACCESS_KEY
+      c.region            = TEST_REGION
+      c.topic_prefix      = TEST_PREFIX
     end
     Tiki::Torch.logger.level = Logger::DEBUG if ENV['DEBUG'] == 'true'
   end
@@ -205,9 +190,9 @@ module TestingHelpers
   end
 
   def delete_queues
-    return false unless on_real_sqs
+    return false unless ON_REAL_SQS
 
-    Tiki::Torch.client.queues.each do |queue|
+    Tiki::Torch.client.queues(TEST_PREFIX).each do |queue|
       debug "> Deleting queue #{queue.name} ..."
       Tiki::Torch.client.sqs.delete_queue queue_url: queue.url
     end

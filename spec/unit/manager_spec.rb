@@ -4,7 +4,8 @@ module Tiki
       let(:client) { instance_double 'Tiki::Torch::AwsClient', to_s: '#<T:T:AwsClient>' }
       subject { described_class.new client, Torch.config }
       context 'basic' do
-        it('to_s') { expect(subject.to_s).to eq '#<T:T:Manager brokers=2 config=#<T:T:Config access_key_id="fake_access_key" region="fake_region"> client=#<T:T:AwsClient>>' }
+        let(:exp_str) { %{#<T:T:Manager brokers=#{subject.brokers.size} config=#<T:T:Config access_key_id="#{TEST_ACCESS_KEY_ID}" region="#{TEST_REGION}"> client=#<T:T:AwsClient>>} }
+        it('to_s') { expect(subject.to_s).to eq exp_str }
       end
     end
   end
