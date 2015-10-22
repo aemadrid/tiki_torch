@@ -10,8 +10,8 @@ module Tiki
       def_delegators :@consumer,
                      :name,
                      :config, :topic, :topic_prefix, :channel,
-                     :queue_name, :dead_letter_queue_name, :visibility_timeout, :message_retention_period,
-                     :max_in_flight, :max_attempts, :event_pool_size, :events_sleep_times
+                     :queue_name, :dead_letter_queue_name, :visibility_timeout, :retention_period,
+                     :max_attempts, :event_pool_size, :events_sleep_times
 
       def_delegators :@manager, :client
 
@@ -60,6 +60,7 @@ module Tiki
 
         debug "#{lbl} starting consumer ..."
         @status = :starting
+        build_consumer
         stats
         start_poller
         start_process_loop
@@ -109,6 +110,13 @@ module Tiki
           end
         end
         debug "#{lbl} Finished running process loop ..."
+      end
+
+      def build_consumer
+        return false if @already_built
+
+        ConsumerBuilder.new(@consumer, @manager).build
+        @already_built = true
       end
 
       def start_poller

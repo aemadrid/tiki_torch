@@ -9,16 +9,17 @@ module Tiki
 
           attribute :topic, String
           attribute :topic_prefix, String, default: lambda { |_, _| Torch.config.topic_prefix }, lazy: true
-          attribute :channel, String, default: 'events'
+          attribute :channel, String, default: lambda { |_, _| Torch.config.channel }, lazy: true
 
-          attribute :create_dlq, Boolean, default: lambda { |_, _| Torch.config.create_dlq }, lazy: true
-          attribute :max_dlq, Integer, default: lambda { |_, _| Torch.config.max_dlq }, lazy: true
-          attribute :dlq_postfix, String, default: lambda { |_, _| Torch.config.dlq_postfix }, lazy: true
-
+          attribute :default_delay, Integer, default: lambda { |_, _| Torch.config.default_delay }, lazy: true
+          attribute :max_size, Integer, default: lambda { |_, _| Torch.config.max_size }, lazy: true
+          attribute :retention_period, Integer, default: lambda { |_, _| Torch.config.retention_period }, lazy: true
+          attribute :policy, String, default: lambda { |_, _| Torch.config.policy }, lazy: true
+          attribute :receive_delay, Integer, default: lambda { |_, _| Torch.config.receive_delay }, lazy: true
           attribute :visibility_timeout, Integer, default: lambda { |_, _| Torch.config.visibility_timeout }, lazy: true
-          attribute :message_retention_period, Integer, default: lambda { |_, _| Torch.config.message_retention_period }, lazy: true
 
-          attribute :max_in_flight, Integer, default: lambda { |_, _| Torch.config.max_in_flight }, lazy: true
+          attribute :use_dlq, Boolean, default: lambda { |_, _| Torch.config.use_dlq }, lazy: true
+          attribute :dlq_postfix, String, default: lambda { |_, _| Torch.config.dlq_postfix }, lazy: true
           attribute :max_attempts, Integer, default: lambda { |_, _| Torch.config.max_attempts }, lazy: true
 
           attribute :event_pool_size, Integer, default: lambda { |_, _| Torch.config.event_pool_size }, lazy: true
@@ -54,10 +55,11 @@ module Tiki
 
           def_delegators :config,
                          :topic, :topic=, :topic_prefix, :topic_prefix=, :channel, :channel=,
-                         :create_dlq, :create_dlq=, :max_dlq, :max_dlq=, :dlq_postfix, :dlq_postfix=,
-                         :visibility_timeout, :visibility_timeout=, :message_retention_period, :message_retention_period=,
-                         :max_in_flight, :max_in_flight=, :max_attempts, :max_attempts=,
-                         :event_pool_size, :transcoder_code, :events_sleep_times
+                         :default_delay, :default_delay=, :max_size, :max_size=, :retention_period, :retention_period=,
+                         :policy, :policy=, :receive_delay, :receive_delay=, :visibility_timeout, :visibility_timeout=,
+                         :use_dlq, :use_dlq=, :dlq_postfix, :dlq_postfix=, :max_attempts, :max_attempts=,
+                         :event_pool_size, :event_pool_size=, :transcoder_code, :transcoder_code=,
+                         :events_sleep_times, :events_sleep_times=
 
           def configure
             yield config
@@ -69,11 +71,13 @@ module Tiki
           end
 
           def queue_name
-            prefix = config.topic_prefix || ::Tiki::Torch.config.topic_prefix || 'prefix'
+            prefix = config.topic_prefix || 'prefix'
             "#{prefix}-#{topic}-#{channel}"
           end
 
           def dead_letter_queue_name
+            return nil unless use_dlq
+
             "#{queue_name}-#{dlq_postfix}"
           end
 

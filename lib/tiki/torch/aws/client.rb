@@ -25,19 +25,6 @@ module Tiki
         res
       end
 
-      def create_and_attach_dlq(main, dlq_name, max_count)
-        return false if main[:redrive_policy].nil?
-
-        queue(dlq_name).tap do |dlq_queue|
-          main.attributes = {
-            'RedrivePolicy' => {
-              'maxReceiveCount'     => max_count,
-              'deadLetterTargetArn' => dlq_queue.attributes.arn
-            }.to_json
-          }
-        end
-      end
-
       def to_s
         %{#<T:T:AwsClient>}
       end

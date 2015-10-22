@@ -1,8 +1,6 @@
 require 'rspec/expectations'
 require 'rspec/core/shared_context'
 require 'json'
-require 'socket'
-require 'timeout'
 
 module TestingHelpers
 
@@ -115,45 +113,19 @@ module TestingHelpers
     took
   end
 
-  def random_closed_port(start = 3000, limit = 1000)
-    port, closed = nil, false
-    until closed
-      port   = start + rand(limit) + 1
-      closed = !port_open?(port)
-    end
-    port
-  end
-
-  def port_open?(port, ip = '127.0.0.1', seconds = 0.5)
-    Timeout::timeout(seconds) do
-      begin
-        TCPSocket.new(ip, port).close
-        debug "port_open? : #{ip} : #{port} : true"
-        true
-      rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
-        debug "port_open? : #{ip} : #{port} : false"
-        false
-      end
-    end
-  rescue Timeout::Error
-    false
-  end
-
-  FAKE_SQS_DB       = ENV.fetch('FAKE_SQS_DATABASE', ':memory:')
-  FAKE_SQS_HOST     = ENV.fetch('FAKE_SQS_HOST', '127.0.0.1')
-  FAKE_SQS_PORT     = ENV.fetch('FAKE_SQS_PORT', random_closed_port).to_i
-  FAKE_SQS_ENDPOINT = "http://#{FAKE_SQS_HOST}:#{FAKE_SQS_PORT}"
-
   def setup_fake_sqs
     if ON_REAL_SQS
       debug ' [ Running from a real SQS queue ] '.center(120, '=')
-    elsif $fake_sqs
-      # Already setup fake SQS
     else
-      debug " [ Running from a fake SQS queue : #{FAKE_SQS_ENDPOINT} ] ".center(120, '=')
-      $fake_sqs = FakeSQS::TestIntegration.new database:     FAKE_SQS_DB,
-                                               sqs_endpoint: FAKE_SQS_HOST,
-                                               sqs_port:     FAKE_SQS_PORT
+      if $fake_sqs
+        # Already setup fake SQS
+      else
+        debug " [ Running from a fake SQS queue : #{FAKE_SQS_ENDPOINT} ] ".center(120, '=')
+        $fake_sqs = FakeSQS::TestIntegration.new database:     FAKE_SQS_DB,
+                                                 sqs_endpoint: FAKE_SQS_HOST,
+                                                 sqs_port:     FAKE_SQS_PORT
+      end
+      Tiki::Torch.config.sqs_endpoint = FAKE_SQS_ENDPOINT
     end
   end
 
@@ -168,7 +140,6 @@ module TestingHelpers
     # debug '>>> stopping fake sqs ...'
     $fake_sqs.stop
   end
-
 
   def config_torch
     Tiki::Torch.configure do |c|

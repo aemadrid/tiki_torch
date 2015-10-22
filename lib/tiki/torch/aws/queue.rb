@@ -30,11 +30,11 @@ module Tiki
         names = names.flatten.map { |x| ATTR_NAMES[x] || x }.compact
         names << 'All' if names.empty?
         result = retryable_sqs_cmd(:get_queue_attributes, queue_url: url, attribute_names: names)
-        result ? AwsQueueAttributes.new(result) : nil
+        result ? AwsQueueAttributes.from_result(result) : nil
       end
 
       def attributes=(options = {})
-        retryable_sqs_cmd(:set_queue_attributes, queue_url: url, attribute_names: options)
+        retryable_sqs_cmd(:set_queue_attributes, queue_url: url, attributes: options)
       end
 
       def attribute(name)

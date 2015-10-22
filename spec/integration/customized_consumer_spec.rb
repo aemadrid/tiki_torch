@@ -5,8 +5,7 @@ describe CustomizedConsumer do
     it('channel           ') { expect(consumer.channel).to eq config.channel }
     it('dlq_postfix       ') { expect(consumer.dlq_postfix).to eq config.dlq_postfix }
     it('visibility_timeout') { expect(consumer.visibility_timeout).to eq config.visibility_timeout }
-    it('message_retention ') { expect(consumer.message_retention_period).to eq config.message_retention_period }
-    it('max_in_flight     ') { expect(consumer.max_in_flight).to eq config.max_in_flight }
+    it('retention_period ') { expect(consumer.retention_period).to eq config.retention_period }
     it('max_attempts      ') { expect(consumer.max_attempts).to eq config.max_attempts }
     it('event_pool_size   ') { expect(consumer.event_pool_size).to eq config.event_pool_size }
     it('transcoder_code   ') { expect(consumer.transcoder_code).to eq config.transcoder_code }

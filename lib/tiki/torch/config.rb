@@ -8,19 +8,20 @@ module Tiki
       attribute :access_key_id, String, default: lambda { |_, _| ENV['AWS_ACCESS_KEY_ID'] }
       attribute :secret_access_key, String, default: lambda { |_, _| ENV['AWS_SECRET_ACCESS_KEY'] }
       attribute :region, String, default: lambda { |_, _| ENV['AWS_REGION'] }
-
       attribute :sqs_endpoint, String
-      attribute :session_token, String
 
       attribute :topic_prefix, String, default: 'tiki_torch'
-      attribute :create_dlq, Boolean, default: false
-      attribute :max_dlq, Integer, default: 1000
-      attribute :dlq_postfix, String, default: 'dlq'
       attribute :channel, String, default: 'events'
-      attribute :visibility_timeout, Integer, default: 600
-      attribute :message_retention_period, Integer, default: 345600
 
-      attribute :max_in_flight, Integer, default: 10
+      attribute :default_delay, Integer, default: 0 # DelaySeconds
+      attribute :max_size, Integer, default: 262144 # MaximumMessageSize
+      attribute :retention_period, Integer, default: 345600 # MessageRetentionPeriod
+      attribute :policy, String, default: nil # Policy
+      attribute :receive_delay, Integer, default: 0 # ReceiveMessageWaitTimeSeconds
+      attribute :visibility_timeout, Integer, default: 60 # VisibilityTimeout
+
+      attribute :use_dlq, Boolean, default: false
+      attribute :dlq_postfix, String, default: 'dlq'
       attribute :max_attempts, Integer, default: 10
 
       attribute :event_pool_size, Integer, default: lambda { |_, _| Concurrent.processor_count }

@@ -59,6 +59,28 @@ module Tiki
           list.each_slice(sep).map { |x| x.join }.join('-')
         end
 
+        def random_closed_port(start = 3000, limit = 1000)
+          port, closed = nil, false
+          until closed
+            port   = start + rand(limit) + 1
+            closed = !port_open?(port)
+          end
+          port
+        end
+
+        def port_open?(port, ip = '127.0.0.1', seconds = 0.5)
+          Timeout::timeout(seconds) do
+            begin
+              TCPSocket.new(ip, port).close
+              true
+            rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+              return false
+            end
+          end
+        rescue Timeout::Error
+          return false
+        end
+
       end
 
     end

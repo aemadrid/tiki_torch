@@ -8,7 +8,7 @@ module Tiki
       attr_reader :client, :config, :brokers, :publisher
 
       def_delegators :@config,
-                     :topic_prefix, :max_in_flight, :discovery_interval, :msg_timeout,
+                     :topic_prefix, :discovery_interval, :msg_timeout,
                      :back_off_strategy, :max_attempts, :back_off_time_unit,
                      :transcoder_code, :queue_class,
                      :event_pool_size, :events_sleep_times, :processor_count

@@ -26,17 +26,19 @@ module Tiki
                      :CreatedTimestamp, :LastModifiedTimestamp, :Policy, :ApproximateNumberOfMessagesDelayed,
                      :DelaySeconds, :ReceiveMessageWaitTimeSeconds, :RedrivePolicy
 
-      def initialize(result)
-        @attributes = result.attributes
+      def self.from_result(result)
+        new result.attributes
+      end
+
+      def initialize(attributes)
+        @attributes = attributes
       end
 
       def get(name)
-        if attributes.key? name
-          attributes[name]
-        elsif respond_to? name
-          send name
+        if (full_name = ATTR_NAMES[name])
+          attributes[full_name]
         else
-          nil
+          attributes[name.to_s]
         end
       end
 
@@ -55,11 +57,11 @@ module Tiki
       end
 
       def created_at
-        get('CreatedTimestamp').nil? ? nil : Time.parse(get('CreatedTimestamp'))
+        get('CreatedTimestamp').nil? ? nil : DateTime.strptime(get('CreatedTimestamp'), '%s').to_time
       end
 
       def updated_at
-        get('LastModifiedTimestamp').nil? ? nil : Time.parse(get('LastModifiedTimestamp'))
+        get('LastModifiedTimestamp').nil? ? nil : DateTime.strptime(get('LastModifiedTimestamp'), '%s').to_time
       end
 
       def policy

@@ -5,7 +5,7 @@ module Tiki
       include Logging
       extend Forwardable
 
-      def_delegators :@consumer, :queue_name, :create_dlq, :max_dlq, :dlq_postfix
+      def_delegators :@consumer, :queue_name, :use_dlq, :dlq_postfix
 
       def initialize(consumer, client)
         @consumer = consumer
@@ -30,9 +30,7 @@ module Tiki
       private
 
       def queue
-        @queue ||= @client.queue(queue_name).tap do |x|
-          @client.create_and_attach_dlq x, "#{queue_name}-#{dlq_postfix}", max_dlq if create_dlq
-        end
+        @queue ||= @client.queue queue_name
       end
 
       def max_qty(qty)
