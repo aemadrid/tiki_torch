@@ -139,7 +139,7 @@ module TestingHelpers
     false
   end
 
-  def use_real_sqs
+  def on_real_sqs
     ENV['USE_REAL_SQS'].to_s == 'true'
   end
 
@@ -147,14 +147,15 @@ module TestingHelpers
   FAKE_SQS_HOST     = ENV.fetch('FAKE_SQS_HOST', '127.0.0.1')
   FAKE_SQS_PORT     = ENV.fetch('FAKE_SQS_PORT', random_closed_port).to_i
   FAKE_SQS_ENDPOINT = "http://#{FAKE_SQS_HOST}:#{FAKE_SQS_PORT}"
+  REAL_SQS_CODE     = "#{rand(9000) + 1001}"
 
   def setup_fake_sqs
-    if use_real_sqs
-      puts ' [ Running from a real SQS queue ] '.center(120, '=')
+    if on_real_sqs
+      debug ' [ Running from a real SQS queue ] '.center(120, '=')
     elsif $fake_sqs
       # Already setup fake SQS
     else
-      puts " [ Running from a fake SQS queue : #{FAKE_SQS_ENDPOINT} ] ".center(120, '=')
+      debug " [ Running from a fake SQS queue : #{FAKE_SQS_ENDPOINT} ] ".center(120, '=')
       $fake_sqs = FakeSQS::TestIntegration.new database:     FAKE_SQS_DB,
                                                sqs_endpoint: FAKE_SQS_HOST,
                                                sqs_port:     FAKE_SQS_PORT
@@ -162,40 +163,39 @@ module TestingHelpers
   end
 
   def start_fake_sqs
-    return false if use_real_sqs
-    puts '>>> starting fake sqs ...'
+    return false if on_real_sqs
+    # debug '>>> starting fake sqs ...'
     $fake_sqs.start
   end
 
   def stop_fake_sqs
-    return false if use_real_sqs
-    puts '>>> stopping fake sqs ...'
+    return false if on_real_sqs
+    # debug '>>> stopping fake sqs ...'
     $fake_sqs.stop
   end
 
   def config_torch
     Tiki::Torch.configure do |c|
-      if use_real_sqs
+      if on_real_sqs
         c.access_key_id     = ENV['AWS_TEST_ACCESS_KEY_ID'].to_s.strip
         c.secret_access_key = ENV['AWS_TEST_SECRET_ACCESS_KEY'].to_s.strip
         c.region            = ENV['AWS_TEST_REGION'].to_s.strip
         raise "Missing ENV['AWS_TEST_ACCESS_KEY_ID']" if c.access_key_id.empty?
         raise "Missing ENV['AWS_TEST_SECRET_ACCESS_KEY']" if c.secret_access_key.empty?
         raise "Missing ENV['AWS_TEST_REGION']" if c.region.empty?
-        c.topic_prefix = "tiki.torch.test.#{rand(9000) + 1001}"
+        c.topic_prefix = "test_#{REAL_SQS_CODE}"
       else
         c.sqs_endpoint      = FAKE_SQS_ENDPOINT
         c.access_key_id     = ENV.fetch 'AWS_TEST_ACCESS_KEY_ID', 'fake_access_key'
         c.secret_access_key = ENV.fetch 'AWS_TEST_SECRET_ACCESS_KEY', 'fake_secret_key'
         c.region            = ENV.fetch 'AWS_TEST_REGION', 'fake_region'
+        c.topic_prefix      = 'test'
       end
     end
     Tiki::Torch.logger.level = Logger::DEBUG if ENV['DEBUG'] == 'true'
-    puts "Tiki::Torch.config : #{Tiki::Torch.config.to_yaml}"
   end
 
   def setup_torch
-    config_torch
     Tiki::Torch.client.sqs = nil
     Tiki::Torch.setup_aws
   end
@@ -205,32 +205,36 @@ module TestingHelpers
   end
 
   def delete_queues
-    return false unless use_real_sqs
+    return false unless on_real_sqs
 
     Tiki::Torch.client.queues.each do |queue|
-      puts "> Deleting queue #{queue.name} ..."
+      debug "> Deleting queue #{queue.name} ..."
       Tiki::Torch.client.sqs.delete_queue queue_url: queue.url
     end
   end
 
+  before(:each) do
+    config_torch
+  end
+
   around(:example, integration: true) do |example|
-    puts '>>> starting integration ...'
+    # debug '>>> starting integration ...'
     $lines = LogLines.new
     start_fake_sqs
     setup_torch
-    puts '>>> running integration ...'
+    # debug '>>> running integration ...'
     example.run
-    puts '>>> ending integration ...'
+    # debug '>>> ending integration ...'
     take_down_torch
     stop_fake_sqs
   end
 
   around(:example, polling: true) do |example|
-    puts '>>> starting polling ...'
+    # debug '>>> starting polling ...'
     manager.start_polling polling_pattern
-    puts '>>> running polling ...'
+    # debug '>>> running polling ...'
     example.run
-    puts '>>> ending polling ...'
+    # debug '>>> ending polling ...'
     manager.stop_polling
   end
 

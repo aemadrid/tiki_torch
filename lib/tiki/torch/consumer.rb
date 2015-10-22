@@ -23,6 +23,12 @@ module Tiki
 
       delegate [:message, :payload, :properties] => :event
 
+      def to_s
+        %{#<#{self.class.name} event=#{event}>}
+      end
+
+      alias :inspect :to_s
+
     end
   end
 end

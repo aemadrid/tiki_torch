@@ -10,6 +10,8 @@ module Tiki
         @sqs ||= ::Aws::SQS::Client.new aws_client_options(:sqs_endpoint)
       end
 
+      VALID_QUEUE_RX = /^[\w_-]{1,80}$/i
+
       def queues(prefix = Tiki::Torch.config.topic_prefix)
         sqs.list_queues(queue_name_prefix: prefix).
           queue_urls.sort.
@@ -17,33 +19,30 @@ module Tiki
       end
 
       def queue(name)
-        type = nil
-
-        unless type
-          debug "[#{name}] checking known queues | #{known_queues.size} : #{known_queues.keys.join(', ')}"
-          q    = known_queues[name]
-          type = :known if q
-        end
-
-        unless type
-          debug "[#{name}] getting queue from server ..."
-          q    = get_queue(name)
-          type = :found if q
-        end
-
-        unless type
-          debug "[#{name}] creating queue on server ..."
-          q    = create_queue(name)
-          type = :created if q
-        end
-
-        type ||= :missing
-
-        # q = known_queues[name] || get_queue(name) || create_queue(name)
-        puts "[#{name}] #{type} | (#{q.class.name}) #{q ? q.inspect : 'MISSING'}"
-        raise "Could not obtain queue [#{name}]" unless q
-        q
+        check_valid_queue_name! name
+        res = get_queue(name) || find_queue(name) || create_queue(name)
+        raise "Could not obtain queue [#{name}]" unless res
+        res
       end
+
+      def create_and_attach_dlq(main, dlq_name, max_count)
+        return false if main[:redrive_policy].nil?
+
+        queue(dlq_name).tap do |dlq_queue|
+          main.attributes = {
+            'RedrivePolicy' => {
+              'maxReceiveCount'     => max_count,
+              'deadLetterTargetArn' => dlq_queue.attributes.arn
+            }.to_json
+          }
+        end
+      end
+
+      def to_s
+        %{#<T:T:AwsClient>}
+      end
+
+      alias :inspect :to_s
 
       private
 
@@ -57,26 +56,36 @@ module Tiki
         options
       end
 
-      def create_queue(name)
-        resp = sqs.create_queue queue_name: name
-        debug_var :resp, resp
-        debug "known_queues : 1 | #{known_queues.size} : #{known_queues.keys.join(', ')}"
-        known_queues[name] = AwsQueue.from_url resp.queue_url, self
-        debug "known_queues : 2 | #{known_queues.size} : #{known_queues.keys.join(', ')}"
-        known_queues[name]
-      rescue Aws::SQS::Errors::QueueNameExists
-        known_queues[name] || get_queue(name)
+      def check_valid_queue_name!(name)
+        message = 'Can only include alphanumeric characters, hyphens, or underscores. 1 to 80 in length'
+        raise ArgumentError, message unless name =~ VALID_QUEUE_RX
       end
 
-      def get_queue(name)
+      def create_queue(name)
+        resp  = sqs.create_queue queue_name: name
+        queue = AwsQueue.from_url resp.queue_url, self
+        cache_queue name, queue
+      rescue Aws::SQS::Errors::QueueNameExists
+        get_queue(name) || find_queue(name)
+      end
+
+      def find_queue(name)
         found = AwsQueue.from_name name, self
         return nil unless found
 
-        known_queues[name] = found
+        cache_queue name, found
       end
 
       def known_queues
         @known_queues ||= Concurrent::Hash.new
+      end
+
+      def get_queue(name)
+        known_queues[name]
+      end
+
+      def cache_queue(name, queue)
+        known_queues[name] = queue
       end
 
     end
@@ -89,7 +98,7 @@ module Tiki
       @client ||= AwsClient.new
     end
 
-    client
+    client.send(:known_queues)
 
   end
 end

@@ -41,6 +41,7 @@ require 'tiki/torch/transcoder'
 require 'tiki/torch/transcoders/json'
 require 'tiki/torch/transcoders/yaml'
 
+require 'tiki/torch/aws/queue_attributes'
 require 'tiki/torch/aws/queue'
 require 'tiki/torch/aws/message'
 require 'tiki/torch/aws/client'

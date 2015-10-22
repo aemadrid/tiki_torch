@@ -49,11 +49,11 @@ module Tiki
 
       def to_s
         attrs = {
-          message_id: message_id,
-          body:       body.size,
-          payload:    payload.class.name,
+          short_id: short_id,
+          body:     body.size,
+          payload:  payload.class.name,
         }
-        "#<#{self.class.name} #{attrs.map { |k, v| "#{k}=#{v.inspect}" }.join(', ')}>"
+        "#<T:T:Event #{attrs.map { |k, v| "#{k}=#{v.inspect}" }.join(', ')}>"
       end
 
       alias :inspect :to_s

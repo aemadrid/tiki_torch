@@ -83,6 +83,12 @@ module Tiki
         @status
       end
 
+      def to_s
+        %{#<T:T:ConsumerBroker consumer=#{@consumer} manager=#{@manager}>}
+      end
+
+      alias :inspect :to_s
+
       private
 
       def process_loop

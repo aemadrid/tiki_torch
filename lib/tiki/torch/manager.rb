@@ -65,6 +65,12 @@ module Tiki
         ].map { |x| x.value }
       end
 
+      def to_s
+        %{#<T:T:Manager brokers=#{brokers.size} config=#{config} client=#{client}>}
+      end
+
+      alias :inspect :to_s
+
       private
 
       def build_config(options)

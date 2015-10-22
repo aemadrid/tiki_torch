@@ -11,7 +11,7 @@ module Tiki
         end
 
         def process
-          debug "Event ##{short_id} was processed"
+          info "Event ##{event.short_id} was processed"
         end
 
         def on_success(result)
@@ -24,7 +24,7 @@ module Tiki
         end
 
         def on_end
-          debug "Event ##{short_id} ended"
+          debug "Event ##{event.short_id} ended"
         end
 
       end

@@ -1,6 +1,6 @@
 module Tiki
   module Torch
-    describe AwsQueue, integration: true, focus: true do
+    describe AwsQueue, integration: true do
       let(:text) { 'Hello!' }
       context 'single' do
         context 'text message' do

@@ -56,6 +56,12 @@ module Tiki
         queue.send_message encoded
       end
 
+      def to_s
+        %{#<T:T:Publisher manager=#{manager}>}
+      end
+
+      alias :inspect :to_s
+
     end
 
     extend self

@@ -13,6 +13,8 @@ module Tiki
       attribute :session_token, String
 
       attribute :topic_prefix, String, default: 'tiki_torch'
+      attribute :create_dlq, Boolean, default: false
+      attribute :max_dlq, Integer, default: 1000
       attribute :dlq_postfix, String, default: 'dlq'
       attribute :channel, String, default: 'events'
       attribute :visibility_timeout, Integer, default: 600
@@ -28,6 +30,12 @@ module Tiki
       def default_message_properties
         @default_message_properties ||= {}
       end
+
+      def to_s
+        %{#<T:T:Config access_key_id=#{access_key_id.inspect} region=#{region.inspect}>}
+      end
+
+      alias :inspect :to_s
 
     end
 

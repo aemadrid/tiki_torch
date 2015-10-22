@@ -1,6 +1,6 @@
 describe SimpleConsumer do
-  context 'basic', focus: true do
-    it('topic             ') { expect(consumer.topic).to eq 'test.simple' }
+  context 'basic' do
+    it('topic             ') { expect(consumer.topic).to eq 'simple' }
     it('topic_prefix      ') { expect(consumer.topic_prefix).to eq config.topic_prefix }
     it('channel           ') { expect(consumer.channel).to eq config.channel }
     it('dlq_postfix       ') { expect(consumer.dlq_postfix).to eq config.dlq_postfix }
@@ -11,7 +11,7 @@ describe SimpleConsumer do
     it('event_pool_size   ') { expect(consumer.event_pool_size).to eq config.event_pool_size }
     it('transcoder_code   ') { expect(consumer.transcoder_code).to eq config.transcoder_code }
     it('sleep_times       ') { expect(consumer.events_sleep_times).to eq config.events_sleep_times }
-    it('queue_name        ') { expect(consumer.queue_name).to eq "#{config.topic_prefix}-test.simple-events" }
+    it('queue_name        ') { expect(consumer.queue_name).to eq "#{config.topic_prefix}-simple-events" }
   end
   context 'processing', integration: true, polling: true do
     context 'multiple' do

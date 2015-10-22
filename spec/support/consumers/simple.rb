@@ -1,6 +1,6 @@
 class SimpleConsumer < Tiki::Torch::Consumer
 
-  consumes 'test.simple'
+  consumes 'simple'
 
   def process
     $lines << payload

@@ -5,22 +5,6 @@ module Tiki
       include Logging
       extend Forwardable
 
-      ATTRIBUTES = {
-        visible_count:      'ApproximateNumberOfMessages',
-        invisible_count:    'ApproximateNumberOfMessagesNotVisible',
-        visibility_timeout: 'VisibilityTimeout',
-        created_at:         'CreatedTimestamp',
-        updated_at:         'LastModifiedTimestamp',
-        policy:             'Policy',
-        max_size:           'MaximumMessageSize',
-        retention_period:   'MessageRetentionPeriod',
-        arn:                'QueueArn',
-        delayed_count:      'ApproximateNumberOfMessagesDelayed',
-        default_delay:      'DelaySeconds',
-        receive_delay:      'ReceiveMessageWaitTimeSeconds',
-        redirve_policy:     'RedrivePolicy',
-      }
-
       attr_accessor :name, :client, :url
 
       def_delegators :client, :sqs
@@ -43,14 +27,18 @@ module Tiki
       end
 
       def attributes(*names)
-        names = names.flatten.map { |x| ATTRIBUTES[x] || x }.compact
+        names = names.flatten.map { |x| ATTR_NAMES[x] || x }.compact
         names << 'All' if names.empty?
-        retryable_sqs_cmd :get_queue_attributes, queue_url: url, attribute_names: names
+        result = retryable_sqs_cmd(:get_queue_attributes, queue_url: url, attribute_names: names)
+        result ? AwsQueueAttributes.new(result) : nil
+      end
+
+      def attributes=(options = {})
+        retryable_sqs_cmd(:set_queue_attributes, queue_url: url, attribute_names: options)
       end
 
       def attribute(name)
-        name = ATTRIBUTES[name] if ATTRIBUTES.key? name
-        attributes(name)[name]
+        attributes[name]
       end
 
       alias :[] :attribute
@@ -79,6 +67,12 @@ module Tiki
           messages.
           map { |m| Torch::AwsMessage.new(m, self) }
       end
+
+      def to_s
+        %{#<T:T:AwsQueue name=#{name.inspect}>}
+      end
+
+      alias :inspect :to_s
 
       private
 
@@ -112,7 +106,7 @@ module Tiki
 
       def retryable_sqs_cmd(cmd, *args)
         debug "cmd : #{cmd} | args : #{args.inspect}"
-        tries ||= 3
+        tries  ||= 3
         result = sqs.send cmd, *args
       rescue Aws::SQS::Errors::QueueNameExists,
         Aws::SQS::Errors::NonExistentQueue => e

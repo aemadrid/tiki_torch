@@ -1,6 +1,9 @@
 module Tiki
   module Torch
     describe Config do
+      context 'basic' do
+        it('to_s') { expect(subject.to_s).to eq '#<T:T:Config access_key_id=nil region=nil>' }
+      end
       context 'default' do
         before(:context) { TestingHelpers.config_torch }
         subject { ::Tiki::Torch.config }
@@ -12,7 +15,7 @@ module Tiki
           it('sqs_endpoint            ') { expect(subject.sqs_endpoint).to eq "http://#{$fake_sqs.options[:sqs_endpoint]}:#{$fake_sqs.options[:sqs_port]}" }
           it('session_token           ') { expect(subject.session_token).to be_nil }
 
-          it('topic_prefix            ') { expect(subject.topic_prefix).to eq 'tiki_torch' }
+          it('topic_prefix            ') { expect(subject.topic_prefix).to eq 'test' }
           it('dlq_postfix             ') { expect(subject.dlq_postfix).to eq 'dlq' }
           it('channel                 ') { expect(subject.channel).to eq 'events' }
           it('visibility_timeout      ') { expect(subject.visibility_timeout).to eq 600 }
