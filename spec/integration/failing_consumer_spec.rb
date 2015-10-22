@@ -15,17 +15,23 @@ describe FailingConsumer, integration: true, polling: true, on_real_sqs: true, f
       expect(policy['maxReceiveCount']).to eq consumer.max_attempts
     end
   end
+  context 'dlq' do
+    let(:dl_queue) { Tiki::Torch.client.queue dlq_name }
+    it 'report failures and sends to DLQ in the end' do
+      consumer.publish 'failure'
+      $lines.wait_for_size 3, 10
 
-  it 'report failures and sends to DLQ in the end' do
-    consumer.publish 'failure'
-    $lines.wait_for_size 3, 10
+      expect($lines.all).to eq %w{ failed:left_for_dead failed:left_for_dead failed:left_for_dead }
+      sleep consumer.visibility_timeout + 1
 
-    expect($lines.all).to eq %w{ failed:left_for_dead failed:left_for_dead failed:left_for_dead }
-    sleep consumer.visibility_timeout + 1
+      attrs = queue.attributes
+      expect(attrs.visible_count).to eq 0
+      expect(attrs.invisible_count).to eq 0
 
-    attrs = queue.attributes
-    expect(attrs.visible_count).to eq 0
-    expect(attrs.invisible_count).to eq 0
+      dlq_attrs = dl_queue.attributes
+      expect(dlq_attrs.visible_count).to eq 1
+      expect(dlq_attrs.invisible_count).to eq 0
+    end
   end
 end
 

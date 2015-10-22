@@ -37,7 +37,7 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
     end
 
     c.after(:suite) do
-      TestingHelpers.delete_queues
+      TestingHelpers.delete_queues unless FOCUSED
     end
 
   end
