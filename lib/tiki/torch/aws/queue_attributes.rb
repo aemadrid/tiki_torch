@@ -93,7 +93,7 @@ module Tiki
       end
 
       def redrive_policy
-        get('RedrivePolicy').to_i
+        get('RedrivePolicy')
       end
 
     end

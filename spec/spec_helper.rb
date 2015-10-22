@@ -21,8 +21,11 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
 
     c.filter_run_excluding performance: true unless ENV['PERFORMANCE'] == 'true'
 
-    c.filter_run_excluding on_fake_sqs: true if ON_REAL_SQS
-    c.filter_run_excluding on_real_sqs: true unless ON_REAL_SQS
+    if ON_REAL_SQS
+      c.filter_run_excluding on_fake_sqs: true
+    else
+      c.filter_run_excluding on_real_sqs: true
+    end
 
     c.mock_with :rspec do |mocks|
       mocks.verify_partial_doubles = true
