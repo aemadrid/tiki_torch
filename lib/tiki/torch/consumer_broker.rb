@@ -209,9 +209,10 @@ module Tiki
       def sleep_for(name, msg = nil)
         return nil if stopped?
 
-        sleep_time = Torch.config.events_sleep_times[name]
-        debug "#{lbl} going to sleep on #{name}#{msg ? " (#{msg})" : ''}for #{sleep_time} secs ..."
-        sleep sleep_time
+        time = Torch.config.events_sleep_times[name].to_f
+        rand_time = (time / 4.0) + (rand(time * 100.0) / 100.0 / 4.0 * 3) # 1/4 + rnd(3/4)
+        debug '%s going to sleep on %s%s for %.2f secs (max: %.2f secs) ...' % [lbl, name, (msg ? " (#{msg})" : ''), rand_time, time]
+        sleep time
       rescue Exception => e
         error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
       end
