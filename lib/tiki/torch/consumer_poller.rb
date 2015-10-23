@@ -5,7 +5,7 @@ module Tiki
       include Logging
       extend Forwardable
 
-      def_delegators :@consumer, :queue_name, :use_dlq, :dlq_postfix
+      def_delegators :@consumer, :queue_name, :use_dlq, :dlq_postfix, :visibility_timeout
 
       def initialize(consumer, client)
         @consumer = consumer
@@ -16,7 +16,7 @@ module Tiki
         options = {
           max_number_of_messages: max_qty(qty),
           wait_time_seconds:      timeout,
-          visibility_timeout:     @consumer.visibility_timeout,
+          visibility_timeout:     visibility_timeout,
         }
         queue.receive_messages options
       end

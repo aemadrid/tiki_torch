@@ -68,7 +68,7 @@ module Tiki
         debug "#{lbl} running consumer!"
         @status
       rescue Exception => e
-        puts "Exception thrown: #{e.class.name} : #{e.message}\n  #{e.backtrace[0,5].join("\n  ")}"
+        puts "Exception thrown: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
       end
 
       def stop
@@ -145,7 +145,7 @@ module Tiki
         if @event_pool.try(:ready?)
           @polling = true
           debug "#{lbl} event pool is ready, polling : #{@event_pool}"
-          messages = @poller.pop @event_pool.ready_size, 1
+          messages = @poller.pop @event_pool.ready_size, 3
           debug "#{lbl} messages : got #{messages.size} messages back ..."
           if messages.size > 0
             messages.each do |msg|
@@ -209,6 +209,11 @@ module Tiki
         return nil if stopped?
 
         time = Torch.config.events_sleep_times[name].to_f
+        if time.nil? || time.to_f < 0.1
+          debug '%s not going to sleep on %s%s [%s:%s] ...' % [lbl, name, (msg ? " (#{msg})" : ''), time.class.name, time.inspect]
+          return false
+        end
+
         rand_time = (time / 4.0) + (rand(time * 100.0) / 100.0 / 4.0 * 3) # 1/4 + rnd(3/4)
         debug '%s going to sleep on %s%s for %.2f secs (max: %.2f secs) ...' % [lbl, name, (msg ? " (#{msg})" : ''), rand_time, time]
         sleep time
