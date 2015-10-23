@@ -12,7 +12,7 @@ module Tiki
 
       VALID_QUEUE_RX = /^[\w_-]{1,80}$/i
 
-      def queues(prefix = Tiki::Torch.config.topic_prefix)
+      def queues(prefix = Tiki::Torch.config.prefix)
         sqs.list_queues(queue_name_prefix: prefix).
           queue_urls.sort.
           map { |x| AwsQueue.from_url x, self }
@@ -25,8 +25,12 @@ module Tiki
         res
       end
 
+      def dynamo
+        @dynamo ||= ::Aws::DynamoDB::Client.new aws_client_options(:dynamo_endpoint)
+      end
+
       def to_s
-        %{#<T:T:AwsClient>}
+        '#<T:T:AwsClient>'
       end
 
       alias :inspect :to_s
@@ -44,7 +48,8 @@ module Tiki
       end
 
       def check_valid_queue_name!(name)
-        message = 'Can only include alphanumeric characters, hyphens, or underscores. 1 to 80 in length'
+        message = 'Can only include alphanumeric characters, hyphens, or underscores. ' +
+          "1 to 80 in length [#{name}]"
         raise ArgumentError, message unless name =~ VALID_QUEUE_RX
       end
 

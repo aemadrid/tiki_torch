@@ -8,7 +8,7 @@ module Tiki
         subject { klass }
         context 'config' do
           it('topic             ') { expect(subject.topic).to eq 'simple' }
-          it('topic_prefix      ') { expect(subject.topic_prefix).to eq config.topic_prefix }
+          it('prefix            ') { expect(subject.prefix).to eq config.prefix }
           it('channel           ') { expect(subject.channel).to eq config.channel }
 
           it('default_delay     ') { expect(subject.default_delay).to eq config.default_delay }

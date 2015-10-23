@@ -9,7 +9,7 @@ module Tiki
 
       def_delegators :@consumer,
                      :name,
-                     :config, :topic, :topic_prefix, :channel,
+                     :config, :topic, :prefix, :channel,
                      :queue_name, :dead_letter_queue_name, :visibility_timeout, :retention_period,
                      :max_attempts, :event_pool_size, :events_sleep_times
 

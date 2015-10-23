@@ -6,6 +6,7 @@ require 'rubygems'
 require 'bundler/setup'
 require 'tiki/torch'
 require 'fake_sqs/test_integration'
+require 'fake_dynamo'
 
 T = Tiki::Torch
 # CS = Tiki::Torch::Consumer
@@ -13,24 +14,8 @@ T = Tiki::Torch
 # CB = Tiki::Torch::ConsumerBroker
 # P  = Tiki::Torch::Publisher
 
-def fake_sqs
-  @fake_sqs ||= FakeSQS::TestIntegration.new database:     ENV.fetch('FAKE_SQS_DATABASE', ':memory:'),
-                                             sqs_endpoint: ENV.fetch('FAKE_SQS_HOST', 'localhost'),
-                                             sqs_port:     ENV.fetch('FAKE_SQS_PORT', 34568).to_i
-end
-
-def fake_setup
-  fake_sqs.start
-  at_exit { fake_sqs.stop }
-  Tiki::Torch.configure do |c|
-    c.sqs_endpoint      = "http://#{fake_sqs.options[:sqs_endpoint]}:#{fake_sqs.options[:sqs_port]}"
-    c.access_key_id     = ENV.fetch 'AWS_TEST_ACCESS_KEY_ID', 'fake_access_key'
-    c.secret_access_key = ENV.fetch 'AWS_TEST_SECRET_ACCESS_KEY', 'fake_secret_key'
-    c.region            = ENV.fetch 'AWS_TEST_REGION', 'us-east-1'
-  end
-  Tiki::Torch.client.sqs = nil
-  Tiki::Torch.setup_aws
-end
+require_relative '../spec/support/constants'
+require_relative '../spec/support/helpers'
 
 require 'logger'
 

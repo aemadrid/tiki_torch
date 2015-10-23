@@ -1,17 +1,7 @@
 unless Object.const_defined? :SPEC_HELPER_LOADED
 
-  require 'rubygems'
-  require 'bundler'
-
-  Bundler.require(:default, :development, :test)
-
-  require 'tiki_torch'
-
-  SPEC_ROOT = File.dirname File.expand_path(__FILE__)
-
-  require 'fake_sqs/test_integration'
-  require 'support/constants'
-  require 'support/helpers'
+  require_relative './support/constants'
+  require_relative './support/helpers'
   Dir.glob("#{SPEC_ROOT}/support/consumers/**/*.rb").map { |path| require path }
 
   RSpec.configure do |c|
@@ -33,11 +23,14 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
 
     c.before(:suite) do
       TestingHelpers.setup_fake_sqs
+      TestingHelpers.setup_fake_dynamo
       TestingHelpers.setup_torch
     end
 
     c.after(:suite) do
-      TestingHelpers.delete_queues unless FOCUSED
+      TestingHelpers.delete_queues
+      TestingHelpers.stop_fake_dynamo
+      TestingHelpers.stop_fake_sqs
     end
 
   end

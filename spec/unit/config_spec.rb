@@ -12,7 +12,7 @@ module Tiki
           it('secret_access_key ') { expect(subject.secret_access_key).to eq TEST_SECRET_ACCESS_KEY }
           it('region            ') { expect(subject.region).to eq TEST_REGION }
 
-          it('topic_prefix      ') { expect(subject.topic_prefix).to eq TEST_PREFIX }
+          it('prefix            ') { expect(subject.prefix).to eq TEST_PREFIX }
           it('channel           ') { expect(subject.channel).to eq 'events' }
 
           it('default_delay     ') { expect(subject.default_delay).to eq 0 }
@@ -31,7 +31,8 @@ module Tiki
           it('events_sleep_times') { expect(subject.events_sleep_times).to eq({ idle: 1, busy: 0.1, received: 0.1, empty: 0.5, exception: 0.5 }) }
 
           context 'fake', on_fake_sqs: true do
-            it('sqs_endpoint') { expect(subject.sqs_endpoint).to eq FAKE_SQS_ENDPOINT }
+            it('sqs_endpoint   ') { expect(subject.sqs_endpoint).to eq FAKE_SQS_ENDPOINT }
+            it('dynamo_endpoint') { expect(subject.dynamo_endpoint).to eq FAKE_DYNAMO_ENDPOINT }
           end
         end
         context 'configure block' do

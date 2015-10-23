@@ -26,7 +26,7 @@ module Tiki
 
       def build_queue_name(name, channel = Torch.config.channel)
         new_name = ''
-        prefix = Torch.config.topic_prefix
+        prefix = Torch.config.prefix
         new_name << "#{prefix}-" unless name.start_with? prefix
         new_name << name
         new_name << "-#{channel}" unless name.end_with? channel

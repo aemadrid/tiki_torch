@@ -6,7 +6,7 @@ module Tiki
         class Config
 
           attr_accessor :topic
-          attr_writer :topic_prefix, :channel
+          attr_writer :prefix, :channel
           attr_writer :default_delay, :max_size, :retention_period, :policy, :receive_delay, :visibility_timeout
           attr_writer :use_dlq, :dlq_postfix, :max_attempts
           attr_writer :event_pool_size, :transcoder_code, :events_sleep_times
@@ -17,8 +17,8 @@ module Tiki
             @consumer = consumer
           end
 
-          def topic_prefix
-            @topic_prefix || Torch.config.topic_prefix
+          def prefix
+            @prefix || Torch.config.prefix
           end
 
           def channel
@@ -94,7 +94,7 @@ module Tiki
           end
 
           def_delegators :config,
-                         :topic, :topic=, :topic_prefix, :topic_prefix=, :channel, :channel=,
+                         :topic, :topic=, :prefix, :prefix=, :channel, :channel=,
                          :default_delay, :default_delay=, :max_size, :max_size=, :retention_period, :retention_period=,
                          :policy, :policy=, :receive_delay, :receive_delay=, :visibility_timeout, :visibility_timeout=,
                          :use_dlq, :use_dlq=, :dlq_postfix, :dlq_postfix=, :max_attempts, :max_attempts=,
@@ -111,7 +111,7 @@ module Tiki
           end
 
           def queue_name
-            prefix = config.topic_prefix || 'prefix'
+            prefix = config.prefix || 'prefix'
             "#{prefix}-#{topic}-#{channel}"
           end
 

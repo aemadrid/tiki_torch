@@ -9,8 +9,9 @@ module Tiki
       attribute :secret_access_key, String, default: lambda { |_, _| ENV['AWS_SECRET_ACCESS_KEY'] }
       attribute :region, String, default: lambda { |_, _| ENV['AWS_REGION'] }
       attribute :sqs_endpoint, String
+      attribute :dynamo_endpoint, String
 
-      attribute :topic_prefix, String, default: 'tiki_torch'
+      attribute :prefix, String, default: 'tiki_torch'
       attribute :channel, String, default: 'events'
 
       attribute :default_delay, Integer, default: 0 # DelaySeconds

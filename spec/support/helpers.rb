@@ -135,8 +135,62 @@ module TestingHelpers
 
   def stop_fake_sqs
     return false if ON_REAL_SQS
+    return false unless $fake_sqs
     # debug '>>> stopping fake sqs ...'
     $fake_sqs.stop
+  end
+
+  def setup_fake_dynamo
+    return false if $started_fake_dynamo
+    Tiki::Torch.config.dynamo_endpoint = FAKE_DYNAMO_ENDPOINT
+
+    FileUtils.mkdir_p File.dirname(FAKE_DYNAMO_DB_PATH)
+    FakeDynamo::Storage.instance.init_db FAKE_DYNAMO_DB_PATH
+    FakeDynamo::Logger.setup FAKE_DYNAMO_LOG_LEVEL
+
+    if FAKE_DYNAMO_COMPACT
+      FakeDynamo::Storage.instance.load_aof
+      FakeDynamo::Storage.instance.compact!
+    end
+
+    FakeDynamo::Storage.instance.load_aof
+    at_exit { stop_fake_dynamo }
+    $started_fake_dynamo = true
+  end
+
+  def start_fake_dynamo
+    setup_fake_dynamo
+    return false if $fake_dynamo_thread
+
+    $fake_dynamo_thread = Thread.new do
+      FakeDynamo::Server.run!(port: FAKE_DYNAMO_PORT, bind: FAKE_DYNAMO_HOST) do |server|
+        if server.respond_to?('config') && server.config.respond_to?('[]=')
+          server.config[:AccessLog] = []
+        end
+      end
+    end
+  end
+
+  def reset_fake_dynamo
+    FakeDynamo::Storage.instance.reset
+    FakeDynamo::Storage.instance.load_aof
+  end
+
+  def stop_fake_dynamo
+    return false unless $stopped_fake_dynamo
+    return false unless $fake_dynamo_thread
+    begin
+      Timeout::timeout(3) do
+        FakeDynamo::Storage.instance.shutdown
+        FakeDynamo::Storage.instance.reset
+        $fake_dynamo_thread.join
+      end
+    rescue Timeout::Error
+      $fake_dynamo_thread.kill
+    end
+    $fake_dynamo_thread = nil
+    FileUtils.rm_rf FAKE_DYNAMO_DB_PATH
+    $stopped_fake_dynamo = true
   end
 
   def config_torch
@@ -145,7 +199,7 @@ module TestingHelpers
       c.access_key_id     = TEST_ACCESS_KEY_ID
       c.secret_access_key = TEST_SECRET_ACCESS_KEY
       c.region            = TEST_REGION
-      c.topic_prefix      = TEST_PREFIX
+      c.prefix            = TEST_PREFIX
     end
     Tiki::Torch.logger.level = Logger::DEBUG if ENV['DEBUG'] == 'true'
   end
@@ -192,6 +246,16 @@ module TestingHelpers
     example.run
     debug '>>> ending polling ...'
     manager.stop_polling
+  end
+
+  around(:example, dynamo: true) do |example|
+    debug '>>> starting dynamo ...'
+    setup_fake_dynamo
+    start_fake_dynamo
+    debug '>>> running dynamo ...'
+    example.run
+    debug '>>> resetting dynamo ...'
+    reset_fake_dynamo
   end
 
 end

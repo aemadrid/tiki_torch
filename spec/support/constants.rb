@@ -1,3 +1,15 @@
+require 'rubygems'
+require 'bundler'
+
+Bundler.require(:default, :development, :test)
+
+require 'tiki_torch'
+
+require 'fake_sqs/test_integration'
+require 'fake_dynamo'
+
+SPEC_ROOT = File.dirname File.dirname(File.expand_path(__FILE__))
+
 ON_REAL_SQS = ENV['USE_REAL_SQS'].to_s == 'true'
 FOCUSED     = ENV['FOCUS'] == 'true'
 PERFORMANCE = ENV['PERFORMANCE'] == 'true'
@@ -22,3 +34,9 @@ FAKE_SQS_HOST     = ENV.fetch('FAKE_SQS_HOST', '127.0.0.1')
 FAKE_SQS_PORT     = ENV.fetch('FAKE_SQS_PORT', Tiki::Torch::Utils.random_closed_port).to_i
 FAKE_SQS_ENDPOINT = "http://#{FAKE_SQS_HOST}:#{FAKE_SQS_PORT}"
 
+FAKE_DYNAMO_DB_PATH   = ENV.fetch('FAKE_DYNAMO_DATABASE', SPEC_ROOT + '/tmp/dynamo.db')
+FAKE_DYNAMO_HOST      = ENV.fetch('FAKE_DYNAMO_HOST', '127.0.0.1')
+FAKE_DYNAMO_PORT      = ENV.fetch('FAKE_DYNAMO_PORT', Tiki::Torch::Utils.random_closed_port).to_i
+FAKE_DYNAMO_ENDPOINT  = "http://#{FAKE_DYNAMO_HOST}:#{FAKE_DYNAMO_PORT}"
+FAKE_DYNAMO_COMPACT   = ENV.fetch('FAKE_DYNAMO_COMPACT', 'false') == 'true'
+FAKE_DYNAMO_LOG_LEVEL = ENV.fetch('FAKE_DYNAMO_LOG_LEVEL', 'warn').to_sym
