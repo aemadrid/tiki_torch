@@ -149,12 +149,11 @@ module Tiki
           debug "#{lbl} messages : got #{messages.size} messages back ..."
           if messages.size > 0
             messages.each do |msg|
-              sleep_for(:busy, @event_pool.try(:tag)) until @event_pool.try(:ready?)
               debug "#{lbl} msg : (#{msg.class.name}) ##{msg.id}"
               process_message msg
             end
           else
-            sleep_for :received, @event_pool.try(:tag)
+            sleep_for :empty, @event_pool.try(:tag)
           end
           @polling = false
         else
