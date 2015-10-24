@@ -179,17 +179,13 @@ module TestingHelpers
   def stop_fake_dynamo
     return false unless $stopped_fake_dynamo
     return false unless $fake_dynamo_thread
-    begin
-      Timeout::timeout(3) do
-        FakeDynamo::Storage.instance.shutdown
-        FakeDynamo::Storage.instance.reset
-        $fake_dynamo_thread.join
-      end
-    rescue Timeout::Error
-      $fake_dynamo_thread.kill
-    end
+
+    FakeDynamo::Storage.instance.shutdown
+    FakeDynamo::Storage.instance.reset
+    $fake_dynamo_thread.exit
     $fake_dynamo_thread = nil
-    FileUtils.rm_rf FAKE_DYNAMO_DB_PATH
+    File.rm FAKE_DYNAMO_DB_PATH
+
     $stopped_fake_dynamo = true
   end
 
