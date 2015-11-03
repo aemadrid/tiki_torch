@@ -192,10 +192,11 @@ module TestingHelpers
   def config_torch
     puts ' [ Configuring torch ... ] '.center(120, '-')
     Tiki::Torch.configure do |c|
-      c.access_key_id     = TEST_ACCESS_KEY_ID
-      c.secret_access_key = TEST_SECRET_ACCESS_KEY
-      c.region            = TEST_REGION
-      c.prefix            = TEST_PREFIX
+      c.access_key_id      = TEST_ACCESS_KEY_ID
+      c.secret_access_key  = TEST_SECRET_ACCESS_KEY
+      c.region             = TEST_REGION
+      c.prefix             = TEST_PREFIX
+      c.events_sleep_times = TEST_EVENT_SLEEP_TIMES
     end
     Tiki::Torch.logger.level = Logger::DEBUG if ENV['DEBUG'] == 'true'
   end
@@ -254,4 +255,12 @@ module TestingHelpers
     reset_fake_dynamo
   end
 
+end
+
+begin
+  require 'simplecov'
+  SimpleCov.start
+  SimpleCov.at_exit { SimpleCov.result.format! }
+rescue LoadError
+  puts 'SimpleCov not available, skipping coverage ...'
 end

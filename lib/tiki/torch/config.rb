@@ -5,6 +5,8 @@ module Tiki
       include Virtus.model
       include Logging
 
+      EVENT_SLEEP_TIMES = { idle: 60, busy: 60, received: 15, empty: 120, exception: 15, poll: 5 }
+
       attribute :access_key_id, String, default: lambda { |_, _| ENV['AWS_ACCESS_KEY_ID'] }
       attribute :secret_access_key, String, default: lambda { |_, _| ENV['AWS_SECRET_ACCESS_KEY'] }
       attribute :region, String, default: lambda { |_, _| ENV['AWS_REGION'] }
@@ -27,7 +29,7 @@ module Tiki
 
       attribute :event_pool_size, Integer, default: lambda { |_, _| Concurrent.processor_count }
       attribute :transcoder_code, String, default: 'yaml'
-      attribute :events_sleep_times, Hash, default: { idle: 1, busy: 0.1, received: 0.1, empty: 0.5, exception: 0.5 }
+      attribute :events_sleep_times, Hash, default: EVENT_SLEEP_TIMES
 
       def default_message_properties
         @default_message_properties ||= {}

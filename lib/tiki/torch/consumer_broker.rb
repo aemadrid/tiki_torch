@@ -144,8 +144,9 @@ module Tiki
         debug "#{lbl} starting poll and process message ..."
         if @event_pool.try(:ready?)
           @polling = true
-          debug "#{lbl} event pool is ready, polling : #{@event_pool}"
-          messages = @poller.pop @event_pool.ready_size, 3
+          timeout  = Torch.config.events_sleep_times[:poll].to_f
+          debug "#{lbl} event pool is ready, polling for #{timeout}: #{@event_pool}"
+          messages = @poller.pop @event_pool.ready_size, timeout
           debug "#{lbl} messages : got #{messages.size} messages back ..."
           if messages.size > 0
             messages.each do |msg|

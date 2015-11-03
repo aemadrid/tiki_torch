@@ -28,7 +28,7 @@ module Tiki
 
           it('event_pool_size   ') { expect(subject.event_pool_size).to eq Concurrent.processor_count }
           it('transcoder_code   ') { expect(subject.transcoder_code).to eq 'yaml' }
-          it('events_sleep_times') { expect(subject.events_sleep_times).to eq({ idle: 1, busy: 0.1, received: 0.1, empty: 0.5, exception: 0.5 }) }
+          it('events_sleep_times') { expect(subject.events_sleep_times).to eq(TEST_EVENT_SLEEP_TIMES) }
 
           context 'fake', on_fake_sqs: true do
             it('sqs_endpoint   ') { expect(subject.sqs_endpoint).to eq FAKE_SQS_ENDPOINT }
