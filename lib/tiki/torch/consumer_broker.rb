@@ -16,8 +16,8 @@ module Tiki
       def_delegators :@manager, :client
 
       def initialize(consumer, manager)
-        @consumer = consumer
-        @manager  = manager
+        @consumer      = consumer
+        @manager       = manager
       end
 
       def status
@@ -146,7 +146,7 @@ module Tiki
           @polling = true
           timeout  = Torch.config.events_sleep_times[:poll].to_f
           debug "#{lbl} event pool is ready, polling for #{timeout}: #{@event_pool}"
-          messages = @poller.pop @event_pool.ready_size, timeout
+          messages = pop_messages timeout
           debug "#{lbl} messages : got #{messages.size} messages back ..."
           if messages.size > 0
             messages.each do |msg|
@@ -164,6 +164,13 @@ module Tiki
       rescue Exception => e
         error "#{lbl} Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
         sleep_for :exception, "#{e.class.name}/#{e.message}"
+      end
+
+      def pop_messages(timeout)
+        qty   = @event_pool.ready_size
+        found = @poller.pop qty, timeout
+        @consumer.pop_results qty, found.size, timeout
+        found
       end
 
       def process_message(msg)
