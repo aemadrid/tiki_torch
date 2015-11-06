@@ -23,7 +23,7 @@ describe ReportingConsumer do
         3.times { consumer.publish status: 'ok' }
         $lines.wait_for_size 3, 3
 
-        expect(consumer.count_since(action, start_time)).to eq 2
+        expect(consumer.count_since(action, start_time)).to eq 3
       end
     end
     context 'received' do
@@ -43,7 +43,7 @@ describe ReportingConsumer do
         expect(consumer.count_since(action, time_ago)).to eq 0
 
         3.times { consumer.publish status: 'ok' }
-        $lines.wait_for_size 3, 3
+        $lines.wait_for_size 3, 10
 
         expect(consumer.count_since(action, start_time)).to eq 3
       end
@@ -54,7 +54,7 @@ describe ReportingConsumer do
         expect(consumer.count_since(action, time_ago)).to eq 0
 
         3.times { consumer.publish status: 'unknown' }
-        $lines.wait_for_size 3, 3
+        $lines.wait_for_size 3, 20
 
         expect(consumer.count_since(action, start_time)).to eq 3
       end

@@ -12,7 +12,7 @@ module Tiki
                      :config, :topic, :prefix, :channel,
                      :queue_name, :dead_letter_queue_name, :visibility_timeout, :retention_period,
                      :max_attempts, :event_pool_size, :events_sleep_times,
-                     :published_since?
+                     :published_since?, :failed_since?
 
       def_delegators :@manager, :client
 
@@ -137,8 +137,8 @@ module Tiki
         debug "#{lbl} starting poll and process message ..."
         POLL_AND_PROCESS_ACTIONS.each_with_index do |name, idx|
           break if stopping?
-          action = send name
-          debug "##{idx + 1}/#{POLL_AND_PROCESS_ACTIONS.size} #{name} : #{action}"
+          action, detail = send name
+          debug "##{idx + 1}/#{POLL_AND_PROCESS_ACTIONS.size} #{name} : #{action} #{detail ? " : #{detail}" : ''}"
           case action
             when :empty, :busy
               sleep_for action, @event_pool.try(:tag)
@@ -156,61 +156,43 @@ module Tiki
       end
 
       def check_if_need_to_poll
-        if @polled_at.nil?
-          debug 'not polled yet ...'
-          return :continue
-        end
+        return [:continue, 'not polled yet'] if @polled_at.nil?
+        return [:continue, 'received some last'] if @received > 0
+        return [:continue, 'published since last'] if published_since?(@polled_at)
+        return [:continue, 'failed since last'] if failed_since?(@polled_at - visibility_timeout)
 
-        if @received == @requested
-          debug "received all requested [#{@received}:#{@requested}] ..."
-          return :continue
-        end
-
-        if published_since?(@polled_at)
-          debug "published since last checked at #{@polled_at} ..."
-          return :continue
-        end
-
-        :empty
+        [:empty, 'neither received all nor published since']
       end
 
       def poll_for_messages
         timeout    = Torch.config.events_sleep_times[:poll].to_f
         @requested = @event_pool.ready_size
 
-        debug "#{lbl} event pool is ready, polling #{@requested} for #{timeout} ..."
         @messages  = @poller.pop @requested, timeout
         @received  = @messages.size
         @polled_at = Time.now
         @consumer.pop_results @requested, @received, timeout
 
-        :continue
+        [:continue, "got #{@received}/#{@requested}"]
       end
 
       def deal_with_no_messages
-        @messages.size > 0 ? :continue : :empty
+        @messages.size > 0 ? [:continue, 'got messages to process'] : [:empty, 'got no messages']
       end
 
       def process_messages
-        debug "#{lbl} messages : got #{@messages.size} messages back ..."
-        @messages.each do |msg|
-          debug "#{lbl} msg : (#{msg.class.name}) ##{msg.id}"
+        @messages.each_with_index do |msg, idx|
+          debug "#{lbl} ##{idx + 1}/#{@received} | msg : (#{msg.class.name}) ##{msg.id}"
           process_message msg
         end
         @messages = []
         sleep_for :received, @event_pool.try(:tag)
-        :processed
+        [:processed, "processed #{@received}/#{@requested}"]
       end
 
       def process_message(msg)
-        debug "#{lbl} got msg : (#{msg.class.name}) ##{msg.id}"
         event = Event.new msg
         debug "#{lbl} got event : (#{event.class.name}) ##{event.short_id}, going to process async ..."
-        # until @event_pool.try(:ready?)
-        #   break if stopping?
-        #   sleep_for :busy, @event_pool.try(:tag)
-        # end
-        debug "#{lbl} sending event ##{event.short_id} to event pool #{@event_pool}..."
         @event_pool.async { process_event event }
       end
 

@@ -70,7 +70,7 @@ describe SimpleConsumer, integration: true, polling: true do
           sleep 3
 
           extra.times { |nr| consumer.publish 's%02i' % (qty + nr) }
-          $lines.wait_for_size total, extra
+          $lines.wait_for_size total, extra * 2
 
           expect($lines.size).to eq total
           expect($lines.sorted).to eq expected

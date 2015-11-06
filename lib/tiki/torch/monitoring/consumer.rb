@@ -31,6 +31,10 @@ module Tiki
             count_since(:published, time_ago) > 0
           end
 
+          def failed_since?(time_ago)
+            count_since(:failure, time_ago) > 0
+          end
+
           def stats_key(action)
             "#{action}:#{Utils.simplified_name(queue_name)}"
           end

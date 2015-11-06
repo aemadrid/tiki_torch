@@ -166,7 +166,11 @@ module TestingHelpers
 
     Tiki::Torch.client.queues(TEST_PREFIX).each do |queue|
       debug "> Deleting queue #{queue.name} ..."
-      Tiki::Torch.client.sqs.delete_queue queue_url: queue.url
+      begin
+        Tiki::Torch.client.sqs.delete_queue queue_url: queue.url
+      rescue Aws::SQS::Errors::NonExistentQueue
+        debug "Error: queue #{queue.name} was not found ..."
+      end
     end
   end
 

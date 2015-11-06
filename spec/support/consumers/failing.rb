@@ -8,8 +8,8 @@ class FailingConsumer < Tiki::Torch::Consumer
 
   def on_failure(exception)
     super
-
-    $lines << ['failed', 'left_for_dead'].join(':')
+    debug 'failing ...'
+    $lines << %w(failed left_for_dead).join(':')
   end
 
 end
