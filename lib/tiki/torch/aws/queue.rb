@@ -117,7 +117,7 @@ module Tiki
           error "Exception (failing): #{e.class.name} : #{e.message}"
         end
       else
-        info "success! result: #{result.class.name} #{result.inspect}"
+        debug "success! result: #{result.class.name} #{result.inspect}"
         result
       end
 

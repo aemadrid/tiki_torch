@@ -5,20 +5,6 @@ module Tiki
       include Logging
       extend Forwardable
 
-      attr_reader :callbacks
-
-      def initialize
-        @callbacks = Concurrent::Hash.new
-      end
-
-      def add_callback(name, &blk)
-        unless block_given?
-        return false
-        end
-        debug "CB : #{name.to_s.underscore} : adding cb #{blk.inspect} ..."
-        @callbacks[name.to_s.underscore] = blk
-      end
-
       def publish(topic_name, payload = {}, properties = {})
         debug "topic_name : #{topic_name} | payload : (#{payload.class.name}) #{payload.inspect} | properties : (#{properties.class.name}) #{properties.inspect}"
         properties = build_properties properties
@@ -26,9 +12,11 @@ module Tiki
         code       = build_code properties
         encoded    = encode payload, properties, code
         res        = write queue_name, encoded
-        process_callbacks topic_name, payload, properties
+        monitor_publish topic_name, payload, properties
         debug_var :res, res
         res
+      rescue Exception => e
+        error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0,5].join("\n  ")}"
       end
 
       def to_s
@@ -70,15 +58,8 @@ module Tiki
         queue.send_message encoded
       end
 
-      def process_callbacks(topic_name, payload, properties)
-        if callbacks.empty?
-          debug "CB : no callbacks found ..."
-          return false
-        end
-        callbacks.each do |name, cb|
-          debug "CB : #{name} : calling cb #{cb.inspect} ..."
-          Concurrent::Future.execute { cb.call topic_name, payload, properties }
-        end
+      def monitor_publish(topic_name, payload, properties)
+        debug "topic_name:#{topic_name} | payload:#{payload.class.name} | properties:#{properties.class.name}"
       end
 
     end

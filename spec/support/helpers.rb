@@ -220,6 +220,15 @@ module TestingHelpers
     end
   end
 
+  def setup_redis_connection
+    Redistat.connect host: REDIS_HOST, port: REDIS_PORT, db: REDIS_DB, thread_safe: true
+    clear_redis
+  end
+
+  def clear_redis
+    Redistat.redis.flushdb
+  end
+
   before(:each) do
     config_torch
   end
@@ -243,6 +252,7 @@ module TestingHelpers
     example.run
     debug '>>> ending polling ...'
     manager.stop_polling
+    clear_redis
   end
 
   around(:example, dynamo: true) do |example|

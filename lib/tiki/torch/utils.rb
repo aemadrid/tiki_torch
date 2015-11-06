@@ -81,6 +81,10 @@ module Tiki
           return false
         end
 
+        def simplified_name(str)
+          str.dup.gsub(/[^\w]/, '')
+        end
+
       end
 
     end

@@ -53,6 +53,9 @@ require 'tiki/torch/consumer_poller'
 require 'tiki/torch/consumers/settings'
 require 'tiki/torch/consumers/hooks'
 require 'tiki/torch/consumer'
+
+require 'tiki/torch/monitoring'
+
 require 'tiki/torch/event'
 require 'tiki/torch/consumer_builder'
 require 'tiki/torch/consumer_broker'

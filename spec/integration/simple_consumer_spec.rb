@@ -57,22 +57,6 @@ describe SimpleConsumer, integration: true, polling: true do
       end
     end
   end
-  context 'publishing', focus: true do
-    let(:publisher) { Tiki::Torch.publisher }
-    it 'processes callbacks on publishing' do
-      publisher.add_callback('cb1') {|_, _, _| $lines << 'cb1' }
-      publisher.add_callback('cb2') {|_, _, _| $lines << 'cb2' }
-
-      2.times {|nr| consumer.publish 's%02i' % nr }
-
-      $lines.wait_for_size 6, 5
-
-      expect($lines.size).to eq 6
-      expect($lines.sorted).to eq %w{ cb1 cb1 cb2 cb2 s00 s01 }
-
-      publisher.callbacks.clear
-    end
-  end
   context 'processing' do
     context 'multiple' do
       let(:expected) { qty.times.map { |x| 's%02i' % x } }

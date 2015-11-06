@@ -16,8 +16,8 @@ module Tiki
       def_delegators :@manager, :client
 
       def initialize(consumer, manager)
-        @consumer      = consumer
-        @manager       = manager
+        @consumer = consumer
+        @manager  = manager
       end
 
       def status
@@ -67,8 +67,6 @@ module Tiki
         @status = :running
         debug "#{lbl} running consumer!"
         @status
-      rescue Exception => e
-        puts "Exception thrown: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
       end
 
       def stop
@@ -101,15 +99,7 @@ module Tiki
         cnt = 0
         while running?
           cnt += 1
-          begin
-            debug "#{lbl(cnt)} calling poll_and_process_message while running?:#{running?} ..."
-            poll_and_process_message
-            debug "#{lbl(cnt)} called poll_and_process_message while running?:#{running?} ..."
-          rescue Exception => e
-            debug "#{lbl(cnt)} exception in poll and process message ..."
-            error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
-            sleep_for :exception, "#{e.class.name}/#{e.message}"
-          end
+          poll_and_process_messages
         end
         debug "#{lbl} Finished running process loop ..."
       end
@@ -131,46 +121,56 @@ module Tiki
 
       def start_process_loop
         debug 'starting process loop ...'
-        @process_loop_thread = Thread.new do
-          begin
-            process_loop
-          rescue Exception => e
-            error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 10].join("\n  ")}"
-          end
-        end
+        @process_loop_thread = Thread.new { process_loop }
       end
 
-      def poll_and_process_message
+      def poll_and_process_messages
         debug "#{lbl} starting poll and process message ..."
-        if @event_pool.try(:ready?)
-          @polling = true
-          timeout  = Torch.config.events_sleep_times[:poll].to_f
-          debug "#{lbl} event pool is ready, polling for #{timeout}: #{@event_pool}"
-          messages = pop_messages timeout
-          debug "#{lbl} messages : got #{messages.size} messages back ..."
-          if messages.size > 0
-            messages.each do |msg|
-              debug "#{lbl} msg : (#{msg.class.name}) ##{msg.id}"
-              process_message msg
-            end
-          else
-            sleep_for :empty, @event_pool.try(:tag)
-          end
-          @polling = false
-        else
-          sleep_for :busy, @event_pool.try(:tag)
-        end
-        debug "#{lbl} ended poll and process message ..."
+        check_if_poll_is_ready &&
+          poll_for_messages &&
+          (deal_with_no_messages || process_messages)
+
+          # if @last_poll_time
+          #   should_poll = published_since? @last_poll_time
+          #   if
+          # end
+
       rescue Exception => e
         error "#{lbl} Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
         sleep_for :exception, "#{e.class.name}/#{e.message}"
       end
 
-      def pop_messages(timeout)
-        qty   = @event_pool.ready_size
-        found = @poller.pop qty, timeout
-        @consumer.pop_results qty, found.size, timeout
-        found
+      def check_if_poll_is_ready
+        return true if @event_pool.try(:ready?)
+
+        sleep_for :busy, @event_pool.try(:tag)
+        false
+      end
+
+      def poll_for_messages
+        timeout = Torch.config.events_sleep_times[:poll].to_f
+        qty     = @event_pool.ready_size
+
+        debug "#{lbl} event pool is ready, polling #{qty} for #{timeout} ..."
+        @messages = @poller.pop qty, timeout
+        @consumer.pop_results qty, @messages.size, timeout
+
+        true
+      end
+
+      def deal_with_no_messages
+        return false if @messages.size > 0
+
+        sleep_for :empty, @event_pool.try(:tag)
+        true
+      end
+
+      def process_messages
+        debug "#{lbl} messages : got #{@messages.size} messages back ..."
+        @messages.each do |msg|
+          debug "#{lbl} msg : (#{msg.class.name}) ##{msg.id}"
+          process_message msg
+        end
       end
 
       def process_message(msg)
@@ -185,9 +185,6 @@ module Tiki
         else
           sleep_for :empty, @event_pool.try(:tag)
         end
-      rescue Exception => e
-        error "#{lbl} Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
-        sleep_for :exception, "#{e.class.name}/#{e.message}"
       end
 
       def process_event(event)
@@ -202,15 +199,13 @@ module Tiki
           result = instance.process
           debug 'succeeding ...'
           instance.on_success result
-        rescue => e
+        rescue Exception => e
           debug 'failing ...'
           instance.on_failure e
         ensure
           debug 'ending ...'
           instance.on_end
         end
-      rescue Exception => e
-        error "Exception thrown: #{e.class.name} : #{e.message}\n  #{e.bactrace[0, 5].join("\n  ")}"
       end
 
       def sleep_for(name, msg = nil)
@@ -225,8 +220,6 @@ module Tiki
         rand_time = (time / 4.0) + (rand(time * 100.0) / 100.0 / 4.0 * 3) # 1/4 + rnd(3/4)
         debug '%s going to sleep on %s%s for %.2f secs (max: %.2f secs) ...' % [lbl, name, (msg ? " (#{msg})" : ''), rand_time, time]
         sleep time
-      rescue Exception => e
-        error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
       end
 
       def stop_process_loop

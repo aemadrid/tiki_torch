@@ -25,6 +25,7 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
       TestingHelpers.setup_fake_sqs
       TestingHelpers.setup_fake_dynamo
       TestingHelpers.setup_torch
+      TestingHelpers.setup_redis_connection
     end
 
     c.after(:suite) do

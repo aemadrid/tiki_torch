@@ -14,7 +14,6 @@ ON_REAL_SQS = ENV['USE_REAL_SQS'].to_s == 'true'
 FOCUSED     = ENV['FOCUS'] == 'true'
 PERFORMANCE = ENV['PERFORMANCE'] == 'true'
 
-
 if ON_REAL_SQS
   TEST_ACCESS_KEY_ID     = ENV['AWS_TEST_ACCESS_KEY_ID'].to_s.strip
   TEST_SECRET_ACCESS_KEY = ENV['AWS_TEST_SECRET_ACCESS_KEY'].to_s.strip
@@ -44,3 +43,6 @@ FAKE_DYNAMO_ENDPOINT  = "http://#{FAKE_DYNAMO_HOST}:#{FAKE_DYNAMO_PORT}"
 FAKE_DYNAMO_COMPACT   = ENV.fetch('FAKE_DYNAMO_COMPACT', 'false') == 'true'
 FAKE_DYNAMO_LOG_LEVEL = ENV.fetch('FAKE_DYNAMO_LOG_LEVEL', 'warn').to_sym
 
+REDIS_HOST = ENV.fetch('REDIS_HOST', 'localhost')
+REDIS_PORT = ENV.fetch('REDIS_PORT', 8379).to_i
+REDIS_DB   = ENV.fetch('REDIS_DB', 15).to_i

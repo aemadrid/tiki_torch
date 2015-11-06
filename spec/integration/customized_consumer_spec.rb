@@ -41,5 +41,4 @@ describe CustomizedConsumer do
       end
     end
   end
-
 end
