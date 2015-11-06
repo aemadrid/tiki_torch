@@ -1,6 +1,6 @@
-describe SimpleConsumer, integration: true, polling: true do
+describe SimpleConsumer do
   let(:config) { described_class.config }
-  context 'queue' do
+  context 'queue', integration: true, polling: true do
     let(:queue) { Tiki::Torch.client.queue described_class.queue_name }
     context 'attributes' do
       let!(:attrs) { queue.attributes }
@@ -57,7 +57,7 @@ describe SimpleConsumer, integration: true, polling: true do
       end
     end
   end
-  context 'processing' do
+  context 'processing', integration: true, polling: true do
     context 'multiple' do
       let(:extra) { 3 }
       let(:total) { qty + extra }
@@ -88,6 +88,31 @@ describe SimpleConsumer, integration: true, polling: true do
         let(:qty) { 55 }
         it_behaves_like 'multiple send and receive'
       end
+    end
+  end
+  context 'monitoring' do
+    let(:empty) { { published: 0, pop: 0, received: 0, success: 0, failure: 0 } }
+    let(:early) { { published: 3, pop: 1, received: 3, success: 2, failure: 1 } }
+    let(:earlier) { { published: 5, pop: 3, received: 5, success: 2, failure: 3 } }
+    let(:full) { { published: 8, pop: 4, received: 8, success: 4, failure: 4 } }
+    let(:times){ [5,30]}
+    it 'reports numbers on time', focus: true do
+      clear_redis
+
+      base = consumer.stats times
+      expect(base).to be_a Hash
+      expect(base.keys.sort).to eq times
+      expect(base[5]).to eq empty
+      expect(base[30]).to eq empty
+
+      early.each { |k, v| consumer.store_stat k, v, 4.minutes.ago }
+      earlier.each { |k, v| consumer.store_stat k, v, 24.minutes.ago }
+
+      final = consumer.stats times
+      expect(final).to be_a Hash
+      expect(final.keys.sort).to eq times
+      expect(final[5]).to eq early
+      expect(final[30]).to eq full
     end
   end
 end

@@ -15,7 +15,7 @@ describe ReportingConsumer do
         expect(consumer.published_since?(start_time)).to eq true
       end
     end
-    context 'pop', focus: true do
+    context 'pop' do
       let(:action) { :pop }
       it 'reports numbers since' do
         expect(consumer.count_since(action, time_ago)).to eq 0
@@ -24,7 +24,7 @@ describe ReportingConsumer do
         sleep 1
         $lines.wait_for_size 3, 10
 
-        expect(consumer.count_since(action, start_time)).to eq 3
+        expect(consumer.count_since(action, start_time)).to eq(REAL_SQS ? 3 : 2)
       end
     end
     context 'received' do

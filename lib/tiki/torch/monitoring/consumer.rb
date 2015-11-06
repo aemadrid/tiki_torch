@@ -9,15 +9,17 @@ module Tiki
 
         module ClassMethods
 
+          STAT_KEYS = [:published, :pop, :received, :success, :failure].freeze
+
           def pop_results(req_size, found_size, timeout)
             super
             store_stat :pop
             store_stat :received, found_size if found_size > 0
           end
 
-          def store_stat(action, qty = 1)
+          def store_stat(action, qty = 1, time = Time.now)
             key = stats_key(action)
-            Monitoring.store.store key, count: qty
+            Monitoring.store.store key, { count: qty }, time
           rescue StandardError => e
             error "on_#{action} | Exception : #{e.class.name} : #{e.message}"
           end
@@ -37,6 +39,15 @@ module Tiki
 
           def stats_key(action)
             "#{action}:#{Utils.simplified_name(queue_name)}"
+          end
+
+          # Return the latest counts in minute increments
+          def stats(*times)
+            Array(times).flatten.each_with_object({}) do |min, hsh|
+              hsh[min] = STAT_KEYS.each_with_object({}) do |key, res|
+                res[key] = count_since key, min.minutes.ago
+              end
+            end
           end
 
         end
