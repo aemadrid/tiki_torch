@@ -138,7 +138,7 @@ module Tiki
         POLL_AND_PROCESS_ACTIONS.each_with_index do |name, idx|
           break if stopping?
           action, detail = send name
-          debug "##{idx + 1}/#{POLL_AND_PROCESS_ACTIONS.size} #{name} : #{action} #{detail ? " : #{detail}" : ''}"
+          debug "#{lbl} ##{idx + 1}/#{POLL_AND_PROCESS_ACTIONS.size} #{name} : #{action} #{detail ? " : #{detail}" : ''}"
           case action
             when :empty, :busy
               sleep_for action, @event_pool.try(:tag)

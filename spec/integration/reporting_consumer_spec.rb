@@ -24,7 +24,7 @@ describe ReportingConsumer do
         sleep 1
         $lines.wait_for_size 3, 10
 
-        expect(consumer.count_since(action, start_time)).to eq(REAL_SQS ? 3 : 2)
+        expect(consumer.count_since(action, start_time)).to eq(ON_REAL_SQS ? 3 : 2)
       end
     end
     context 'received' do
