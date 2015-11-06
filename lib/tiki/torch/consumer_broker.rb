@@ -125,12 +125,25 @@ module Tiki
         @process_loop_thread = Thread.new { process_loop }
       end
 
+      POLL_AND_PROCESS_ACTIONS = [
+        :check_if_pool_is_ready,
+        :check_if_need_to_poll,
+        :poll_for_messages,
+        :deal_with_no_messages,
+        :process_messages
+      ]
+
       def poll_and_process_messages
         debug "#{lbl} starting poll and process message ..."
-        check_if_pool_is_ready &&
-          check_if_need_to_poll &&
-          poll_for_messages &&
-          (deal_with_no_messages || process_messages)
+        POLL_AND_PROCESS_ACTIONS.each_with_index do |name, idx|
+          action = send name
+          debug "#{idx} : #{name} : #{action}"
+          case action
+            when :empty, :busy
+              sleep_for action, @event_pool.try(:tag)
+              break
+          end
+        end
 
       rescue Exception => e
         error "#{lbl} Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
@@ -138,37 +151,43 @@ module Tiki
       end
 
       def check_if_pool_is_ready
-        return true if @event_pool.try(:ready?)
-
-        sleep_for :busy, @event_pool.try(:tag)
-        false
+        @event_pool.try(:ready?) ? :continue : :busy
       end
 
       def check_if_need_to_poll
-        return true if @polled_at.nil?
-        return true if published_since?(@polled_at)
+        if @polled_at.nil?
+          debug 'not polled yet ...'
+          return :continue
+        end
 
-        sleep_for :empty
-        false
+        if @received == @requested
+          debug "received all requested [#{@received}:#{@requested}] ..."
+          return :continue
+        end
+
+        if published_since?(@polled_at)
+          debug "published since last checked at #{@polled_at} ..."
+          return :continue
+        end
+
+        :empty
       end
 
       def poll_for_messages
-        timeout = Torch.config.events_sleep_times[:poll].to_f
-        qty     = @event_pool.ready_size
+        timeout    = Torch.config.events_sleep_times[:poll].to_f
+        @requested = @event_pool.ready_size
 
-        debug "#{lbl} event pool is ready, polling #{qty} for #{timeout} ..."
-        @messages  = @poller.pop qty, timeout
+        debug "#{lbl} event pool is ready, polling #{@requested} for #{timeout} ..."
+        @messages  = @poller.pop @requested, timeout
+        @received  = @messages.size
         @polled_at = Time.now
-        @consumer.pop_results qty, @messages.size, timeout
+        @consumer.pop_results @requested, @received, timeout
 
-        true
+        :continue
       end
 
       def deal_with_no_messages
-        return false if @messages.size > 0
-
-        sleep_for :empty, @event_pool.try(:tag)
-        true
+        @messages.size > 0 ? :continue : :empty
       end
 
       def process_messages
@@ -178,6 +197,7 @@ module Tiki
           process_message msg
         end
         @messages = []
+        :processed
       end
 
       def process_message(msg)

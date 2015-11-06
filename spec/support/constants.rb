@@ -10,6 +10,7 @@ require 'fake_dynamo'
 
 SPEC_ROOT = File.dirname File.dirname(File.expand_path(__FILE__))
 
+DEBUG       = ENV['DEBUG'].to_s == 'true'
 ON_REAL_SQS = ENV['USE_REAL_SQS'].to_s == 'true'
 FOCUSED     = ENV['FOCUS'] == 'true'
 PERFORMANCE = ENV['PERFORMANCE'] == 'true'

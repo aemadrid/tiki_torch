@@ -48,7 +48,7 @@ describe ReportingConsumer do
         expect(consumer.count_since(action, start_time)).to eq 3
       end
     end
-    context 'failing', focus: true do
+    context 'failing' do
       let(:action) { :failure }
       it 'reports numbers since' do
         expect(consumer.count_since(action, time_ago)).to eq 0

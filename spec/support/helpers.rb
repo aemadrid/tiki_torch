@@ -95,7 +95,7 @@ module TestingHelpers
   extend self
 
   def debug(msg)
-    puts msg
+    puts msg if DEBUG
   end
 
   def bnr(msg, chr = '=')
@@ -190,7 +190,6 @@ module TestingHelpers
   end
 
   def config_torch
-    puts ' [ Configuring torch ... ] '.center(120, '-')
     Tiki::Torch.configure do |c|
       c.access_key_id      = TEST_ACCESS_KEY_ID
       c.secret_access_key  = TEST_SECRET_ACCESS_KEY
@@ -198,7 +197,7 @@ module TestingHelpers
       c.prefix             = TEST_PREFIX
       c.events_sleep_times = TEST_EVENT_SLEEP_TIMES
     end
-    Tiki::Torch.logger.level = Logger::DEBUG if ENV['DEBUG'] == 'true'
+    Tiki::Torch.logger.level = Logger::DEBUG if DEBUG
   end
 
   def setup_torch
@@ -246,13 +245,14 @@ module TestingHelpers
   end
 
   around(:example, polling: true) do |example|
+    debug '>>> clearing redis ...'
+    clear_redis
     debug '>>> starting polling ...'
     manager.start_polling polling_pattern
     debug '>>> running polling ...'
     example.run
     debug '>>> ending polling ...'
     manager.stop_polling
-    clear_redis
   end
 
   around(:example, dynamo: true) do |example|

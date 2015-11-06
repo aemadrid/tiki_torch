@@ -59,27 +59,33 @@ describe SimpleConsumer, integration: true, polling: true do
   end
   context 'processing' do
     context 'multiple' do
-      let(:expected) { qty.times.map { |x| 's%02i' % x } }
+      let(:extra) { 3 }
+      let(:total) { qty + extra }
+      let(:expected) { total.times.map { |x| 's%02i' % x } }
       shared_examples 'multiple send and receive' do
         it 'properly' do
           qty.times { |nr| consumer.publish 's%02i' % nr }
 
           $lines.wait_for_size qty, qty
+          sleep 3
 
-          expect($lines.size).to eq qty
+          extra.times { |nr| consumer.publish 's%02i' % (qty + nr) }
+          $lines.wait_for_size total, extra
+
+          expect($lines.size).to eq total
           expect($lines.sorted).to eq expected
         end
       end
-      context 'send/receive #1', focus: true do
+      context 'send/receive #1' do
         let(:qty) { 4 }
         it_behaves_like 'multiple send and receive'
       end
-      context 'send/receive #2', focus: true do
+      context 'send/receive #2' do
         let(:qty) { 14 }
         it_behaves_like 'multiple send and receive'
       end
-      context 'send/receive #3', focus: true do
-        let(:qty) { 54 }
+      context 'send/receive #3' do
+        let(:qty) { 55 }
         it_behaves_like 'multiple send and receive'
       end
     end

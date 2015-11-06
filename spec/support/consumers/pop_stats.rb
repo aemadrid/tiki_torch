@@ -4,13 +4,17 @@ class PopStatsConsumer < Tiki::Torch::Consumer
 
   consumes 'pop_stats'
 
-  def process
-    $lines << 'success'
-  end
+  class << self
 
-  def self.pop_results(req_size, found_size, timeout)
-    super
-    $lines << "r:#{req_size}|f:#{found_size}|t:#{timeout}"
+    def tag
+      "r:#{event_pool_size}"
+    end
+
+    def pop_results(req_size, found_size, timeout)
+      super
+      $lines << "r:#{req_size}"
+    end
+
   end
 
 end
