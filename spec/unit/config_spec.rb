@@ -32,7 +32,6 @@ module Tiki
 
           context 'fake', on_fake_sqs: true do
             it('sqs_endpoint   ') { expect(subject.sqs_endpoint).to eq FAKE_SQS_ENDPOINT }
-            it('dynamo_endpoint') { expect(subject.dynamo_endpoint).to eq FAKE_DYNAMO_ENDPOINT }
           end
         end
         context 'configure block' do

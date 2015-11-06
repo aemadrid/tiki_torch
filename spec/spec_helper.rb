@@ -23,14 +23,12 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
 
     c.before(:suite) do
       TestingHelpers.setup_fake_sqs
-      TestingHelpers.setup_fake_dynamo
       TestingHelpers.setup_torch
       TestingHelpers.setup_redis_connection
     end
 
     c.after(:suite) do
       TestingHelpers.delete_queues
-      TestingHelpers.stop_fake_dynamo
       TestingHelpers.stop_fake_sqs
     end
 

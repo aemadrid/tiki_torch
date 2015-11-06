@@ -136,8 +136,9 @@ module Tiki
       def poll_and_process_messages
         debug "#{lbl} starting poll and process message ..."
         POLL_AND_PROCESS_ACTIONS.each_with_index do |name, idx|
+          break if stopping?
           action = send name
-          debug "#{idx} : #{name} : #{action}"
+          debug "##{idx + 1}/#{POLL_AND_PROCESS_ACTIONS.size} #{name} : #{action}"
           case action
             when :empty, :busy
               sleep_for action, @event_pool.try(:tag)
@@ -197,21 +198,20 @@ module Tiki
           process_message msg
         end
         @messages = []
+        sleep_for :received, @event_pool.try(:tag)
         :processed
       end
 
       def process_message(msg)
-        if msg
-          debug "#{lbl} got msg : (#{msg.class.name}) ##{msg.id}"
-          event = Event.new msg
-          debug "#{lbl} got event : (#{event.class.name}) ##{event.short_id}, going to process async ..."
-          sleep_for :busy, @event_pool.try(:tag) until @event_pool.try(:ready?)
-          debug "#{lbl} sending event ##{event.short_id} to event pool #{@event_pool}..."
-          @event_pool.async { process_event event }
-          sleep_for :received, @event_pool.try(:tag)
-        else
-          sleep_for :empty, @event_pool.try(:tag)
-        end
+        debug "#{lbl} got msg : (#{msg.class.name}) ##{msg.id}"
+        event = Event.new msg
+        debug "#{lbl} got event : (#{event.class.name}) ##{event.short_id}, going to process async ..."
+        # until @event_pool.try(:ready?)
+        #   break if stopping?
+        #   sleep_for :busy, @event_pool.try(:tag)
+        # end
+        debug "#{lbl} sending event ##{event.short_id} to event pool #{@event_pool}..."
+        @event_pool.async { process_event event }
       end
 
       def process_event(event)

@@ -25,10 +25,6 @@ module Tiki
         res
       end
 
-      def dynamo
-        @dynamo ||= ::Aws::DynamoDB::Client.new aws_client_options(:dynamo_endpoint)
-      end
-
       def to_s
         '#<T:T:AwsClient>'
       end

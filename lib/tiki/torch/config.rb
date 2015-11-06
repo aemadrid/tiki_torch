@@ -11,7 +11,6 @@ module Tiki
       attribute :secret_access_key, String, default: lambda { |_, _| ENV['AWS_SECRET_ACCESS_KEY'] }
       attribute :region, String, default: lambda { |_, _| ENV['AWS_REGION'] }
       attribute :sqs_endpoint, String
-      attribute :dynamo_endpoint, String
 
       attribute :prefix, String, default: 'tiki_torch'
       attribute :channel, String, default: 'events'
