@@ -64,21 +64,21 @@ describe SimpleConsumer, integration: true, polling: true do
         it 'properly' do
           qty.times { |nr| consumer.publish 's%02i' % nr }
 
-          $lines.wait_for_size qty, qty / 4.0 * 3
+          $lines.wait_for_size qty, qty
 
           expect($lines.size).to eq qty
           expect($lines.sorted).to eq expected
         end
       end
-      context 'send/receive #1' do
+      context 'send/receive #1', focus: true do
         let(:qty) { 4 }
         it_behaves_like 'multiple send and receive'
       end
-      context 'send/receive #2' do
+      context 'send/receive #2', focus: true do
         let(:qty) { 14 }
         it_behaves_like 'multiple send and receive'
       end
-      context 'send/receive #3' do
+      context 'send/receive #3', focus: true do
         let(:qty) { 54 }
         it_behaves_like 'multiple send and receive'
       end

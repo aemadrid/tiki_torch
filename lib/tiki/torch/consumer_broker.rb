@@ -11,7 +11,8 @@ module Tiki
                      :name,
                      :config, :topic, :prefix, :channel,
                      :queue_name, :dead_letter_queue_name, :visibility_timeout, :retention_period,
-                     :max_attempts, :event_pool_size, :events_sleep_times
+                     :max_attempts, :event_pool_size, :events_sleep_times,
+                     :published_since?
 
       def_delegators :@manager, :client
 
@@ -126,24 +127,28 @@ module Tiki
 
       def poll_and_process_messages
         debug "#{lbl} starting poll and process message ..."
-        check_if_poll_is_ready &&
+        check_if_pool_is_ready &&
+          check_if_need_to_poll &&
           poll_for_messages &&
           (deal_with_no_messages || process_messages)
-
-          # if @last_poll_time
-          #   should_poll = published_since? @last_poll_time
-          #   if
-          # end
 
       rescue Exception => e
         error "#{lbl} Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
         sleep_for :exception, "#{e.class.name}/#{e.message}"
       end
 
-      def check_if_poll_is_ready
+      def check_if_pool_is_ready
         return true if @event_pool.try(:ready?)
 
         sleep_for :busy, @event_pool.try(:tag)
+        false
+      end
+
+      def check_if_need_to_poll
+        return true if @polled_at.nil?
+        return true if published_since?(@polled_at)
+
+        sleep_for :empty
         false
       end
 
@@ -152,7 +157,8 @@ module Tiki
         qty     = @event_pool.ready_size
 
         debug "#{lbl} event pool is ready, polling #{qty} for #{timeout} ..."
-        @messages = @poller.pop qty, timeout
+        @messages  = @poller.pop qty, timeout
+        @polled_at = Time.now
         @consumer.pop_results qty, @messages.size, timeout
 
         true
@@ -171,6 +177,7 @@ module Tiki
           debug "#{lbl} msg : (#{msg.class.name}) ##{msg.id}"
           process_message msg
         end
+        @messages = []
       end
 
       def process_message(msg)

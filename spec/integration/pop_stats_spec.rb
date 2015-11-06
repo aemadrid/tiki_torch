@@ -1,6 +1,6 @@
 describe PopStatsConsumer, integration: true, polling: true do
   let(:nr){  Tiki::Torch.config.event_pool_size }
-  it 'registers numbers each time it pops' do
+  it 'registers numbers each time it pops', focus: true do
     consumer.publish sleep_time: 1
     $lines.wait_for_size 4
 
