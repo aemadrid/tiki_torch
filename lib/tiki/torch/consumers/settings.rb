@@ -115,6 +115,10 @@ module Tiki
             "#{prefix}-#{topic}-#{channel}"
           end
 
+          def monitor_name
+            Utils.simplified_name queue_name
+          end
+
           def dead_letter_queue_name
             return nil unless use_dlq
 

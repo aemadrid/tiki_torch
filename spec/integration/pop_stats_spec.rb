@@ -1,4 +1,4 @@
-describe PopStatsConsumer, integration: true, polling: true do
+describe PopStatsConsumer, integration: true do
   let(:nr) { consumer.event_pool_size }
   let(:qty) { 2 }
   let!(:start_time) { Time.now }

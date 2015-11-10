@@ -19,7 +19,7 @@ if ON_REAL_SQS
   TEST_SECRET_ACCESS_KEY = ENV['AWS_TEST_SECRET_ACCESS_KEY'].to_s.strip
   TEST_REGION            = ENV['AWS_TEST_REGION'].to_s.strip
   TEST_PREFIX            = "test_#{Time.now.strftime('%m%d-%H%M')}"
-  TEST_EVENT_SLEEP_TIMES = { idle: 1, busy: 0.5, received: 1, empty: 0.5, exception: 0.5, poll: 1 }
+  TEST_EVENT_SLEEP_TIMES = { idle: 1, busy: 0.5, received: 1, empty: 0.5, exception: 0.5, poll: 1, max_wait: 5 * 60 }
   raise "Missing ENV['AWS_TEST_ACCESS_KEY_ID']" if TEST_ACCESS_KEY_ID.empty?
   raise "Missing ENV['AWS_TEST_SECRET_ACCESS_KEY']" if TEST_SECRET_ACCESS_KEY.empty?
   raise "Missing ENV['AWS_TEST_REGION']" if TEST_REGION.empty?
@@ -36,6 +36,6 @@ FAKE_SQS_HOST     = ENV.fetch('FAKE_SQS_HOST', '127.0.0.1')
 FAKE_SQS_PORT     = ENV.fetch('FAKE_SQS_PORT', Tiki::Torch::Utils.random_closed_port).to_i
 FAKE_SQS_ENDPOINT = "http://#{FAKE_SQS_HOST}:#{FAKE_SQS_PORT}"
 
-REDIS_HOST = ENV.fetch('REDIS_HOST', 'localhost')
-REDIS_PORT = ENV.fetch('REDIS_PORT', 8379).to_i
-REDIS_DB   = ENV.fetch('REDIS_DB', 15).to_i
+ENV['REDISTAT_HOST'] ||= 'localhost'
+ENV['REDISTAT_PORT'] ||= '6379'
+ENV['REDISTAT_DB']   ||= '15'

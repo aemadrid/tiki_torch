@@ -11,11 +11,12 @@ describe CustomizedConsumer do
     it('transcoder_code   ') { expect(consumer.transcoder_code).to eq config.transcoder_code }
     it('sleep_times       ') { expect(consumer.events_sleep_times).to eq config.events_sleep_times }
     it('queue_name        ') { expect(consumer.queue_name).to eq "#{config.prefix}-customized-events" }
+    it('monitor_name      ') { expect(consumer.monitor_name).to eq "#{config.prefix}customizedevents" }
   end
   context 'consumer' do
 
   end
-  context 'processing', integration: true, polling: true do
+  context 'processing', integration: true do
     it 'receives successful message and overrides successful hooks' do
       time_it 'test #1' do
         time_it('publish message', '-') { consumer.publish status: 'ok' }

@@ -175,7 +175,8 @@ module TestingHelpers
   end
 
   def setup_redis_connection
-    Redistat.connect host: REDIS_HOST, port: REDIS_PORT, db: REDIS_DB, thread_safe: true
+    debug " [ Connecting to Redis : #{Tiki::Torch.redistat_options.inspect} ] ".center(120, '-')
+    Tiki::Torch.setup_redistat
     clear_redis
   end
 
@@ -190,24 +191,28 @@ module TestingHelpers
   around(:example, integration: true) do |example|
     debug '>>> starting integration ...'
     $lines = LogLines.new
+    debug '>>> starting fake sqs ...'
     start_fake_sqs
+    debug '>>> setting up porch ...'
     setup_torch
-    debug '>>> running integration ...'
-    example.run
-    debug '>>> ending integration ...'
-    take_down_torch
-    stop_fake_sqs
-  end
-
-  around(:example, polling: true) do |example|
     debug '>>> clearing redis ...'
     clear_redis
     debug '>>> starting polling ...'
     manager.start_polling polling_pattern
-    debug '>>> running polling ...'
+    debug '>>> running integration ...'
     example.run
+    debug '>>> ending integration ...'
     debug '>>> ending polling ...'
     manager.stop_polling
+    debug '>>> taking down porch ...'
+    take_down_torch
+    debug '>>> stopping fake sqs ...'
+    stop_fake_sqs
+  end
+
+  around(:example, polling: true) do |example|
+    debug '>>> running polling ...'
+    example.run
   end
 
 end

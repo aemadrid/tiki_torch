@@ -1,4 +1,4 @@
-describe FailingConsumer, integration: true, polling: true, on_real_sqs: true do
+describe FailingConsumer, integration: true, on_real_sqs: true do
 
   let(:config) { described_class.config }
   let(:queue_name) { described_class.queue_name }

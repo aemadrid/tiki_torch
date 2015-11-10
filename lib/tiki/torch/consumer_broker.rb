@@ -159,9 +159,14 @@ module Tiki
         return [:continue, 'not polled yet'] if @polled_at.nil?
         return [:continue, 'received some last'] if @received > 0
         return [:continue, 'published since last'] if published_since?(@polled_at)
+        return [:continue, 'must check since'] if max_wait_passed?
         return [:continue, 'failed since last'] if failed_since?(@polled_at - visibility_timeout)
 
         [:empty, 'neither received all nor published since']
+      end
+
+      def max_wait_passed?
+        Time.now > (@polled_at + Torch.config.events_sleep_times[:max_wait].to_f)
       end
 
       def poll_for_messages

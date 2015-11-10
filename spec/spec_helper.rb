@@ -26,6 +26,7 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
       TestingHelpers.setup_fake_sqs
       TestingHelpers.setup_torch
       TestingHelpers.setup_redis_connection
+      TestingHelpers.clear_redis
     end
 
     c.after(:suite) do

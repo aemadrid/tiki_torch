@@ -1,6 +1,6 @@
 describe SimpleConsumer do
   let(:config) { described_class.config }
-  context 'queue', integration: true, polling: true do
+  context 'queue', integration: true do
     let(:queue) { Tiki::Torch.client.queue described_class.queue_name }
     context 'attributes' do
       let!(:attrs) { queue.attributes }
@@ -57,7 +57,17 @@ describe SimpleConsumer do
       end
     end
   end
-  context 'processing', integration: true, polling: true do
+  context 'processing', integration: true do
+    context 'after max time', focus: true do
+      let(:max_wait) { 0.5 }
+      let!(:start_time){Time.now}
+      it 'pops regardless of writes' do
+        consumer.config.events_sleep_times[:max_wait] = max_wait
+        consumer.instance_variable_set '@polled_at', Time.now
+        expect(consumer).to receive(:pop_results).once
+        sleep max_wait + 0.1
+      end
+    end
     context 'multiple' do
       let(:extra) { 3 }
       let(:total) { qty + extra }
@@ -95,8 +105,8 @@ describe SimpleConsumer do
     let(:early) { { published: 3, pop: 1, received: 3, success: 2, failure: 1 } }
     let(:earlier) { { published: 5, pop: 3, received: 5, success: 2, failure: 3 } }
     let(:full) { { published: 8, pop: 4, received: 8, success: 4, failure: 4 } }
-    let(:times){ [5,30]}
-    it 'reports numbers on time', focus: true do
+    let(:times) { [5, 30] }
+    it 'reports numbers on time' do
       clear_redis
 
       base = consumer.stats times

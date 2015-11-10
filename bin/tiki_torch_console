@@ -7,11 +7,12 @@ require 'bundler/setup'
 require 'tiki/torch'
 require 'fake_sqs/test_integration'
 
-T = Tiki::Torch
-# CS = Tiki::Torch::Consumer
-# E  = Tiki::Torch::Event
-# CB = Tiki::Torch::ConsumerBroker
-# P  = Tiki::Torch::Publisher
+T  = Tiki::Torch
+CS = Tiki::Torch::Consumer
+E  = Tiki::Torch::Event
+CB = Tiki::Torch::ConsumerBroker
+P  = Tiki::Torch::Publisher
+M  = Tiki::Torch::Monitoring
 
 require_relative '../spec/support/constants'
 require_relative '../spec/support/helpers'

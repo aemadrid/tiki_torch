@@ -1,6 +1,9 @@
 module Tiki
   module Torch
     module Monitoring
+
+      STAT_KEYS = [:published, :pop, :received, :success, :failure].freeze
+
       module Consumer
 
         def self.included(base)
@@ -8,8 +11,6 @@ module Tiki
         end
 
         module ClassMethods
-
-          STAT_KEYS = [:published, :pop, :received, :success, :failure].freeze
 
           def pop_results(req_size, found_size, timeout)
             super
@@ -19,6 +20,7 @@ module Tiki
 
           def store_stat(action, qty = 1, time = Time.now)
             key = stats_key(action)
+            debug "storing | %-30.30s : %2i : %s" % [key, qty, time]
             Monitoring.store.store key, { count: qty }, time
           rescue StandardError => e
             error "on_#{action} | Exception : #{e.class.name} : #{e.message}"
@@ -38,13 +40,13 @@ module Tiki
           end
 
           def stats_key(action)
-            "#{action}:#{Utils.simplified_name(queue_name)}"
+            "#{action}:#{monitor_name}"
           end
 
           # Return the latest counts in minute increments
           def stats(*times)
             Array(times).flatten.each_with_object({}) do |min, hsh|
-              hsh[min] = STAT_KEYS.each_with_object({}) do |key, res|
+              hsh[min] = Monitoring::STAT_KEYS.each_with_object({}) do |key, res|
                 res[key] = count_since key, min.minutes.ago
               end
             end

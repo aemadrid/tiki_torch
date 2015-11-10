@@ -5,12 +5,16 @@ module Tiki
       include Virtus.model
       include Logging
 
-      EVENT_SLEEP_TIMES = { idle: 60, busy: 60, received: 15, empty: 120, exception: 15, poll: 5 }
+      EVENT_SLEEP_TIMES = { idle: 60, busy: 60, received: 15, empty: 120, exception: 15, poll: 5, max_wait: 5 * 60 }
 
       attribute :access_key_id, String, default: lambda { |_, _| ENV['AWS_ACCESS_KEY_ID'] }
       attribute :secret_access_key, String, default: lambda { |_, _| ENV['AWS_SECRET_ACCESS_KEY'] }
       attribute :region, String, default: lambda { |_, _| ENV['AWS_REGION'] }
       attribute :sqs_endpoint, String
+
+      attribute :redistat_host, String, default: lambda { |_, _| ENV.fetch 'REDISTAT_HOST', 'localhost' }
+      attribute :redistat_port, Integer, default: lambda { |_, _| ENV.fetch('REDISTAT_PORT', '6379').to_i }
+      attribute :redistat_db, Integer, default: lambda { |_, _| ENV.fetch('REDISTAT_DB', '15').to_i }
 
       attribute :prefix, String, default: 'tiki_torch'
       attribute :channel, String, default: 'events'
@@ -51,7 +55,7 @@ module Tiki
     end
 
     def aws_options
-      @aws_options ||= {
+      {
         access_key_id:     config.access_key_id,
         secret_access_key: config.secret_access_key,
         region:            config.region,
@@ -60,6 +64,19 @@ module Tiki
 
     def setup_aws(options = {})
       ::Aws.config = aws_options.merge options
+    end
+
+    def redistat_options
+      {
+        host:        config.redistat_host,
+        port:        config.redistat_port,
+        db:          config.redistat_db,
+        thread_safe: true,
+      }
+    end
+
+    def setup_redistat(options = {})
+      ::Redistat.connect redistat_options.merge options
     end
 
     config
