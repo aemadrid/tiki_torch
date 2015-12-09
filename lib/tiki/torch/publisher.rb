@@ -8,7 +8,7 @@ module Tiki
       def publish(topic_name, payload = {}, properties = {})
         debug "topic_name : #{topic_name} | payload : (#{payload.class.name}) #{payload.inspect} | properties : (#{properties.class.name}) #{properties.inspect}"
         properties = build_properties properties
-        queue_name = build_queue_name topic_name
+        queue_name = build_queue_name topic_name, properties
         code       = build_code properties
         encoded    = encode payload, properties, code
         res        = write queue_name, encoded
@@ -16,7 +16,7 @@ module Tiki
         debug_var :res, res
         res
       rescue Exception => e
-        error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0,5].join("\n  ")}"
+        error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
       end
 
       def to_s
@@ -33,9 +33,10 @@ module Tiki
           merge(properties)
       end
 
-      def build_queue_name(name, channel = Torch.config.channel)
+      def build_queue_name(name, properties)
+        channel  = properties.delete(:channel) || Torch.config.channel
         new_name = ''
-        prefix   = Torch.config.prefix
+        prefix   = properties.delete(:prefix) || Torch.config.prefix
         new_name << "#{prefix}-" unless name.start_with? prefix
         new_name << name
         new_name << "-#{channel}" unless name.end_with? channel
