@@ -20,8 +20,8 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'aws-sdk-core', '2.5.8'
   s.add_dependency 'redistat'
-  s.add_dependency 'concurrent-ruby', '1.0.0'
-  s.add_dependency 'concurrent-ruby-edge', '0.2.0'
+  s.add_dependency 'concurrent-ruby', '1.0.2'
+  s.add_dependency 'concurrent-ruby-edge', '0.2.2'
   s.add_dependency 'lifeguard', '0.2.0'
   s.add_dependency 'multi_json', '1.12.1'
   s.add_dependency 'virtus', '1.0.5'
