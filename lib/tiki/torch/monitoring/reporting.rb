@@ -3,7 +3,7 @@ module Tiki
     module Monitoring
       class StatsQuery
 
-        UNITS = %i{ minutes hours days }.freeze
+        UNITS = [:minutes, :hours, :days].freeze
 
         attr_reader :unit, :times, :final, :scope, :keys
 
