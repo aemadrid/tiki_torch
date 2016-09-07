@@ -113,12 +113,10 @@ module TestingHelpers
 
   def setup_fake_sqs
     if ON_REAL_SQS
-      debug ' [ Running from a real SQS queue ] '.center(120, '=')
+      puts ' [ Running from a real SQS queue ] '.center(120, '=')
     else
-      if $fake_sqs
-        # Already setup fake SQS
-      else
-        debug " [ Running from a fake SQS queue : #{FAKE_SQS_ENDPOINT} ] ".center(120, '=')
+      unless $fake_sqs
+        puts " [ Running from a fake SQS queue : #{FAKE_SQS_ENDPOINT} ] ".center(120, '=')
         $fake_sqs = FakeSQS::TestIntegration.new database:     FAKE_SQS_DB,
                                                  sqs_endpoint: FAKE_SQS_HOST,
                                                  sqs_port:     FAKE_SQS_PORT
