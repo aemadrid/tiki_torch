@@ -21,15 +21,14 @@ dependencies:
     - "vendor/bundle"
 
   pre:
+    - echo rvm_autoupdate_flag=2 >> ~/.rvmrc
     - rvm install ruby-2.0.0-p598
     - rvm install ruby-2.3.1
-    - rvm install jruby-19mode
     - rvm install jruby-9.0.0.0
 
   override:
     - rvm-exec ruby-2.0.0-p598 bash -c "bundle check --path=vendor/bundle || bundle install --path=vendor/bundle"
     - rvm-exec ruby-2.3.1      bash -c "bundle check --path=vendor/bundle || bundle install --path=vendor/bundle"
-    - rvm-exec jruby-19mode    bash -c "bundle check --path=vendor/bundle_java || bundle install --path=vendor/bundle_java"
     - rvm-exec jruby-9.0.0.0   bash -c "bundle check --path=vendor/bundle_java || bundle install --path=vendor/bundle_java"
 
 test:
@@ -37,7 +36,6 @@ test:
   override:
     - rvm-exec ruby-2.0.0-p598 bash -c "bundle exec rspec --color --require spec_helper"
     - rvm-exec ruby-2.3.1      bash -c "bundle exec rspec --color --require spec_helper"
-    - rvm-exec jruby-19mode    bash -c "bundle exec rspec --color --require spec_helper"
     - rvm-exec jruby-9.0.0.0   bash -c "bundle exec rspec --color --require spec_helper"
 
 general:
