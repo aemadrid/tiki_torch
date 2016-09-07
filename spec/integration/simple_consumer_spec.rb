@@ -60,11 +60,11 @@ describe SimpleConsumer do
   context 'processing', integration: true do
     context 'after max time', focus: true do
       let(:max_wait) { 0.5 }
-      let!(:start_time){Time.now}
+      let!(:start_time) { Time.now }
       it 'pops regardless of writes' do
         consumer.config.events_sleep_times[:max_wait] = max_wait
         consumer.instance_variable_set '@polled_at', Time.now
-        expect(consumer).to receive(:pop_results).once
+        expect(consumer).to receive(:pop_results)
         sleep max_wait + 0.1
       end
     end
