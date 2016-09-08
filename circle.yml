@@ -8,7 +8,6 @@ machine:
 
   environment:
     JRUBY_OPTS: --server -J-Dfile.encoding=utf8 --2.0 -J-XX:+TieredCompilation -J-XX:TieredStopAtLevel=1 -J-noverify -X-C -Xcompile.invokedynamic=false -J-Xmx2g
-    REDIS_PORT: 6379
     DEBUG: true
     FOCUS: false
     PERFORMANCE: false

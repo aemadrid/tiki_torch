@@ -9,18 +9,18 @@ describe FailingConsumer, integration: true, on_real_sqs: true do
       attrs = queue.attributes
       expect(attrs.visible_count).to be_a Integer
       expect(attrs.invisible_count).to be_a Integer
-      expect(attrs.visibility_timeout).to eq 3
+      expect(attrs.visibility_timeout).to eq 1
 
       policy = JSON.parse attrs.redrive_policy
       expect(policy['deadLetterTargetArn']).to match /#{dlq_name}$/
       expect(policy['maxReceiveCount']).to eq consumer.max_attempts
     end
   end
-  context 'dlq' do
+  context 'dlq', on_real_sqs: true do
     let(:dl_queue) { Tiki::Torch.client.queue dlq_name }
     it 'report failures and sends to DLQ in the end' do
       consumer.publish 'failure'
-      $lines.wait_for_size 3, 30
+      $lines.wait_for_size 2, 20
 
       expect($lines.all.uniq).to eq %w{ failed:left_for_dead }
       sleep consumer.visibility_timeout + 1

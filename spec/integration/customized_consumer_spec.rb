@@ -28,7 +28,7 @@ describe CustomizedConsumer do
     it 'receives meh message and overrides success hook' do
       time_it 'test #2' do
         time_it('publish message', '-') { consumer.publish status: 'meh' }
-        $lines.wait_for_size 3, 3
+        $lines.wait_for_size 3, 6
 
         expect($lines.all).to eq ['started', 'succeeded with false', 'end']
       end

@@ -12,10 +12,6 @@ module Tiki
       attribute :region, String, default: lambda { |_, _| ENV['AWS_REGION'] }
       attribute :sqs_endpoint, String
 
-      attribute :redistat_host, String, default: lambda { |_, _| ENV.fetch 'REDISTAT_HOST', 'localhost' }
-      attribute :redistat_port, Integer, default: lambda { |_, _| ENV.fetch('REDISTAT_PORT', '6379').to_i }
-      attribute :redistat_db, Integer, default: lambda { |_, _| ENV.fetch('REDISTAT_DB', '15').to_i }
-
       attribute :prefix, String, default: 'tiki_torch'
       attribute :channel, String, default: 'events'
 
@@ -64,19 +60,6 @@ module Tiki
 
     def setup_aws(options = {})
       ::Aws.config = aws_options.merge options
-    end
-
-    def redistat_options
-      {
-        host:        config.redistat_host,
-        port:        config.redistat_port,
-        db:          config.redistat_db,
-        thread_safe: true,
-      }
-    end
-
-    def setup_redistat(options = {})
-      ::Redistat.connect redistat_options.merge options
     end
 
     config

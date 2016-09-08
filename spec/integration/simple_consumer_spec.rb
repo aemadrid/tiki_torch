@@ -64,27 +64,35 @@ describe SimpleConsumer do
       it 'pops regardless of writes' do
         consumer.config.events_sleep_times[:max_wait] = max_wait
         consumer.instance_variable_set '@polled_at', Time.now
-        expect(consumer).to receive(:pop_results)
-        sleep max_wait + 0.1
+        expect(consumer).to receive(:pop_results).at_least(:once)
+        sleep max_wait + 1
       end
     end
     context 'multiple' do
       let(:extra) { 3 }
       let(:total) { qty + extra }
       let(:expected) { total.times.map { |x| 's%02i' % x } }
+      let(:sleep_time) { ON_REAL_SQS ? 5 : 3 }
       shared_examples 'multiple send and receive' do
+        before(:each) {
+          @old_wait = described_class.events_sleep_times[:max_wait]
+          described_class.events_sleep_times[:max_wait] = 0.5
+        }
         it 'properly' do
           qty.times { |nr| consumer.publish 's%02i' % nr }
 
           $lines.wait_for_size qty, qty
-          sleep 3
+          sleep sleep_time
 
           extra.times { |nr| consumer.publish 's%02i' % (qty + nr) }
           $lines.wait_for_size total, extra * 2
 
           expect($lines.size).to eq total
           expect($lines.sorted).to eq expected
+
+          described_class.events_sleep_times[:max_wait] = 0.5
         end
+        after(:each){ described_class.events_sleep_times[:max_wait] = @old_wait }
       end
       context 'send/receive #1' do
         let(:qty) { 4 }
@@ -98,31 +106,6 @@ describe SimpleConsumer do
         let(:qty) { 55 }
         it_behaves_like 'multiple send and receive'
       end
-    end
-  end
-  context 'monitoring' do
-    let(:empty) { { published: 0, pop: 0, received: 0, success: 0, failure: 0 } }
-    let(:early) { { published: 3, pop: 1, received: 3, success: 2, failure: 1 } }
-    let(:earlier) { { published: 5, pop: 3, received: 5, success: 2, failure: 3 } }
-    let(:full) { { published: 8, pop: 4, received: 8, success: 4, failure: 4 } }
-    let(:times) { [5, 30] }
-    it 'reports numbers on time' do
-      clear_redis
-
-      base = consumer.stats times
-      expect(base).to be_a Hash
-      expect(base.keys.sort).to eq times
-      expect(base[5]).to eq empty
-      expect(base[30]).to eq empty
-
-      early.each { |k, v| consumer.store_stat k, v, 4.minutes.ago }
-      earlier.each { |k, v| consumer.store_stat k, v, 24.minutes.ago }
-
-      final = consumer.stats times
-      expect(final).to be_a Hash
-      expect(final.keys.sort).to eq times
-      expect(final[5]).to eq early
-      expect(final[30]).to eq full
     end
   end
 end

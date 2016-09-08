@@ -11,8 +11,7 @@ module Tiki
                      :name,
                      :config, :topic, :prefix, :channel,
                      :queue_name, :dead_letter_queue_name, :visibility_timeout, :retention_period,
-                     :max_attempts, :event_pool_size, :events_sleep_times,
-                     :published_since?, :failed_since?
+                     :max_attempts, :event_pool_size, :events_sleep_times
 
       def_delegators :@manager, :client
 
@@ -157,20 +156,24 @@ module Tiki
 
       def check_if_need_to_poll
         return [:continue, 'not polled yet'] if @polled_at.nil?
-        return [:continue, 'received some last'] if @received > 0
-        return [:continue, 'published since last'] if published_since?(@polled_at)
+        return [:continue, 'received some last'] if @received.to_i > 0
         return [:continue, 'must check since'] if max_wait_passed?
-        return [:continue, 'failed since last'] if failed_since?(@polled_at - visibility_timeout)
 
         [:empty, 'neither received all nor published since']
       end
 
       def max_wait_passed?
-        Time.now > (@polled_at + Torch.config.events_sleep_times[:max_wait].to_f)
+        Time.now >= next_poll_time
+      end
+
+      def next_poll_time
+        return Time.now if @polled_at.nil?
+
+        @polled_at + randomize_secs(events_sleep_times[:max_wait].to_f, 2.0)
       end
 
       def poll_for_messages
-        timeout    = Torch.config.events_sleep_times[:poll].to_f
+        timeout    = events_sleep_times[:poll].to_f
         @requested = @event_pool.ready_size
 
         @messages  = @poller.pop @requested, timeout
@@ -225,15 +228,22 @@ module Tiki
       def sleep_for(name, msg = nil)
         return nil if stopped?
 
-        time = Torch.config.events_sleep_times[name].to_f
+        time = events_sleep_times[name].to_f
         if time.nil? || time.to_f < 0.1
           debug '%s not going to sleep on %s%s [%s:%s] ...' % [lbl, name, (msg ? " (#{msg})" : ''), time.class.name, time.inspect]
           return false
         end
 
-        rand_time = (time / 4.0) + (rand(time * 100.0) / 100.0 / 4.0 * 3) # 1/4 + rnd(3/4)
+        rand_time = randomize_secs time
         debug '%s going to sleep on %s%s for %.2f secs (max: %.2f secs) ...' % [lbl, name, (msg ? " (#{msg})" : ''), rand_time, time]
-        sleep time
+        sleep rand_time
+      end
+
+      def randomize_secs(seconds, base_size = 4, diff_size = 1)
+        total = base_size.to_f + diff_size
+        base  = seconds.to_f * base_size.to_f / total
+        diff  = seconds.to_f * diff_size.to_f / total * rand(101.0).to_f / 100.0
+        (base + diff).round(2)
       end
 
       def stop_process_loop

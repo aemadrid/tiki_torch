@@ -55,7 +55,7 @@ module Tiki
       def start_polling(pattern = :all)
         debug "starting to poll | pattern (#{pattern.class.name}) #{pattern.inspect}"
         brokers_for(pattern, :start).map do |c|
-          debug "[#{pattern}] start #{c.name} : #{c.topic} : #{c.channel}".center(120, '~')
+          debug "[#{pattern}] start #{c.name} : #{c.topic} : #{c.channel}".center(90, '~')
           Concurrent::Future.execute { [c.name, c.start] }
         end.map { |x| x.value }
       end
@@ -63,7 +63,7 @@ module Tiki
       def stop_polling(pattern = :all)
         debug "stop polling | pattern (#{pattern.class.name}) #{pattern.inspect}"
         brokers_for(pattern, :stop).map do |c|
-          debug "[#{pattern}] stop #{c.name} : #{c.topic} : #{c.channel}".center(120, '~')
+          debug "[#{pattern}] stop #{c.name} : #{c.topic} : #{c.channel}".center(90, '~')
           Concurrent::Future.execute { [c.name, c.stop] }
         end.map { |x| x.value }
       end

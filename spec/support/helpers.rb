@@ -42,11 +42,11 @@ module TestingHelpers
                    :keep
                  end
         break unless status == :keep
-        debug 'cnt : %i | status : %s | size: %i/%i | left : %.2fs' % [cnt, status, @all.size, nr, last_time - Time.now] if cnt % 10 == 0
+        debug 'C : cnt : %i | status : %s | size: %i/%i | left : %.2fs%s' % [cnt, status, @all.size, nr, last_time - Time.now, "\n#{@all.to_yaml}"] if cnt % 10 == 0
         sleep 0.05
       end
       took = last_time - Time.now
-      debug 'cnt : %i | status : %s | size: %i/%i | took : %.2fs (%.2fr/s)' % [cnt, status, @all.size, nr, took, cnt / took.to_f]
+      debug 'F : cnt : %i | status : %s | size: %i/%i | took : %.2fs (%.2fr/s)%s' % [cnt, status, @all.size, nr, took, cnt / took.to_f, "\n#{@all.to_yaml}"]
       Time.now - start_time
     end
 
@@ -99,7 +99,7 @@ module TestingHelpers
   end
 
   def bnr(msg, chr = '=')
-    debug " [ #{msg} ] ".center(120, chr)
+    debug " [ #{msg} ] ".center(90, chr)
   end
 
   def time_it(msg = nil, chr = '=')
@@ -113,10 +113,10 @@ module TestingHelpers
 
   def setup_fake_sqs
     if ON_REAL_SQS
-      puts ' [ Running from a real SQS queue ] '.center(120, '=')
+      puts ' [ Running from a real SQS queue ] '.center(90, '=')
     else
       unless $fake_sqs
-        puts " [ Running from a fake SQS queue : #{FAKE_SQS_ENDPOINT} ] ".center(120, '=')
+        puts " [ Running from a fake SQS queue : #{FAKE_SQS_ENDPOINT} ] ".center(90, '=')
         $fake_sqs = FakeSQS::TestIntegration.new database:     FAKE_SQS_DB,
                                                  sqs_endpoint: FAKE_SQS_HOST,
                                                  sqs_port:     FAKE_SQS_PORT
@@ -172,16 +172,6 @@ module TestingHelpers
     end
   end
 
-  def setup_redis_connection
-    debug " [ Connecting to Redis : #{Tiki::Torch.redistat_options.inspect} ] ".center(120, '-')
-    Tiki::Torch.setup_redistat
-    clear_redis
-  end
-
-  def clear_redis
-    Redistat.redis.flushdb
-  end
-
   before(:each) do
     config_torch
   end
@@ -193,8 +183,6 @@ module TestingHelpers
     start_fake_sqs
     debug '>>> setting up porch ...'
     setup_torch
-    debug '>>> clearing redis ...'
-    clear_redis
     debug '>>> starting polling ...'
     manager.start_polling polling_pattern
     debug '>>> running integration ...'

@@ -1,6 +1,6 @@
 class FailingConsumer < Tiki::Torch::Consumer
 
-  consumes 'failing', visibility_timeout: 3, use_dlq: true, max_attempts: 3
+  consumes 'failing', visibility_timeout: 1, use_dlq: true, max_attempts: 2
 
   def process
     raise 'I like to fail'
