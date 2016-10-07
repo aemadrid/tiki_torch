@@ -169,7 +169,7 @@ module Tiki
       def next_poll_time
         return Time.now if @polled_at.nil?
 
-        @polled_at + randomize_secs(events_sleep_times[:max_wait].to_f, 2.0)
+        @polled_at + randomize_secs(events_sleep_times[:max_wait].to_f, 1, 3)
       end
 
       def poll_for_messages
@@ -234,12 +234,12 @@ module Tiki
           return false
         end
 
-        rand_time = randomize_secs time
+        rand_time = randomize_secs time, 2, 1
         debug '%s going to sleep on %s%s for %.2f secs (max: %.2f secs) ...' % [lbl, name, (msg ? " (#{msg})" : ''), rand_time, time]
         sleep rand_time
       end
 
-      def randomize_secs(seconds, base_size = 4, diff_size = 1)
+      def randomize_secs(seconds, base_size, diff_size)
         total = base_size.to_f + diff_size
         base  = seconds.to_f * base_size.to_f / total
         diff  = seconds.to_f * diff_size.to_f / total * rand(101.0).to_f / 100.0
