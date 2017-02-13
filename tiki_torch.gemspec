@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ['lib']
 
-  s.add_dependency 'aws-sdk-core', '~> 2.5.8'
+  s.add_dependency 'aws-sdk-core', '~> 2.7.7'
   s.add_dependency 'concurrent-ruby', '1.0.2'
   s.add_dependency 'concurrent-ruby-edge', '0.2.2'
   s.add_dependency 'lifeguard', '0.2.0'
