@@ -19,8 +19,8 @@ Gem::Specification.new do |s|
   s.require_paths = ['lib']
 
   s.add_dependency 'aws-sdk-core', '~> 2.5.8'
-  s.add_dependency 'concurrent-ruby', '1.0.2'
-  s.add_dependency 'concurrent-ruby-edge', '0.2.2'
+  s.add_dependency 'concurrent-ruby', '~> 1.0'
+  s.add_dependency 'concurrent-ruby-edge'
   s.add_dependency 'lifeguard', '0.2.0'
   s.add_dependency 'multi_json'
   s.add_dependency 'virtus'
