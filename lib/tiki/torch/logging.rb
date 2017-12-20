@@ -58,7 +58,7 @@ module Tiki
 
         def log_exception(e, extras = {})
           error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
-          @exception_proc&.call e, extras
+          @exception_proc.call e, extras if @exception_proc
           raise e if raise_errors?
         end
 
