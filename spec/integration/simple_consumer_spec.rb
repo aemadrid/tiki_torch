@@ -58,7 +58,7 @@ describe SimpleConsumer do
     end
   end
   context 'processing', integration: true do
-    context 'after max time', focus: true do
+    context 'after max time' do
       let(:max_wait) { 0.5 }
       let!(:start_time) { Time.now }
       it 'pops regardless of writes' do

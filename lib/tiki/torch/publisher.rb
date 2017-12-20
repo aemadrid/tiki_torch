@@ -16,7 +16,7 @@ module Tiki
         debug_var :res, res
         res
       rescue Exception => e
-        error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
+        log_exception e, section: 'publisher', topic: topic_name
       end
 
       def to_s
