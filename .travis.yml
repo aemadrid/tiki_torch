@@ -1,14 +1,14 @@
 language: ruby
-jdk:
-  - oraclejdk8
+#jdk:
+#  - oraclejdk8
 cache: bundler
 rvm:
   - ruby-2.0.0-p598
   - ruby-2.2.0
   - ruby-2.4.1
-  - jruby-18mode
-  - jruby-19mode
-  - jruby-head
+#  - jruby-18mode
+#  - jruby-19mode
+#  - jruby-head
 env:
   global:
     - JRUBY_OPTS="--server -J-Dfile.encoding=utf8 --2.0"
