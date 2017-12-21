@@ -1,6 +1,6 @@
 # Tiki::Torch
 
-[![Build Status](https://travis-ci.org/aemadrid/tiki_torch.svg?branch=master)](https://travis-ci.org/aemadrid/tiki_torch)
+[![Build Status](https://travis-ci.org/aemadrid/tiki_torch.svg?branch=feature%2Fmove_to_sqs)](https://travis-ci.org/aemadrid/tiki_torch)
 
 TODO: Write a gem description
 
