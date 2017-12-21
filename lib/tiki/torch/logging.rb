@@ -57,9 +57,12 @@ module Tiki
         end
 
         def log_exception(e, extras = {})
-          error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
           @exception_proc.call e, extras if @exception_proc
-          raise e if raise_errors?
+          if raise_errors?
+            raise e
+          else
+            error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
+          end
         end
 
         def on_exception(action = :set, &blk)
@@ -76,8 +79,8 @@ module Tiki
           length    = 60
           prefix    = name
           _, _, lbl = log_prefix_labels
-          prefix += ".#{lbl}" if lbl
-          prefix = prefix.rjust(length, ' ')[-length, length]
+          prefix    += ".#{lbl}" if lbl
+          prefix    = prefix.rjust(length, ' ')[-length, length]
           prefix    += format(' T%s', Thread.current.object_id.to_s[-4..-1]) if ENV['LOG_THREAD_ID'] == 'true'
           prefix    += format(' C%02i:%02i', run_thread_count, thread_count) if ENV['LOG_THREAD_COUNT'] == 'true'
           prefix    += ' | '

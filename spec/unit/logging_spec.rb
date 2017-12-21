@@ -2,7 +2,7 @@
 
 module Tiki
   module Torch
-    describe Logging, :focus do
+    describe Logging do
       let(:consumer) { ExceptionalConsumer }
       let(:logger) { Torch.logger }
       context 'logger' do
@@ -41,11 +41,7 @@ module Tiki
           context 'when raising errors' do
             before do
               consumer.raise_errors = true
-              consumer.on_exception do |e, extras|
-                ExceptionalConsumer.error "on_exception : #{e.class.name} : #{extras.inspect}"
-              end
-              expect(logger).to receive(:error).with(/Exception:/)
-              expect(logger).to receive(:error).with(%r[on_exception : RuntimeError : {:weird=>"error"}])
+              expect(logger).to_not receive(:error).with(/Exception:/)
             end
             it do
               expect(consumer.raise_errors?).to eq true
@@ -61,6 +57,17 @@ module Tiki
               expect(consumer.raise_errors?).to eq false
               expect { subject.process }.to_not raise_error
             end
+          end
+          context 'with an exception proc' do
+            before do
+              consumer.raise_errors = false
+              consumer.on_exception do |e, extras|
+                ExceptionalConsumer.error "on_exception : #{e.class.name} : #{extras.inspect}"
+              end
+              expect(logger).to receive(:error).with(/Exception:/)
+              expect(logger).to receive(:error).with(%r[on_exception : RuntimeError : {:weird=>"error"}])
+            end
+            it { subject.process }
           end
           after do
             consumer.raise_errors = false
