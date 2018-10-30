@@ -1,0 +1,49 @@
+module Tiki
+  module Torch
+    module Publishing
+      describe Event, :fast do
+
+        it "uses defaults" do
+          event = Event.new("foo", {})
+          expect(event.format).to eq("yaml")
+          expect(event.serialization_strategy).to eq(Torch.config.serialization_strategy)
+        end
+
+        it "validates provided formats" do
+          expect{Event.new("foo", {}, "dumb")}.to raise_error(ArgumentError, "dumb is not a valid format option")
+          expect(Event.new("foo", {}, "yaml").format).to eq("yaml")
+        end
+
+        describe "#serialize" do
+          let(:body) { {foo: {bar: "baz"} } }
+          let(:subject) { Event.new(body, {}, "json", strategy) }
+
+          context "using prefix" do
+            let(:strategy) { Torch::Config::SerializationStrategies::PREFIX }
+            it "delegates to the proper serialization strategy" do
+              expect(Torch::Serialization::PrefixStrategy).to receive(:serialize).with(subject)
+              subject.serialize
+            end
+          end
+
+          context "using attributes" do
+            let(:strategy) { Torch::Config::SerializationStrategies::MESSAGE_ATTRIBUTES }
+            it "delegates to the proper serialization strategy" do
+              expect(Torch::Serialization::AttributesStrategy).to receive(:serialize).with(subject)
+              subject.serialize
+            end
+          end
+
+          context "defaults" do
+            let(:subject) { Event.new(body, {}) }
+            example "to prefix" do
+              expect(Torch::Serialization::PrefixStrategy).to receive(:serialize).with(subject)
+              subject.serialize
+            end
+          end
+
+        end
+      end
+    end
+  end
+end

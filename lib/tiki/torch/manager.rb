@@ -84,7 +84,7 @@ module Tiki
       private
 
       def build_publisher
-        Publisher.new
+        Publishing::Publisher.new
       end
 
       def build_brokers

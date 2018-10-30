@@ -15,7 +15,7 @@ module Tiki
 
       def self.from_name(name, client)
         url = client.sqs.get_queue_url(queue_name: name).queue_url
-        new name, url, client
+        new(name, url, client)
       rescue Aws::SQS::Errors::NonExistentQueue
         return nil
       end
@@ -101,7 +101,17 @@ module Tiki
         fail ArgumentError, "The message must be a Hash and you passed a #{options.class.name}" unless options.is_a? Hash
         body = options[:message_body]
         fail ArgumentError, "The message body must be a String and you passed a #{body.class.name}" unless body.is_a? String
+        message_attributes = options[:message_attributes]
+        validate_message_attributes!(message_attributes) if message_attributes
         options
+      end
+
+      def validate_message_attributes!(attrs = {})
+        attrs.each do |key, value_hash|
+          fail ArgumentError, "Attribute name must be of type String" unless key.is_a? String
+          fail ArgumentError, "Attribute must include `{string_value: <value>}`" unless value_hash[:string_value].is_a? String
+          fail ArgumentError, "Attribute must include `{data_type: 'String'}`" unless value_hash[:data_type] == "String"
+        end
       end
 
       def retryable_sqs_cmd(cmd, *args)

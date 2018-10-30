@@ -1,7 +1,7 @@
 module Tiki
   module Torch
-    describe Consumer do
-      let(:event) { instance_double 'Tiki::Torch::Event', to_s: '#<T:T:Event short_id="abc123", body=42, payload="String">' }
+    describe Consumer, :fast do
+      let(:event) { instance_double 'Tiki::Torch::Consumer::Event', to_s: '#<T:T:C:Event short_id="abc123", body=42, payload="String">' }
       let(:broker) { instance_double 'Tiki::Torch::ConsumerBroker' }
       let(:klass) { SimpleConsumer }
       context 'class' do
@@ -30,7 +30,7 @@ module Tiki
       context 'instance' do
         subject { klass.new event, broker }
         context 'basic' do
-          it('to_s') { expect(subject.to_s).to eq '#<SimpleConsumer event=#<T:T:Event short_id="abc123", body=42, payload="String">>' }
+          it('to_s') { expect(subject.to_s).to eq '#<SimpleConsumer event=#<T:T:C:Event short_id="abc123", body=42, payload="String">>' }
         end
       end
     end

@@ -1,6 +1,6 @@
 module Tiki
   module Torch
-    describe ThreadPool do
+    describe ThreadPool, :fast do
       context 'states' do
         let!(:pool){ described_class.new :ready_pool, 3 }
         it 'on each step' do

@@ -46,15 +46,20 @@ require 'tiki/torch/aws/queue'
 require 'tiki/torch/aws/message'
 require 'tiki/torch/aws/client'
 
-require 'tiki/torch/publisher'
+require 'tiki/torch/serialization/attributes_strategy'
+require 'tiki/torch/serialization/prefix_strategy'
+
 require 'tiki/torch/consumers/publisher'
 require 'tiki/torch/consumer_registry'
 require 'tiki/torch/consumer_poller'
 require 'tiki/torch/consumers/settings'
 require 'tiki/torch/consumers/hooks'
+require 'tiki/torch/consumers/event'
 require 'tiki/torch/consumer'
 
-require 'tiki/torch/event'
 require 'tiki/torch/consumer_builder'
 require 'tiki/torch/consumer_broker'
 require 'tiki/torch/manager'
+
+require 'tiki/torch/publishing/event'
+require 'tiki/torch/publishing/publisher'

@@ -9,7 +9,7 @@ require 'fake_sqs/test_integration'
 
 T  = Tiki::Torch
 CS = Tiki::Torch::Consumer
-E  = Tiki::Torch::Event
+E  = Tiki::Torch::Consumer::Event
 CB = Tiki::Torch::ConsumerBroker
 P  = Tiki::Torch::Publisher
 M  = Tiki::Torch::Monitoring

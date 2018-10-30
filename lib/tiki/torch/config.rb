@@ -7,6 +7,14 @@ module Tiki
 
       EVENT_SLEEP_TIMES = { idle: 60, busy: 60, received: 15, empty: 120, exception: 15, poll: 5, max_wait: 5 * 60 }
 
+      class SerializationStrategies
+        PREFIX = "prefix"
+        MESSAGE_ATTRIBUTES = "message_attributes"
+      end
+
+      YAML_CODES = %w(yaml application/yaml application/x-yaml)
+      JSON_CODES = %w(json application/json)
+
       attribute :access_key_id, String, default: lambda { |_, _| ENV['AWS_ACCESS_KEY_ID'] }
       attribute :secret_access_key, String, default: lambda { |_, _| ENV['AWS_SECRET_ACCESS_KEY'] }
       attribute :region, String, default: lambda { |_, _| ENV['AWS_REGION'] }
@@ -29,6 +37,8 @@ module Tiki
       attribute :event_pool_size, Integer, default: lambda { |_, _| Concurrent.processor_count }
       attribute :transcoder_code, String, default: 'yaml'
       attribute :events_sleep_times, Hash, default: EVENT_SLEEP_TIMES
+      attribute :serialization_strategy, String, default: SerializationStrategies::PREFIX
+      attribute :valid_formats, Array, default: YAML_CODES.concat(JSON_CODES)
 
       def default_message_properties
         @default_message_properties ||= {}

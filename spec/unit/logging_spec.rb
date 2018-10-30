@@ -2,7 +2,7 @@
 
 module Tiki
   module Torch
-    describe Logging do
+    describe Logging, :fast do
       let(:consumer) { ExceptionalConsumer }
       let(:logger) { Torch.logger }
       context 'logger' do

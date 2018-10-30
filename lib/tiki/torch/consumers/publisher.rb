@@ -3,10 +3,14 @@ module Tiki
     class Consumer
       module Publishing
 
-        def publish(queue_name, payload, properties = {})
-          defaults = Torch.config.default_message_properties
-          custom   = { parent_message_id: event.message_id }.merge properties.dup
-          Torch.publish queue_name, payload, defaults.merge(custom)
+        def publish(queue_name, payload, properties = {}, format = Torch.config.transcoder_code )
+          custom = { parent_message_id: event.message_id }.merge properties.dup
+          event = Torch::Publishing::Event.new(payload, custom, format)
+          Torch.publish_event(queue_name, event)
+        end
+
+        def publish_event(queue_name, event)
+          Torch.publish_event(queue_name, event)
         end
 
         def self.included(base)
@@ -15,14 +19,18 @@ module Tiki
 
         module ClassMethods
 
-          def publish(payload, properties = {})
-            defaults = Torch.config.default_message_properties
+          def publish(payload, properties = {}, format = Torch.config.transcoder_code)
+            props = Torch.config.default_message_properties.merge(properties.dup)
             debug "queue_name : #{queue_name}"
-            Torch.publish queue_name, payload, defaults.merge(properties.dup)
+            event = Torch::Publishing::Event.new(payload, props, format)
+            Torch.publish_event(queue_name, event)
+          end
+
+          def publish_event(queue_name, event)
+            Torch.publish_event(queue_name, event)
           end
 
         end
-
       end
     end
   end
