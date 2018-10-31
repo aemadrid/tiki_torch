@@ -50,20 +50,5 @@ module Tiki
       end
     end
   end
-
-  describe Torch do
-
-    # This is testing a bit of implementation, but 
-    describe "self.publish" do
-      before {
-        allow(Torch).to receive(:manager).and_return(
-          double("manager",publisher: double("publisher", publish: true))
-        )
-      }
-      it "builds an event with the default strategy" do
-        expect(Torch::Publishing::Event).to receive(:new).with("a",{},"yaml","prefix")
-        Torch.publish("topic", "a", {})
-      end
-    end
-  end
 end
+
