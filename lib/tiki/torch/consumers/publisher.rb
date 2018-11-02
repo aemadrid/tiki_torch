@@ -19,14 +19,14 @@ module Tiki
 
         module ClassMethods
 
-          def publish(queue_name, payload, properties = {}, format = config.transcoder_code)
+          def publish(payload, properties = {}, format = config.transcoder_code)
             props = Torch.config.default_message_properties.merge(properties.dup)
             debug "queue_name : #{queue_name}"
             event = Torch::Publishing::Event.new(payload, props, format, config.serialization_strategy)
             Torch.publish_event(queue_name, event)
           end
 
-          def publish_event(queue_name, event)
+          def publish_event(event)
             Torch.publish_event(queue_name, event)
           end
 

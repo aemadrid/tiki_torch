@@ -9,14 +9,14 @@ describe "Compatibility" do
         context "prefix serialization" do
           it "publishes and consumes yaml successfully" do
             consumer.configure{ |c| c.transcoder_code = "yaml" }
-            consumer.publish('simple', message, properties)
+            consumer.publish(message, properties)
             $lines.wait_for_size(1, 2)
             expect($lines.sorted).to include(message)
           end
 
           it "publishes and consumes json successfully" do
             consumer.configure{ |c| c.transcoder_code = "json" }
-            consumer.publish('simple', message, properties)
+            consumer.publish(message, properties)
             $lines.wait_for_size(1, 2)
             expect($lines.sorted).to include(message)
           end
