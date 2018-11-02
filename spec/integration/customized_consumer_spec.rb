@@ -1,17 +1,17 @@
 describe CustomizedConsumer do
   context 'config' do
-    it('topic             ') { expect(consumer.topic).to eq 'customized' }
-    it('prefix            ') { expect(consumer.prefix).to eq config.prefix }
-    it('channel           ') { expect(consumer.channel).to eq config.channel }
-    it('dlq_postfix       ') { expect(consumer.dlq_postfix).to eq config.dlq_postfix }
+    it('topic')              { expect(consumer.topic).to eq 'customized' }
+    it('prefix')             { expect(consumer.prefix).to eq config.prefix }
+    it('channel')            { expect(consumer.channel).to eq config.channel }
+    it('dlq_postfix')        { expect(consumer.dlq_postfix).to eq config.dlq_postfix }
     it('visibility_timeout') { expect(consumer.visibility_timeout).to eq config.visibility_timeout }
-    it('retention_period ') { expect(consumer.retention_period).to eq config.retention_period }
-    it('max_attempts      ') { expect(consumer.max_attempts).to eq config.max_attempts }
-    it('event_pool_size   ') { expect(consumer.event_pool_size).to eq config.event_pool_size }
-    it('transcoder_code   ') { expect(consumer.transcoder_code).to eq config.transcoder_code }
-    it('sleep_times       ') { expect(consumer.events_sleep_times).to eq config.events_sleep_times }
-    it('queue_name        ') { expect(consumer.queue_name).to eq "#{config.prefix}-customized-events" }
-    it('monitor_name      ') { expect(consumer.monitor_name).to eq "#{config.prefix}customizedevents" }
+    it('retention_period')   { expect(consumer.retention_period).to eq config.retention_period }
+    it('max_attempts')       { expect(consumer.max_attempts).to eq config.max_attempts }
+    it('event_pool_size')    { expect(consumer.event_pool_size).to eq config.event_pool_size }
+    it('transcoder_code')    { expect(consumer.transcoder_code).to eq config.transcoder_code }
+    it('sleep_times')        { expect(consumer.events_sleep_times).to eq config.events_sleep_times }
+    it('queue_name')         { expect(consumer.queue_name).to eq "#{config.prefix}-customized-events" }
+    it('monitor_name')       { expect(consumer.monitor_name).to eq "#{config.prefix}customizedevents" }
   end
   context 'consumer' do
 
