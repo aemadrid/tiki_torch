@@ -11,7 +11,7 @@ module Tiki
 
         describe "#publish" do
           context "yaml with prefix serialization" do
-            let(:event) { Event.new(payload, props, "yaml") }
+            let(:event) { Message.new(payload, props, "yaml") }
             it "sends a message" do
               expect(Torch.client).to receive(:queue).with("fantastic-cheese-events").and_return(mock_queue)
               expect(mock_queue).to receive(:send_message).with(/\Ayaml|/)
@@ -20,7 +20,7 @@ module Tiki
           end
 
           context "json with prefix serialization" do
-            let(:event) { Event.new(payload, props, "json") }
+            let(:event) { Message.new(payload, props, "json") }
             it "sends a message" do
               expect(Torch.client).to receive(:queue).with("fantastic-cheese-events").and_return(mock_queue)
               expect(mock_queue).to receive(:send_message).with(/\Ajson|/)
@@ -29,7 +29,7 @@ module Tiki
           end
 
           context "yaml with attribute serialization" do
-            let(:event) { Event.new(payload, props, "yaml", "message_attributes") }
+            let(:event) { Message.new(payload, props, "yaml", "message_attributes") }
             it "sends a message" do
               expect(Torch.client).to receive(:queue).with("fantastic-cheese-events").and_return(mock_queue)
               expect(mock_queue).to receive(:send_message).with(instance_of(Hash))
@@ -38,7 +38,7 @@ module Tiki
           end
 
           context "json with attribute serialization" do
-            let(:event) { Event.new(payload, props, "json", "message_attributes") }
+            let(:event) { Message.new(payload, props, "json", "message_attributes") }
             it "sends a message" do
               expect(Torch.client).to receive(:queue).with("fantastic-cheese-events").and_return(mock_queue)
               expect(mock_queue).to receive(:send_message).with(instance_of(Hash))

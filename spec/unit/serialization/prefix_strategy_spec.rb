@@ -3,7 +3,7 @@ module Tiki
     module Serialization
       describe PrefixStrategy, :fast do
 
-        let(:event) { Publishing::Event.new(payload, properties, format, strategy) }
+        let(:event) { Publishing::Message.new(payload, properties, format, strategy) }
         let(:payload) { {foo: { bar: "buzz" }} }
         let(:properties) { {color: "yellow", purpose: "shenanigans", transcoder_code: format} }
         let(:strategy) { Torch::Config::SerializationStrategies::PREFIX }

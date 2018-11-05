@@ -1,22 +1,22 @@
 module Tiki
   module Torch
     module Publishing
-      describe Event, :fast do
+      describe Message, :fast do
 
         it "uses defaults" do
-          event = Event.new("foo", {})
+          event = Message.new("foo", {})
           expect(event.format).to eq("yaml")
           expect(event.serialization_strategy).to eq(Torch.config.serialization_strategy)
         end
 
         it "validates provided formats" do
-          expect{Event.new("foo", {}, "dumb")}.to raise_error(ArgumentError, "dumb is not a valid format option")
-          expect(Event.new("foo", {}, "yaml").format).to eq("yaml")
+          expect{Message.new("foo", {}, "dumb")}.to raise_error(ArgumentError, "dumb is not a valid format option")
+          expect(Message.new("foo", {}, "yaml").format).to eq("yaml")
         end
 
         describe "#serialize" do
           let(:body) { {foo: {bar: "baz"} } }
-          let(:subject) { Event.new(body, {}, "json", strategy) }
+          let(:subject) { Message.new(body, {}, "json", strategy) }
 
           context "using prefix" do
             let(:strategy) { Torch::Config::SerializationStrategies::PREFIX }
@@ -35,7 +35,7 @@ module Tiki
           end
 
           context "defaults" do
-            let(:subject) { Event.new(body, {}) }
+            let(:subject) { Message.new(body, {}) }
             example "to prefix" do
               expect(Torch::Serialization::PrefixStrategy).to receive(:serialize).with(subject)
               subject.serialize

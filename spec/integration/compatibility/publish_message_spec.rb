@@ -64,11 +64,11 @@ describe "publishing a message", :fast do
 
   end
 
-  describe "#publish_event interface" do
+  describe "#publish_message interface" do
     let(:payload) { {foo: { bar: "buzz" }} }
     let(:properties) { {color: "yellow", purpose: "shenanigans"} }
-    let(:event) { Tiki::Torch::Publishing::Event.new(payload, properties, format, strategy) }
-    let(:publish_message) { Tiki::Torch.publish_event('test_queue', event) }
+    let(:event) { Tiki::Torch::Publishing::Message.new(payload, properties, format, strategy) }
+    let(:publish_message) { Tiki::Torch.publish_message('test_queue', event) }
     after(:each) {
       TestQueue.clear
     }

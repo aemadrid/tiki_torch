@@ -37,7 +37,7 @@ module Tiki
           new_name << "-#{channel}" unless name.end_with? channel
 
           # we don't want to encode the prefix and channel properties, and event is immutable
-          new_event = Event.new(event.payload, properties, event.format, event.serialization_strategy)
+          new_event = Message.new(event.payload, properties, event.format, event.serialization_strategy)
           [new_name, new_event]
         end
 
@@ -60,16 +60,16 @@ module Tiki
     extend self
 
     def publisher
-      @p ||= manager.publisher
+      @publisher ||= manager.publisher
     end
 
-    def publish_event(topic_name, event)
-      publisher.publish(topic_name, event)
+    def publish_message(topic_name, message)
+      publisher.publish(topic_name, message)
     end
 
     def publish(topic_name, payload = {}, properties = {}, format = Torch.config.transcoder_code)
-      event = Publishing::Event.new(payload, properties, format, Torch.config.serialization_strategy)
-      publish_event(topic_name, event)
+      message = Publishing::Message.new(payload, properties, format, Torch.config.serialization_strategy)
+      publish_message(topic_name, message)
     end
 
   end

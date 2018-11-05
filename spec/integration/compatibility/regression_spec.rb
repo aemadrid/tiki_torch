@@ -5,6 +5,10 @@ describe "Compatibility" do
       let(:properties) { {color: "blue"} }
       let(:strategies) { Tiki::Torch::Config::SerializationStrategies }
 
+      after(:each){
+        # This will mess up defaults later if left
+        consumer.configure{ |c| c.transcoder_code = "yaml"}
+      }
       context "original publish interface" do
         context "prefix serialization" do
           it "publishes and consumes yaml successfully" do

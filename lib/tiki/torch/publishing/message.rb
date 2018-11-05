@@ -2,7 +2,7 @@
 module Tiki
   module Torch
     module Publishing
-      class Event
+      class Message
 
         attr_reader :serialization_strategy, :format,  :properties, :payload
 
