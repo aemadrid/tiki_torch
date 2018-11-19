@@ -18,10 +18,10 @@ module Tiki
           registry.find { |klass| klass.codes.include?(code.to_s) }
         end
 
-        def encode(str, code = 'yaml')
+        def encode(body, code = 'yaml')
           transcoder = transcoder_for(code)
           raise "Unknown transcoder code [#{code}]" unless transcoder
-          transcoder.encode(str)
+          transcoder.encode(body)
         end
 
         def decode(str, code = 'yaml')
