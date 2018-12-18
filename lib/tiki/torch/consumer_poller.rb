@@ -17,6 +17,7 @@ module Tiki
           max_number_of_messages: max_qty(qty),
           wait_time_seconds:      timeout,
           visibility_timeout:     visibility_timeout,
+          message_attribute_names: ["All"],
         }
         queue.receive_messages options
       end

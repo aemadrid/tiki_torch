@@ -73,6 +73,7 @@ describe SimpleConsumer do
       let(:total) { qty + extra }
       let(:expected) { total.times.map { |x| 's%02i' % x } }
       let(:sleep_time) { ON_REAL_SQS ? 5 : 3 }
+
       shared_examples 'multiple send and receive' do
         before(:each) {
           @old_wait = described_class.events_sleep_times[:max_wait]

@@ -62,8 +62,9 @@ module Tiki
       end
 
       def message_attributes
-        data.message_attributes
+        data.message_attributes || {}
       end
+
     end
   end
 

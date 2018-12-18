@@ -9,7 +9,7 @@ module Tiki
           attr_writer :prefix, :channel
           attr_writer :default_delay, :max_size, :retention_period, :policy, :receive_delay, :visibility_timeout
           attr_writer :use_dlq, :dlq_postfix, :max_attempts
-          attr_writer :event_pool_size, :transcoder_code, :events_sleep_times
+          attr_writer :event_pool_size, :transcoder_code, :serialization_strategy, :events_sleep_times
 
           attr_reader :consumer
 
@@ -67,6 +67,10 @@ module Tiki
 
           def transcoder_code
             @transcoder_code || Torch.config.transcoder_code
+          end
+
+          def serialization_strategy
+            @serialization_strategy || Torch.config.serialization_strategy
           end
 
           def events_sleep_times

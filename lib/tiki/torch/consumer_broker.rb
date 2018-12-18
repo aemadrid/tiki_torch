@@ -199,7 +199,7 @@ module Tiki
       end
 
       def process_message(msg)
-        event = Event.new msg
+        event = Consumers::Event.new msg
         debug "#{lbl} got event : (#{event.class.name}) ##{event.short_id}, going to process async ..."
         @event_pool.async { process_event event }
       end

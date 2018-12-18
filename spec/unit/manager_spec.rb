@@ -1,6 +1,6 @@
 module Tiki
   module Torch
-    describe Manager do
+    describe Manager, :fast do
       let(:client) { instance_double 'Tiki::Torch::AwsClient', to_s: '#<T:T:AwsClient>' }
       subject { described_class.new }
       context 'basic' do
