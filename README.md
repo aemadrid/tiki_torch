@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/aemadrid/tiki_torch.svg?branch=feature%2Fmove_to_sqs)](https://travis-ci.org/aemadrid/tiki_torch)
 
-The currently in-use branch at https://github.com/aemadrid/tiki_torch/tree/feature/move_to_sqs has been renamed to master here, and previous incarnations have been versioned and tagged. Version 0.0.1 is the Rabbit MQ implementation, and versions starting with v0.0.3 are Amazon SQS based.
+Master is a backwards-compatible TikiTorch branch that has been augmented for use with Amazon SQS attributes. It can consume and produce messages in the prefix-style notation, and the API should also be backwards compatible (when changing to the new version in Merchant Portal, we did have to modify the way some of the test helpers worked). The widely-used branch at https://github.com/aemadrid/tiki_torch/tree/feature/move_to_sqs has been tagged as v0.0.3 here. Previous incarnations have been versioned and tagged (version 0.0.1 is the Rabbit MQ implementation, and versions starting with v0.0.3 are Amazon SQS based).
 
 TODO: Write a gem description
 
