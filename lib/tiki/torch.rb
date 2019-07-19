@@ -14,7 +14,7 @@ require 'forwardable'
 require 'colorize'
 require 'yaml'
 require 'logger'
-require 'aws-sdk-core'
+require 'aws-sdk-sqs'
 
 require 'tiki/torch/version'
 require 'tiki/torch/core_ext'

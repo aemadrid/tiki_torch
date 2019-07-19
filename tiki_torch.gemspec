@@ -18,10 +18,10 @@ Gem::Specification.new do |s|
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ['lib']
 
-  s.add_dependency 'aws-sdk-core', '~> 2.5.8'
+  s.add_dependency 'aws-sdk-sqs', '~> 1'
   s.add_dependency 'concurrent-ruby', '~> 1.0'
   s.add_dependency 'concurrent-ruby-edge'
-  s.add_dependency 'lifeguard', '0.2.0'
+  s.add_dependency 'lifeguard', '0.3.0'
   s.add_dependency 'multi_json'
   s.add_dependency 'virtus'
 
