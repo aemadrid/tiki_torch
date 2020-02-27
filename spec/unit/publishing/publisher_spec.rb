@@ -53,9 +53,9 @@ module Tiki
               allow(mock_queue).to receive(:send_message).and_raise(StandardError, "test error")
             end
 
-            it "should log and re-raise the exception" do
+            it "should log and re-raise a PublishingError" do
               expect(subject).to receive(:log_exception)
-              expect { subject.publish("cheese", event) }.to raise_error(StandardError)
+              expect { subject.publish("cheese", event) }.to raise_error(described_class::PublishingError)
             end
           end
 
