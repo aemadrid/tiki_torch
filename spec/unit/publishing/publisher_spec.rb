@@ -46,6 +46,30 @@ module Tiki
             end
           end
 
+          context "with a StandardError raised" do
+            let(:event) { Message.new(payload, props, "json", "message_attributes") }
+            before do
+              allow(Torch.client).to receive(:queue).with("fantastic-cheese-events").and_return(mock_queue)
+              allow(mock_queue).to receive(:send_message).and_raise(StandardError, "test error")
+            end
+
+            it "should log and re-raise the exception" do
+              expect(subject).to receive(:log_exception)
+              expect { subject.publish("cheese", event) }.to raise_error(StandardError)
+            end
+          end
+
+          context "with a low-level exception raised" do
+            let(:event) { Message.new(payload, props, "json", "message_attributes") }
+            before do
+              allow(Torch.client).to receive(:queue).with("fantastic-cheese-events").and_return(mock_queue)
+              allow(mock_queue).to receive(:send_message).and_raise(Exception, "test error")
+            end
+
+            it "should not swallow the exception" do
+              expect { subject.publish("cheese", event) }.to raise_error(Exception)
+            end
+          end
         end
       end
     end

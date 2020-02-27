@@ -13,8 +13,9 @@ module Tiki
           monitor_publish(topic_name, event.payload, event.properties)
           debug_var(:res, res)
           res
-        rescue Exception => e
+        rescue StandardError => e
           log_exception e, section: 'publisher', topic: topic_name
+          raise
         end
 
         def to_s
