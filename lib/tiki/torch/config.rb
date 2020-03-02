@@ -39,6 +39,10 @@ module Tiki
       attribute :events_sleep_times, Hash, default: EVENT_SLEEP_TIMES
       attribute :serialization_strategy, String, default: SerializationStrategies::PREFIX
       attribute :valid_formats, Array, default: YAML_CODES.concat(JSON_CODES)
+      # Can be anything that responds to `call`. Defaults to noop.
+      # Virtus automatically calls anything that responds to `call`, so we have to wrap the
+      # handler in a lambda.
+      attribute :publishing_error_handler, Object, default: lambda { |_, _| Proc.new { |_| } }
 
       def default_message_properties
         @default_message_properties ||= {}

@@ -6,8 +6,6 @@ module Tiki
         include Logging
         extend Forwardable
 
-        PublishingError = Class.new(::StandardError)
-
         def publish(topic_name, event)
           log_debug(topic_name, event)
           queue_name, event = build_queue_name(topic_name, event)
@@ -15,10 +13,10 @@ module Tiki
           monitor_publish(topic_name, event.payload, event.properties)
           debug_var(:res, res)
           res
-        rescue StandardError => e
+        rescue Exception => e
           log_exception e, section: 'publisher', topic: topic_name
 
-          raise(PublishingError, e)
+          Torch.config.publishing_error_handler.call(e)
         end
 
         def to_s

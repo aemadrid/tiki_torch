@@ -46,28 +46,30 @@ module Tiki
             end
           end
 
-          context "with a StandardError raised" do
+          context "with an exception raised" do
             let(:event) { Message.new(payload, props, "json", "message_attributes") }
             before do
               allow(Torch.client).to receive(:queue).with("fantastic-cheese-events").and_return(mock_queue)
               allow(mock_queue).to receive(:send_message).and_raise(StandardError, "test error")
             end
 
-            it "should log and re-raise a PublishingError" do
-              expect(subject).to receive(:log_exception)
-              expect { subject.publish("cheese", event) }.to raise_error(described_class::PublishingError)
-            end
-          end
-
-          context "with a low-level exception raised" do
-            let(:event) { Message.new(payload, props, "json", "message_attributes") }
-            before do
-              allow(Torch.client).to receive(:queue).with("fantastic-cheese-events").and_return(mock_queue)
-              allow(mock_queue).to receive(:send_message).and_raise(Exception, "test error")
+            context "with no error handler configured" do
+              it "should silently ignore the exception" do
+                puts("config: #{Torch.config}")
+                expect(subject).to receive(:log_exception)
+                expect { subject.publish("cheese", event) }.to_not raise_error
+              end
             end
 
-            it "should not swallow the exception" do
-              expect { subject.publish("cheese", event) }.to raise_error(Exception)
+            context "with an error handler configured" do
+              before do
+                allow(Torch.config).to receive(:publishing_error_handler).and_return(Proc.new {|error| raise error})
+              end
+
+              it "should log and re-raise the error" do
+                expect(subject).to receive(:log_exception)
+                expect { subject.publish("cheese", event) }.to raise_error(StandardError)
+              end
             end
           end
         end
