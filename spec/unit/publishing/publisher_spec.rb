@@ -63,7 +63,7 @@ module Tiki
 
             context "with an error handler configured" do
               before do
-                allow(Torch.config).to receive(:publishing_error_handler).and_return(Proc.new {|error| raise error})
+                allow(Torch.config).to receive(:publishing_error_handler).and_return(Proc.new {|error, topic, event| raise error})
               end
 
               it "should log and re-raise the error" do
