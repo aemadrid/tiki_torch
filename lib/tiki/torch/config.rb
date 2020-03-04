@@ -42,7 +42,11 @@ module Tiki
       # Can be anything that responds to `call`. Defaults to noop.
       # Virtus automatically calls anything that responds to `call`, so we have to wrap the
       # handler in a lambda.
-      attribute :publishing_error_handler, Object, default: lambda { |_, _| Proc.new { |_| } }
+      attribute :publishing_error_handler, Object, default: lambda { |_, _| Proc.new { |_, _, _| } }
+
+      attribute :retry_interval_secs, Integer
+      attribute :retry_timeout_secs, Integer
+      attribute :retry_size, Integer
 
       def default_message_properties
         @default_message_properties ||= {}
