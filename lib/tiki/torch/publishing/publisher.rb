@@ -15,6 +15,8 @@ module Tiki
           res
         rescue Exception => e
           log_exception e, section: 'publisher', topic: topic_name
+
+          Torch.config.publishing_error_handler.call(e, topic_name, event)
         end
 
         def to_s
