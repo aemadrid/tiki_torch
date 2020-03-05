@@ -10,7 +10,7 @@ module Tiki
         let(:subject) { Publisher.new }
         let(:mock_queue) { Torch::AwsQueue.new("x","y","z").tap {|q| allow(q).to receive(:send_message).and_return(true)} }
 
-        describe "#publish", :focus do
+        describe "#publish" do
           context "yaml with prefix serialization" do
             let(:event) { Message.new(payload, props, "yaml") }
             it "sends a message" do
@@ -49,11 +49,11 @@ module Tiki
 
           context "with an exception raised" do
             let(:msg) { Message.new(payload, props, "json", "message_attributes") }
-            let(:thrown_error) { StandardError.new "test error" }
+            let(:error) { StandardError.new "test error" }
 
             before do
               allow(Torch.client).to receive(:queue).with(full_topic_name).and_return(mock_queue)
-              allow(mock_queue).to receive(:send_message).and_raise(thrown_error)
+              allow(mock_queue).to receive(:send_message).and_raise(error)
             end
 
             context "with no error handler configured" do
@@ -68,12 +68,12 @@ module Tiki
 
               before do
                 allow(Torch.config).to receive(:publishing_error_handler).and_return(handler)
-                expect(handler).to receive(:call).with(thrown_error, topic_name, msg).and_call_original
+                expect(handler).to receive(:call).with(error, topic_name, msg).and_call_original
               end
 
               it "should log and re-raise the error" do
                 expect(subject).to receive(:log_exception)
-                expect { subject.publish(topic_name, msg) }.to raise_error(thrown_error)
+                expect { subject.publish(topic_name, msg) }.to raise_error(error)
               end
             end
           end
