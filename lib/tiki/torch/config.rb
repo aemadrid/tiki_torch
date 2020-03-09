@@ -46,7 +46,7 @@ module Tiki
 
       attribute :retry_interval_secs, Integer
       attribute :retry_timeout_secs, Integer
-      attribute :retry_size, Integer
+      attribute :retry_count, Integer
 
       def default_message_properties
         @default_message_properties ||= {}
