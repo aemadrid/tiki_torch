@@ -1,45 +1,37 @@
+# frozen_string_literal: true
+
 unless Object.const_defined? :SPEC_HELPER_LOADED
 
-  require 'rubygems'
-  require 'bundler'
-
-  Bundler.require(:default, :development, :test)
-
-  require 'tiki_torch'
-
-  require 'support/helpers'
-  require 'support/consumers'
+  require_relative './support/constants'
+  require_relative './support/helpers'
+  Dir.glob("#{SPEC_ROOT}/support/consumers/**/*.rb").map { |path| require path }
 
   RSpec.configure do |c|
     c.include TestingHelpers
 
-    c.filter_run focus: true if ENV['FOCUS'] == 'true'
-    c.filter_run_excluding performance: true unless ENV['PERFORMANCE'] == 'true'
+    c.filter_run focus: true if FOCUSED
+
+    c.filter_run_excluding performance: true unless PERFORMANCE
+
+    if ON_REAL_SQS
+      c.filter_run_excluding on_fake_sqs: true
+    else
+      c.filter_run_excluding on_real_sqs: true
+    end
 
     c.mock_with :rspec do |mocks|
       mocks.verify_partial_doubles = true
     end
 
-    c.before(:each, integration: true) do
-      $lines = TestingHelpers::LogLines.new
-      TestingHelpers.setup_vars
+    c.before(:suite) do
+      TestingHelpers.delete_queues
+      TestingHelpers.setup_fake_sqs
       TestingHelpers.setup_torch
     end
 
-    c.after(:each, integration: true) do
-      TestingHelpers.take_down_torch
-    end
-
-    c.after(:context, integration: true) do
-      TestingHelpers.take_down_vars
-    end
-
     c.after(:suite) do
-      secs = Tiki::Torch.config.msg_timeout / 1000.0 + 1
-      Tiki::Torch::Utils.wait_for secs
-      TestingHelpers.clear_all_consumers
+      TestingHelpers.stop_fake_sqs
     end
-
   end
 
   SPEC_HELPER_LOADED = true

@@ -1,0 +1,48 @@
+machine:
+
+  ruby:
+    version: ruby-2.0.0-p598
+
+  java:
+    version: openjdk7
+
+  environment:
+    JRUBY_OPTS: --server -J-Dfile.encoding=utf8 --2.0 -J-XX:+TieredCompilation -J-XX:TieredStopAtLevel=1 -J-noverify -X-C -Xcompile.invokedynamic=false -J-Xmx2g
+    DEBUG: true
+    FOCUS: false
+    PERFORMANCE: false
+    USE_REAL_SQS: false
+
+dependencies:
+
+  cache_directories:
+    - "vendor/bundle_java"
+    - "vendor/bundle"
+
+  pre:
+    - echo rvm_autoupdate_flag=0 >> ~/.rvmrc
+
+    - rvm install ruby-2.0.0-p598
+    - rvm install ruby-2.3.1
+    - rvm install jruby-9.0.0.0
+
+    - rvm-exec ruby-2.0.0-p598 bash -c "gem install bundler"
+    - rvm-exec ruby-2.3.1      bash -c "gem install bundler"
+    - rvm-exec jruby-9.0.0.0   bash -c "gem install bundler"
+
+  override:
+    - rvm-exec ruby-2.0.0-p598 bash -c "bundle check --path=vendor/bundle || bundle install --path=vendor/bundle"
+    - rvm-exec ruby-2.3.1      bash -c "bundle check --path=vendor/bundle || bundle install --path=vendor/bundle"
+    - rvm-exec jruby-9.0.0.0   bash -c "bundle check --path=vendor/bundle_java || bundle install --path=vendor/bundle_java"
+
+test:
+
+  override:
+    - rvm-exec ruby-2.0.0-p598 bash -c "bundle exec rspec --color --require spec_helper"
+    - rvm-exec ruby-2.3.1      bash -c "bundle exec rspec --color --require spec_helper"
+    - rvm-exec jruby-9.0.0.0   bash -c "bundle exec rspec --color --require spec_helper"
+
+general:
+
+  artifacts:
+    - coverage

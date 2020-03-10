@@ -5,51 +5,81 @@ module Tiki
       include Virtus.model
       include Logging
 
-      attribute :nsqlookupd, Array[String], default: lambda { |_, _| [ENV['NSLOOKUPD_ADDRESS']].compact }
-      attribute :nsqd, Array[String], default: lambda { |config, _| config.safe_default_nsqd_address }
+      EVENT_SLEEP_TIMES = { idle: 60, busy: 60, received: 15, empty: 120, exception: 15, poll: 5, max_wait: 5 * 60 }
 
-      attribute :topic_prefix, String, default: 'tiki_torch-'
-      attribute :max_in_flight, Integer, default: 10
-      attribute :discovery_interval, Integer, default: 60
-      attribute :msg_timeout, Integer, default: 60_000
+      class SerializationStrategies
+        PREFIX = "prefix"
+        MESSAGE_ATTRIBUTES = "message_attributes"
+      end
 
-      attribute :back_off_strategy, Class
-      attribute :max_attempts, Integer, default: 100
-      attribute :back_off_time_unit, Integer, default: 3_000
+      YAML_CODES = %w(yaml application/yaml application/x-yaml)
+      JSON_CODES = %w(json application/json)
 
-      attribute :transcoder_code, String, default: 'yaml'
+      attribute :access_key_id, String, default: lambda { |_, _| ENV['AWS_ACCESS_KEY_ID'] }
+      attribute :secret_access_key, String, default: lambda { |_, _| ENV['AWS_SECRET_ACCESS_KEY'] }
+      attribute :region, String, default: lambda { |_, _| ENV['AWS_REGION'] }
+      attribute :sqs_endpoint, String
 
-      attribute :queue_class, Object, default: lambda {|_, _| Queue }
+      attribute :prefix, String, default: 'tiki_torch'
+      attribute :channel, String, default: 'events'
+
+      attribute :default_delay, Integer, default: 0 # DelaySeconds
+      attribute :max_size, Integer, default: 262144 # MaximumMessageSize
+      attribute :retention_period, Integer, default: 345600 # MessageRetentionPeriod
+      attribute :policy, String, default: nil # Policy
+      attribute :receive_delay, Integer, default: 0 # ReceiveMessageWaitTimeSeconds
+      attribute :visibility_timeout, Integer, default: 60 # VisibilityTimeout
+
+      attribute :use_dlq, Boolean, default: false
+      attribute :dlq_postfix, String, default: 'dlq'
+      attribute :max_attempts, Integer, default: 10
 
       attribute :event_pool_size, Integer, default: lambda { |_, _| Concurrent.processor_count }
-      attribute :events_sleep_times, Integer, default: { idle: 1, busy: 0.1, received: 0.1, empty: 0.5, exception: 0.5 }
-      attribute :processor_count, Integer, default: lambda { |_, _| Concurrent.processor_count }
+      attribute :transcoder_code, String, default: 'yaml'
+      attribute :events_sleep_times, Hash, default: EVENT_SLEEP_TIMES
+      attribute :serialization_strategy, String, default: SerializationStrategies::PREFIX
 
-      def producer_connection_options(topic_name)
-        options              = { topic: topic_name }
-        options[:nsqlookupd] = nsqlookupd unless nsqlookupd.empty?
-        options[:nsqd]       = nsqd unless nsqd.empty?
-        options
-      end
+      attribute :valid_formats, Array, default: YAML_CODES.concat(JSON_CODES)
+      # Can be anything that responds to `call`. Defaults to noop.
+      # Virtus automatically calls anything that responds to `call`, so we have to wrap the
+      # handler in a lambda.
+      attribute :publishing_error_handler, Object, default: lambda { |_, _| Proc.new { |_, _, _| } }
+      attribute :publishing_retry_handler, Object, default: lambda { |_, _| Proc.new { |_, _| } }
+
+      attribute :retry_interval_secs, Integer
+      attribute :retry_timeout_secs, Integer
+      attribute :retry_count, Integer
 
       def default_message_properties
         @default_message_properties ||= {}
       end
 
-      def safe_default_nsqd_address
-        return nil unless nsqlookupd.empty?
-        [ENV['NSQD_ADDRESS']] unless ENV['NSQD_ADDRESS'].nil?
-        ['localhost:4150']
+      def to_s
+        %{#<T:T:Config access_key_id=#{access_key_id.inspect} region=#{region.inspect}>}
       end
+
+      alias :inspect :to_s
 
     end
 
-    def self.config
+    def config
       @config ||= Config.new
     end
 
-    def self.configure
+    def configure
       yield config
+    end
+
+    def aws_options
+      {
+        access_key_id:     config.access_key_id,
+        secret_access_key: config.secret_access_key,
+        region:            config.region,
+      }
+    end
+
+    def setup_aws(options = {})
+      ::Aws.config = aws_options.merge options
     end
 
     config

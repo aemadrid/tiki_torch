@@ -26,6 +26,10 @@ module Tiki
         @pool.busy_size == 0
       end
 
+      def ready_size
+        @pool.pool_size - @pool.busy_size
+      end
+
       def async(*args, &block)
         raise(NotReadyError, 'Not ready to run async jobs') unless ready?
 

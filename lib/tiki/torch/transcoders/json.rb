@@ -4,22 +4,19 @@ module Tiki
 
       class << self
 
-        def code
-          'json'
+        def codes
+          Torch::Config::JSON_CODES
         end
 
-        def encode(payload = {}, properties = {})
-          MultiJson.dump payload:    payload,
-                         properties: properties
+        def encode(body = {})
+          MultiJson.dump body
         end
 
         def decode(str)
-          hsh = MultiJson.load str, symbolize_keys: true
-          [hsh[:payload], hsh[:properties]]
+          MultiJson.load(str, symbolize_keys: true)
         end
 
       end
-
     end
   end
 end

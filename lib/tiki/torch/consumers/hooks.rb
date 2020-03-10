@@ -4,14 +4,23 @@ module Tiki
       module Hooks
 
         def self.included(base)
-          base.send :attr_reader, :success, :failure, :back_off
+          base.extend ClassMethods
+          base.send :attr_reader, :success, :failure
+        end
+
+        module ClassMethods
+
+          def pop_results(req_size, found_size, timeout)
+            debug "req_size : #{req_size} | found_size : #{found_size} | timeout : #{timeout}"
+          end
+
         end
 
         def on_start
         end
 
         def process
-          debug "Event ##{short_id} was processed"
+          info "Event ##{event.short_id} was processed"
         end
 
         def on_success(result)
@@ -21,22 +30,10 @@ module Tiki
 
         def on_failure(exception)
           @failure = exception
-          back_off_event || dlq_event
-        end
-
-        def on_rpc_response(result)
-          respond_to = properties[:respond_to]
-          request_id = properties[:request_message_id]
-
-          debug_var :properties, properties
-          return nil if respond_to.nil? || request_id.nil?
-
-          publish respond_to, result, request_message_id: request_id
-          [:responded, respond_to, request_id]
         end
 
         def on_end
-          debug "Event ##{short_id} ended"
+          debug "Event ##{event.short_id} ended in #{@success ? 'success' : 'failure'}"
         end
 
       end

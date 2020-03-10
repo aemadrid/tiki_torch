@@ -4,17 +4,16 @@ module Tiki
 
       class << self
 
-        def code
-          'yaml'
+        def codes
+          Torch::Config::YAML_CODES
         end
 
-        def encode(payload = {}, properties = {})
-          { payload: payload, properties: properties }.to_yaml
+        def encode(body = {})
+          body.to_yaml
         end
 
         def decode(str)
-          hsh = YAML.load str
-          [hsh[:payload], hsh[:properties]]
+          YAML.load(str)
         end
 
       end
