@@ -1,13 +1,13 @@
+# frozen_string_literal: true
+
 require 'rspec/expectations'
 require 'rspec/core/shared_context'
 require 'json'
 
 module TestingHelpers
-
   extend RSpec::Core::SharedContext
 
   class LogLines
-
     include Tiki::Torch::Logging
 
     attr_reader :all
@@ -31,9 +31,10 @@ module TestingHelpers
     def wait_for_size(nr, timeout = 15)
       start_time  = Time.now
       last_time   = start_time + timeout
-      cnt, status = 0, nil
+      cnt = 0
+      status = nil
       loop do
-        cnt    += 1
+        cnt += 1
         status = if @all.size >= nr
                    :enough
                  elsif Time.now >= last_time
@@ -42,30 +43,31 @@ module TestingHelpers
                    :keep
                  end
         break unless status == :keep
-        debug 'C : cnt : %i | status : %s | size: %i/%i | left : %.2fs%s' % [cnt, status, @all.size, nr, last_time - Time.now, "\n#{@all.to_yaml}"] if cnt % 10 == 0
+
+        if cnt % 10 == 0
+          debug format('C : cnt : %i | status : %s | size: %i/%i | left : %.2fs%s', cnt, status, @all.size, nr, last_time - Time.now, "\n#{@all.to_yaml}")
+        end
         sleep 0.05
       end
       took = last_time - Time.now
-      debug 'F : cnt : %i | status : %s | size: %i/%i | took : %.2fs (%.2fr/s)%s' % [cnt, status, @all.size, nr, took, cnt / took.to_f, "\n#{@all.to_yaml}"]
+      debug format('F : cnt : %i | status : %s | size: %i/%i | took : %.2fs (%.2fr/s)%s', cnt, status, @all.size, nr, took, cnt / took.to_f, "\n#{@all.to_yaml}")
       Time.now - start_time
     end
 
-    alias :<< :add
+    alias << add
 
     def size
       @all.size
     end
 
     def to_s
-      %{#<#{self.class.name} size=#{@all.size} all=#{@all.inspect}>}
+      %(#<#{self.class.name} size=#{@all.size} all=#{@all.inspect}>)
     end
 
-    alias :inspect :to_s
-
+    alias inspect to_s
   end
 
   module Consumer
-
     private
 
     def sleep_if_necessary(period_time = 0.1, touch_event = false)
@@ -81,18 +83,17 @@ module TestingHelpers
         debug "[#{event.short_id}]> no need to sleep ..."
       end
     end
-
   end
 
   let(:config) { Tiki::Torch.config }
   let(:consumer) { described_class }
   let(:consumers) { [consumer] }
-  let(:polling_pattern) { %r{#{consumers.map { |x| x.name }.join('|') }} }
+  let(:polling_pattern) { /#{consumers.map(&:name).join('|')}/ }
   let(:manager) { Tiki::Torch::Manager.new }
   let(:queue_name) { 'fake-sqs-queue' }
   let(:queue) { Tiki::Torch.client.queue queue_name }
 
-  extend self
+  module_function
 
   def debug(msg)
     puts msg if DEBUG
@@ -117,9 +118,9 @@ module TestingHelpers
     else
       unless $fake_sqs
         puts " [ Running from a fake SQS queue : #{FAKE_SQS_ENDPOINT} ] ".center(90, '=')
-        $fake_sqs = FakeSQS::TestIntegration.new database:     FAKE_SQS_DB,
+        $fake_sqs = FakeSQS::TestIntegration.new database: FAKE_SQS_DB,
                                                  sqs_endpoint: FAKE_SQS_HOST,
-                                                 sqs_port:     FAKE_SQS_PORT
+                                                 sqs_port: FAKE_SQS_PORT
       end
       Tiki::Torch.config.sqs_endpoint = FAKE_SQS_ENDPOINT
     end
@@ -127,6 +128,7 @@ module TestingHelpers
 
   def start_fake_sqs
     return false if ON_REAL_SQS
+
     # debug '>>> starting fake sqs ...'
     $fake_sqs.start
   end
@@ -134,6 +136,7 @@ module TestingHelpers
   def stop_fake_sqs
     return false if ON_REAL_SQS
     return false unless $fake_sqs
+
     # debug '>>> stopping fake sqs ...'
     $fake_sqs.stop
   end
@@ -200,7 +203,6 @@ module TestingHelpers
     debug '>>> running polling ...'
     example.run
   end
-
 end
 
 begin

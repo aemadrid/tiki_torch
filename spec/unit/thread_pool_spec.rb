@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module Tiki
   module Torch
     describe ThreadPool, :fast do
       context 'states' do
-        let!(:pool){ described_class.new :ready_pool, 3 }
+        let!(:pool) { described_class.new :ready_pool, 3 }
         it 'on each step' do
           # Empty
           expect(pool.free?).to eq true
@@ -28,9 +30,9 @@ module Tiki
           expect(pool.busy?).to eq true
 
           # After being fully booked
-          expect {
+          expect do
             pool.async { sleep 0.5 }
-          }.to raise_error ThreadPool::NotReadyError, 'Not ready to run async jobs'
+          end.to raise_error ThreadPool::NotReadyError, 'Not ready to run async jobs'
         end
       end
     end

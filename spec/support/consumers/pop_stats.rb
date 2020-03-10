@@ -1,11 +1,11 @@
-class PopStatsConsumer < Tiki::Torch::Consumer
+# frozen_string_literal: true
 
+class PopStatsConsumer < Tiki::Torch::Consumer
   include TestingHelpers::Consumer
 
   consumes 'pop_stats'
 
   class << self
-
     def tag
       "r:#{event_pool_size}"
     end
@@ -14,7 +14,5 @@ class PopStatsConsumer < Tiki::Torch::Consumer
       super
       $lines << "r:#{req_size}"
     end
-
   end
-
 end

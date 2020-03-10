@@ -8,13 +8,15 @@ module Tiki
 
         def publish(topic_name, event)
           log_debug(topic_name, event)
-          queue_name, event = build_queue_name(topic_name, event)
-          res = write(queue_name, event)
-          monitor_publish(topic_name, event.payload, event.properties)
+          queue_name, built_event = build_queue_name(topic_name, event)
+          res = write(queue_name, built_event)
+          monitor_publish(topic_name, built_event.payload, built_event.properties)
           debug_var(:res, res)
           res
         rescue Exception => e
           log_exception e, section: 'publisher', topic: topic_name
+
+          Torch.config.publishing_error_handler.call(e, topic_name, event)
         end
 
         def to_s

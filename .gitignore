@@ -15,3 +15,4 @@ mkmf.log
 scrap/
 .ruby-version
 .idea/
+.tool-versions

@@ -26,6 +26,11 @@ module Tiki
           end
         end
 
+        def fingerprint
+          value = Kernel.format '%s:%s:%s', @payload.to_s, @properties.to_s, @format.to_s
+          Zlib.crc32 value, nil
+        end
+
         private
 
         def valid_formats
