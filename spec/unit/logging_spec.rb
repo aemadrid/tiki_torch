@@ -65,7 +65,7 @@ module Tiki
                 ExceptionalConsumer.error "on_exception : #{e.class.name} : #{extras.inspect}"
               end
               expect(logger).to receive(:error).with(/Exception:/)
-              expect(logger).to receive(:error).with(%r[on_exception : RuntimeError : {:weird=>"error"}])
+              expect(logger).to receive(:error).with(/on_exception : RuntimeError : {:weird=>"error"}/)
             end
             it { subject.process }
           end

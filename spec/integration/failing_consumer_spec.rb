@@ -1,5 +1,6 @@
-describe FailingConsumer, integration: true, on_real_sqs: true do
+# frozen_string_literal: true
 
+describe FailingConsumer, integration: true, on_real_sqs: true do
   let(:config) { described_class.config }
   let(:queue_name) { described_class.queue_name }
   let(:dlq_name) { described_class.dead_letter_queue_name }
@@ -12,7 +13,7 @@ describe FailingConsumer, integration: true, on_real_sqs: true do
       expect(attrs.visibility_timeout).to eq 1
 
       policy = JSON.parse attrs.redrive_policy
-      expect(policy['deadLetterTargetArn']).to match /#{dlq_name}$/
+      expect(policy['deadLetterTargetArn']).to match(/#{dlq_name}$/)
       expect(policy['maxReceiveCount']).to eq consumer.max_attempts
     end
   end
@@ -22,7 +23,7 @@ describe FailingConsumer, integration: true, on_real_sqs: true do
       consumer.publish 'failure'
       $lines.wait_for_size 2, 20
 
-      expect($lines.all.uniq).to eq %w{ failed:left_for_dead }
+      expect($lines.all.uniq).to eq %w[failed:left_for_dead]
       sleep consumer.visibility_timeout + 1
 
       attrs = queue.attributes

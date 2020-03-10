@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module Tiki
   module Torch
     describe Config, :fast do
       subject { Torch.config }
       context 'basic' do
-        it('to_s') { expect(subject.to_s).to eq %{#<T:T:Config access_key_id="#{TEST_ACCESS_KEY_ID}" region="#{TEST_REGION}">} }
+        it('to_s') { expect(subject.to_s).to eq %(#<T:T:Config access_key_id="#{TEST_ACCESS_KEY_ID}" region="#{TEST_REGION}">) }
       end
       context 'default' do
         before(:context) { TestingHelpers.config_torch }
@@ -16,8 +18,8 @@ module Tiki
           it('channel           ')     { expect(subject.channel).to eq 'events' }
 
           it('default_delay     ')     { expect(subject.default_delay).to eq 0 }
-          it('max_size          ')     { expect(subject.max_size).to eq 262144 }
-          it('retention_period  ')     { expect(subject.retention_period).to eq 345600 }
+          it('max_size          ')     { expect(subject.max_size).to eq 262_144 }
+          it('retention_period  ')     { expect(subject.retention_period).to eq 345_600 }
           it('policy            ')     { expect(subject.policy).to be_nil }
           it('receive_delay     ')     { expect(subject.receive_delay).to eq 0 }
           it('visibility_timeout')     { expect(subject.visibility_timeout).to eq 60 }

@@ -5,7 +5,7 @@ class ExceptionalConsumer < Tiki::Torch::Consumer
 
   def process
     raise 'oh oh'
-  rescue => e
+  rescue StandardError => e
     log_exception e, weird: 'error'
   end
 end
