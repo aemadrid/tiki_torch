@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 unless Object.const_defined? :SPEC_HELPER_LOADED
 
   require_relative './support/constants'
@@ -30,7 +32,6 @@ unless Object.const_defined? :SPEC_HELPER_LOADED
     c.after(:suite) do
       TestingHelpers.stop_fake_sqs
     end
-
   end
 
   SPEC_HELPER_LOADED = true

@@ -1,11 +1,11 @@
 AllCops:
   DisplayCopNames: true
-  Exclude:
-    - scrap/**/*
   TargetRubyVersion: 2.4
 
 Metrics/BlockNesting:
   Max: 2
+  Exclude:
+    - spec/**/*.rb
 
 Metrics/ClassLength:
   CountComments: false
@@ -17,11 +17,10 @@ Metrics/PerceivedComplexity:
 Metrics/CyclomaticComplexity:
   Max: 8
 
-Metrics/LineLength:
+Layout/LineLength:
   AllowURI: true
   Max: 165
   Exclude:
-    - db/**/*.rb
     - Gemfile*
 
 Metrics/MethodLength:
@@ -90,7 +89,7 @@ Style/StringLiterals:
 Style/TrivialAccessors:
   Enabled: false
 
-Layout/AlignHash:
+Layout/HashAlignment:
   EnforcedColonStyle: key
 
 Style/SignalException:
@@ -103,7 +102,7 @@ Naming/MemoizedInstanceVariableName:
   Exclude:
     - app/actions/**/*.rb
 
-Naming/UncommunicativeMethodParamName:
+Naming/MethodParameterName:
   AllowedNames:
     - _
     - _e
@@ -111,6 +110,7 @@ Naming/UncommunicativeMethodParamName:
     - to
     - tx
     - id
+    - nr
 
 Lint/AmbiguousBlockAssociation:
   Enabled: false
@@ -131,3 +131,8 @@ Style/MethodMissingSuper:
 
 Style/MissingRespondToMissing:
   Enabled: false
+
+Style/GlobalVars:
+  Enabled: true
+  Exclude:
+    - spec/**/*.rb

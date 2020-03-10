@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 class TestBroker < Tiki::Torch::ConsumerBroker
-  def event_pool=(ep)
-    @event_pool = ep
+  def event_pool=(value)
+    @event_pool = value
   end
 end
 
 class TestClient < Tiki::Torch::AwsClient
   def known_queues
-    { "test_queue-events" => TestQueue }
+    { 'test_queue-events' => TestQueue }
   end
 end
 
@@ -30,21 +32,19 @@ class TestQueue
       @collection = []
     end
 
-    alias :send_message :push
-    alias :receive_messages :pop
+    alias send_message push
+    alias receive_messages pop
   end
 end
 
 class FakeEventPool
-  def self.async(&block)
+  def self.async
     yield
   end
 end
 
 class TestConsumer < Tiki::Torch::Consumer
-
   def process
     TestQueue.push(payload)
   end
-
 end

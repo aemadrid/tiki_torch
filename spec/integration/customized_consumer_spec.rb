@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe CustomizedConsumer do
   context 'config' do
     it('topic')              { expect(consumer.topic).to eq 'customized' }
@@ -14,7 +16,6 @@ describe CustomizedConsumer do
     it('monitor_name')       { expect(consumer.monitor_name).to eq "#{config.prefix}customizedevents" }
   end
   context 'consumer' do
-
   end
   context 'processing', integration: true do
     it 'receives successful message and overrides successful hooks' do

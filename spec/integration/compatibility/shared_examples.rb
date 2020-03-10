@@ -1,5 +1,7 @@
-RSpec.shared_examples "a yaml message with prefix" do
-  it "publishes" do
+# frozen_string_literal: true
+
+RSpec.shared_examples 'a yaml message with prefix' do
+  it 'publishes' do
     publish_message
     result = TestQueue.pop
     matches = [
@@ -11,12 +13,12 @@ RSpec.shared_examples "a yaml message with prefix" do
       /:color: yellow/,
       /:purpose: shenanigans/
     ]
-    matches.each{ |m| expect(result).to match(m) }
+    matches.each { |m| expect(result).to match(m) }
   end
 end
 
-RSpec.shared_examples "a json message with prefix" do
-  it "publishes" do
+RSpec.shared_examples 'a json message with prefix' do
+  it 'publishes' do
     publish_message
     result = TestQueue.pop
     matches = [
@@ -28,28 +30,28 @@ RSpec.shared_examples "a json message with prefix" do
       /\"color\":\"yellow\"/,
       /\"purpose\":\"shenanigans\"/
     ]
-    matches.each{ |m| expect(result).to match(m) }
+    matches.each { |m| expect(result).to match(m) }
   end
 end
 
-RSpec.shared_examples "a yaml message with attributes" do
-  it "publishes" do
+RSpec.shared_examples 'a yaml message with attributes' do
+  it 'publishes' do
     publish_message
     result = TestQueue.pop
     expect(result.keys).to include(:message_body, :message_attributes)
     expect(result[:message_body]).to match(/---\n:foo:\n  :bar: buzz/)
-    expect(result[:message_attributes].keys).to include("Content-Type", "messageId", "publishedAt", "color", "purpose")
-    expect(result[:message_attributes]["Content-Type"][:string_value]).to eq("yaml")
+    expect(result[:message_attributes].keys).to include('Content-Type', 'messageId', 'publishedAt', 'color', 'purpose')
+    expect(result[:message_attributes]['Content-Type'][:string_value]).to eq('yaml')
   end
 end
 
-RSpec.shared_examples "a json message with attributes" do
-  it "publish" do
+RSpec.shared_examples 'a json message with attributes' do
+  it 'publish' do
     publish_message
     result = TestQueue.pop
     expect(result.keys).to include(:message_body, :message_attributes)
     expect(result[:message_body]).to match(/{\"foo\":{\"bar\":\"buzz\"}}/)
-    expect(result[:message_attributes].keys).to include("Content-Type", "messageId", "publishedAt", "color", "purpose")
-    expect(result[:message_attributes]["Content-Type"][:string_value]).to eq("json")
+    expect(result[:message_attributes].keys).to include('Content-Type', 'messageId', 'publishedAt', 'color', 'purpose')
+    expect(result[:message_attributes]['Content-Type'][:string_value]).to eq('json')
   end
 end

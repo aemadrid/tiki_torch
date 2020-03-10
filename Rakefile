@@ -7,7 +7,7 @@ begin
   require 'rubocop/rake_task'
   desc 'Runs rubocop with our custom settings'
   RuboCop::RakeTask.new(:rubocop) do |task|
-    config = ROOT.join('.rubocop.yml').to_s
+    config = ROOT.join('.rubocop').to_s
     task.options = ['-D', '-c', config]
   end
 rescue LoadError

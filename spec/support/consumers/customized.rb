@@ -1,5 +1,6 @@
-module CustomConsumer
+# frozen_string_literal: true
 
+module CustomConsumer
   def on_start
     super
     $lines << 'started'
@@ -19,24 +20,21 @@ module CustomConsumer
     super
     $lines << 'end'
   end
-
 end
 
 class CustomizedConsumer < Tiki::Torch::Consumer
-
   include CustomConsumer
 
   consumes 'customized'
 
   def process
     case payload[:status]
-      when 'ok'
-        true
-      when 'meh'
-        false
-      else
-        raise "Unknown status [#{payload[:status]}]"
+    when 'ok'
+      true
+    when 'meh'
+      false
+    else
+      raise "Unknown status [#{payload[:status]}]"
     end
   end
-
 end

@@ -1,15 +1,16 @@
+# frozen_string_literal: true
+
 module Tiki
   module Torch
     module Publishing
       describe Retries, :fast do
-
-        let(:topic_name) { "cheese" }
-        let(:full_topic_name) { "fantastic-cheese-events" }
-        let(:payload) { { cheese: { type: "swiss" } } }
-        let(:props) { { texture: "holey", prefix: "fantastic" } }
-        let(:event) { Message.new payload, props, "yaml" }
+        let(:topic_name) { 'cheese' }
+        let(:full_topic_name) { 'fantastic-cheese-events' }
+        let(:payload) { { cheese: { type: 'swiss' } } }
+        let(:props) { { texture: 'holey', prefix: 'fantastic' } }
+        let(:event) { Message.new payload, props, 'yaml' }
         let(:error) { StandardError.new 'some error' }
-        let(:mock_queue) { Torch::AwsQueue.new("x", "y", "z") }
+        let(:mock_queue) { Torch::AwsQueue.new('x', 'y', 'z') }
         let(:wait_time) { 1 }
         let(:publisher) { Publisher.new }
 
@@ -20,13 +21,13 @@ module Tiki
             @cnt ||= 0
             @cnt += 1
             do_raise = @cnt < 3
-            do_raise ? raise(StandardError, "some error") : true
+            do_raise ? raise(StandardError, 'some error') : true
           end
         end
 
         after(:each) { described_class.disable }
 
-        describe "retries messages on a schedule" do
+        describe 'retries messages on a schedule' do
           before { described_class.setup interval_secs: wait_time }
           it 'works' do
             publisher.publish(topic_name, event)
@@ -36,7 +37,7 @@ module Tiki
           end
         end
 
-        describe "retries messages on a custom schedule" do
+        describe 'retries messages on a custom schedule' do
           let(:tries) { [] }
           before do
             described_class.setup interval_secs: wait_time,
