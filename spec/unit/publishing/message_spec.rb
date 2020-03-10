@@ -41,7 +41,15 @@ module Tiki
               subject.serialize
             end
           end
+        end
 
+        describe '#fingerprint' do
+          let(:body) { {foo: {bar: "baz"} } }
+          let(:subject) { Message.new(body, {}, "json") }
+
+          it "provides a simple CRC fingerprint" do
+            expect(subject.fingerprint).to eq 2757912629
+          end
         end
       end
     end
