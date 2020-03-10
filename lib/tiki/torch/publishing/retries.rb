@@ -65,7 +65,7 @@ module Tiki
           # The callback to deal with the list of entries and the entry that was just added
           # to that list
           #
-          # @param [Hash{String=>Tiki::Torch::Publishing::Retries::Entry}] current_entries
+          # @param [Hash{String=>Tiki::Torch::Publishing::Retries::Entry}] _current_entries
           # @param [Tiki::Torch::Publishing::Retries::Entry] entry
           # @return [Tiki::Torch::Publishing::Retries::Entry]
           def default_retry_handler(_current_entries, entry)
