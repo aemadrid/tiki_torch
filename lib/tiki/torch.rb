@@ -16,7 +16,7 @@ require 'forwardable'
 require 'colorize'
 require 'yaml'
 require 'logger'
-require 'aws-sdk-sqs'
+require 'aws-sdk-core'
 require 'zlib'
 
 require 'tiki/torch/version'
