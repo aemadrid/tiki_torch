@@ -176,12 +176,17 @@ module Tiki
         timeout    = events_sleep_times[:poll].to_f
         @requested = @event_pool.ready_size
 
-        @messages  = @poller.pop @requested, timeout
-        @received  = @messages.size
-        @polled_at = Time.now
-        @consumer.pop_results @requested, @received, timeout
-
-        [:continue, "got #{@received}/#{@requested}"]
+        if @requested > 0
+          @messages  = @poller.pop @requested, timeout
+          @received  = @messages.size
+          @polled_at = Time.now
+          @consumer.pop_results @requested, @received, timeout
+          [:continue, "got #{@received}/#{@requested}"]
+        else
+          @messages  = []
+          @received  = 0
+          [:continue, "got bad requested size [#{@requested}]"]
+        end
       end
 
       def deal_with_no_messages
