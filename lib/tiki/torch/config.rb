@@ -50,6 +50,11 @@ module Tiki
       attribute :retry_timeout_secs, Integer
       attribute :retry_count, Integer
 
+      attribute :serial_qty, Integer, default: lambda { |_, _| ENV.fetch 'TIKI_SERIAL_POLLER_QTY', '10' }
+      attribute :serial_timeout, Integer, default: lambda { |_, _| ENV.fetch 'TIKI_SERIAL_POLLER_TIMEOUT', '1' }
+      attribute :serial_visibility, Integer, default: lambda { |_, _| ENV.fetch 'TIKI_SERIAL_POLLER_VISIBILITY', '60' }
+      attribute :serial_wait_secs, Float, default: lambda { |_, _| ENV.fetch 'TIKI_SERIAL_POLLER_WAIT_SECS', '1.5' }
+
       def default_message_properties
         @default_message_properties ||= {}
       end
