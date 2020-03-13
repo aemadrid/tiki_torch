@@ -5,16 +5,21 @@ module Tiki
       include Logging
       extend Forwardable
 
-      attr_reader :client, :pollers, :publisher
-
+      attr_reader :client
       def_delegator :@publisher, :publish
 
       def initialize(client = Torch.client)
         @client = client
-        @pollers = build_pollers
-        @publisher = build_publisher
         trap_signals
         at_exit { stop_polling }
+      end
+
+      def pollers
+        @pollers ||= build_pollers
+      end
+
+      def publisher
+        @publisher ||= build_publisher
       end
 
       def running?
