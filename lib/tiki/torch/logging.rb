@@ -57,11 +57,20 @@ module Tiki
         end
 
         def log_exception(e, extras = {})
+          backtrace_sep = extras.delete(:backtrace_sep) || " | "
+          backtrace_size = extras.delete(:backtrace_size) || 5
           @exception_proc.call e, extras if @exception_proc
           if raise_errors?
             raise e
           else
-            error "Exception: #{e.class.name} : #{e.message}\n  #{e.backtrace[0, 5].join("\n  ")}"
+            error format(
+                    "Exception: %s : %s%s%s",
+                    e.class.name,
+                    e.message,
+                    backtrace_sep,
+                    e.backtrace[0, backtrace_size].join(backtrace_sep)
+                  )
+
           end
         end
 

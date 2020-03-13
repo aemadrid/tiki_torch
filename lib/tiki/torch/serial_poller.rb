@@ -86,7 +86,7 @@ module Tiki
 
       def show_stats
         refresh_stats
-        label = format('%s - %s', consumer.name, consumer.queue_name)[0, 50]
+        label = format('%s - %s', consumer.name, consumer.queue_name)[-50, 50]
         info format('%50.50s : %4i / %2i / %2i', label, @stats[:available], @stats[:hidden], @stats[:delayed])
       end
 
