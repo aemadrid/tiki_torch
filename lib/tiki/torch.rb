@@ -67,3 +67,6 @@ require 'tiki/torch/manager'
 require 'tiki/torch/publishing/message'
 require 'tiki/torch/publishing/publisher'
 require 'tiki/torch/publishing/retries'
+
+require 'tiki/torch/serial_manager'
+require 'tiki/torch/serial_poller'

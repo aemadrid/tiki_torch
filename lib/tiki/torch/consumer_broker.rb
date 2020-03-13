@@ -109,7 +109,7 @@ module Tiki
         return false if @already_built
 
         debug 'building consumer ...'
-        ConsumerBuilder.new(@consumer, @manager).build
+        ConsumerBuilder.new(@consumer, client).build
         @already_built = true
       end
 

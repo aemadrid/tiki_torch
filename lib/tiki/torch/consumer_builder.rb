@@ -2,6 +2,10 @@ module Tiki
   module Torch
     class ConsumerBuilder
 
+      def self.build(consumer, client = Torch.client)
+        new(consumer, client).build
+      end
+
       include Logging
       extend Forwardable
 
@@ -10,11 +14,11 @@ module Tiki
                      :default_delay, :max_size, :retention_period, :policy, :receive_delay, :visibility_timeout,
                      :use_dlq, :dead_letter_queue_name, :max_attempts
 
-      def_delegators :@manager, :client
+      attr_reader :client
 
-      def initialize(consumer, manager)
+      def initialize(consumer, client = Torch.client)
         @consumer = consumer
-        @manager  = manager
+        @client = client
       end
 
       def build
