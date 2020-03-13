@@ -37,6 +37,8 @@ module Tiki
         end
       end
 
+      alias start start_polling
+
       def wait
         return unless running?
 
@@ -49,6 +51,8 @@ module Tiki
         info "stop polling ..."
         @running = false
       end
+
+      alias stop stop_polling
 
       def to_s
         %{#<T:T:SerialManager pollers=#{pollers.size}>}
