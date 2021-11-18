@@ -26,6 +26,14 @@ Or install it yourself as:
 
 TODO: Write usage instructions here
 
+## Development
+
+### Publishing
+
+0. Ensure you are configured for publishing.  [See this](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-rubygems-registry)
+1. Build the gem `gem build tiki_torch.gemspec`
+2. Publish the gem `gem push --key github --host https://rubygems.pkg.github.com/acima-credit tiki_torch-x.x.x.gem`
+3. 
 ## Contributing
 
 1. Fork it ( https://github.com/aemadrid/tiki_torch/fork )

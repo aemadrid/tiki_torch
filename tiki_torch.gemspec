@@ -12,6 +12,7 @@ Gem::Specification.new do |s|
   s.summary     = %q{Tiki Torch is a Ruby asynchronous communication library through Amazon SQS.}
   s.homepage    = ''
   s.license     = 'MIT'
+  s.metadata['allowed_push_host'] = 'https://rubygems.pkg.github.com/acima-credit'
 
   s.files         = `git ls-files -z`.split("\x0")
   s.executables   = s.files.grep(%r{^bin/}) { |f| File.basename(f) }
