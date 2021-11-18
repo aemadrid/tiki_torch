@@ -16,3 +16,4 @@ scrap/
 .ruby-version
 .idea/
 .tool-versions
+*.gem
