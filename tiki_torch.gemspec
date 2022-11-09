@@ -4,8 +4,10 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'tiki/torch/version'
 
 Gem::Specification.new do |s|
-  s.name        = 'tiki_torch'
-  s.version     = Tiki::Torch::VERSION
+  s.name = 'tiki_torch'
+  current_branch = `git branch --remote --contains | sed "s|[[:space:]]*origin/||"`.strip
+  branch_commit = `git rev-parse HEAD`.strip[0..6]
+  s.version     = current_branch == 'master' ? Tiki::Torch::VERSION : "#{Tiki::Torch::VERSION}-#{branch_commit}"
   s.authors     = ['Adrian Madrid']
   s.email       = ['aemadrid@gmail.com']
   s.description = %q{Inter-service communication library for Ruby}
