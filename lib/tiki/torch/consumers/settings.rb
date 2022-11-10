@@ -69,6 +69,10 @@ module Tiki
             @transcoder_code || Torch.config.transcoder_code
           end
 
+          def permitted_classes_for_YAML
+            @permitted_classes_for_YAML || Torch.config.permitted_classes_for_YAML
+          end
+
           def serialization_strategy
             @serialization_strategy || Torch.config.serialization_strategy
           end
