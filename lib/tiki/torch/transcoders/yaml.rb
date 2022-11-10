@@ -1,9 +1,7 @@
 module Tiki
   module Torch
     class YamlTranscoder < Transcoder
-
       class << self
-
         def codes
           Torch::Config::YAML_CODES
         end
@@ -13,11 +11,13 @@ module Tiki
         end
 
         def decode(str)
-          YAML.load(str)
+          if RUBY_VERSION[0].to_i < 3
+            YAML.load(str)
+          else
+            YAML.load(str, permitted_classes: Torch.config.permitted_classes_for_YAML)
+          end
         end
-
       end
-
     end
   end
 end

@@ -36,6 +36,7 @@ module Tiki
 
       attribute :event_pool_size, Integer, default: lambda { |_, _| Concurrent.processor_count }
       attribute :transcoder_code, String, default: 'yaml'
+      attribute :permitted_classes_for_YAML, Array, default: lambda { |_, _| [Symbol, Time, Date, DateTime, BigDecimal] }
       attribute :events_sleep_times, Hash, default: EVENT_SLEEP_TIMES
       attribute :serialization_strategy, String, default: SerializationStrategies::PREFIX
 
