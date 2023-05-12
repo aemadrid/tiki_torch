@@ -14,7 +14,12 @@ module Tiki
           if RUBY_VERSION[0].to_i < 3
             YAML.load(str)
           else
-            YAML.load(str, permitted_classes: Torch.config.permitted_classes_for_YAML)
+            # psych 4.0 alias support
+            begin
+              YAML.load(source, aliases: true, permitted_classes: Torch.config.permitted_classes_for_YAML)
+            rescue ArgumentError
+              YAML.load(source, permitted_classes: Torch.config.permitted_classes_for_YAML)
+            end
           end
         end
       end
